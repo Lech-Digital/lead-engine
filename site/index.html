@@ -10,11 +10,11 @@
     --cream:    #F3E9D6;
     --cream-2:  #FBF4E6;
     --ink:      #382C23;
-    --ink-soft: #7C6A57;
+    --ink-soft: #675541;
     --line:     #E4D5BA;
     --line-2:   #D8C5A4;
     --orange: #E07A3E;
-    --orange-d: #B85C28;
+    --orange-d: #A04E1E;
     --rose:   #D9897F;
     --rose-d: #BB665B;
     --gold:   #E0A93B;
@@ -23,7 +23,7 @@
     --screen:   #3A3568;
     --screen-2: #46406F;
     --screen-tx:#D6D1F4;
-    --screen-mu:#9A93C9;
+    --screen-mu:#B2ABDA;
     --mono: "SF Mono", ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace;
     --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --measure: 62ch;
@@ -48,16 +48,17 @@
     position: fixed; top: 0; left: 0; right: 0; z-index: 60;
     background: rgba(243,233,214,0.92); -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px);
     border-bottom: 2px solid var(--line-2);
-    transform: translateY(-115%); transition: transform .32s cubic-bezier(.2,.7,.3,1);
+    transform: translateY(-115%); visibility: hidden;
+    transition: transform .32s cubic-bezier(.2,.7,.3,1), visibility .32s;
   }
   .statusbar::after { content:""; display:block; height:2px; background: linear-gradient(to right,var(--orange),var(--rose),var(--gold),var(--teal),var(--blue)); }
-  .statusbar.show { transform: none; }
+  .statusbar.show { transform: none; visibility: visible; }
   .statusbar .inner { max-width: var(--maxw); margin: 0 auto; padding: 9px clamp(20px,5vw,56px); display: flex; align-items: center; justify-content: space-between; gap: 14px; font-family: var(--mono); font-size: 0.74rem; }
   .statusbar .live { color: var(--orange-d); letter-spacing: 0.06em; display: inline-flex; align-items: center; gap: 8px; }
   .statusbar .pdot { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 0 0 var(--teal); animation: pulse 1.8s infinite; }
   .statusbar .count { color: var(--ink-soft); font-variant-numeric: tabular-nums; }
-  .sb-cta { font-family: var(--mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; text-decoration: none; color: #fff; background: var(--orange); border: 1.5px solid var(--orange-d); border-radius: 7px; padding: 5px 10px; box-shadow: 0 3px 0 var(--orange-d); white-space: nowrap; }
-  .sb-cta:hover { transform: translateY(1px); box-shadow: 0 2px 0 var(--orange-d); }
+  .sb-cta { font-family: var(--mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; text-decoration: none; color: #fff; background: var(--orange-d); border: 1.5px solid #7a3c16; border-radius: 7px; padding: 5px 10px; box-shadow: 0 3px 0 #7a3c16; white-space: nowrap; }
+  .sb-cta:hover { transform: translateY(1px); box-shadow: 0 2px 0 #7a3c16; }
   @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(94,158,148,.6);} 70%{box-shadow:0 0 0 7px rgba(94,158,148,0);} 100%{box-shadow:0 0 0 0 rgba(94,158,148,0);} }
 
   .caret { display: inline-block; width: 0.62ch; height: 1.05em; vertical-align: -0.15em; background: currentColor; margin-left: 1px; animation: blink 1.05s steps(1) infinite; }
@@ -84,10 +85,10 @@
   .cta-row { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 34px; }
 
   .btn { display: inline-flex; align-items: center; gap: 9px; font-weight: 700; font-size: 0.96rem; font-family: var(--sans); padding: 14px 24px; border-radius: 11px; text-decoration: none; border: 1.5px solid; cursor: pointer; transition: transform .08s ease, box-shadow .08s ease; }
-  .btn-primary { background: var(--orange); color: #fff; border-color: var(--orange-d); box-shadow: 0 5px 0 var(--orange-d); }
+  .btn-primary { background: var(--orange-d); color: #fff; border-color: #7a3c16; box-shadow: 0 5px 0 #7a3c16; }
   .btn-ghost { background: var(--cream-2); color: var(--ink); border-color: var(--line-2); box-shadow: 0 5px 0 var(--line-2); }
   .btn:hover { transform: translateY(2px); }
-  .btn-primary:hover { box-shadow: 0 3px 0 var(--orange-d); }
+  .btn-primary:hover { box-shadow: 0 3px 0 #7a3c16; }
   .btn-ghost:hover { box-shadow: 0 3px 0 var(--line-2); }
   .btn:active { transform: translateY(5px); box-shadow: 0 0 0 currentColor; }
   .btn:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
@@ -246,7 +247,7 @@
 
 <div class="rainbow" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
 
-<div class="statusbar" id="statusbar" aria-hidden="true">
+<div class="statusbar" id="statusbar">
   <div class="inner">
     <span class="live"><span class="pdot"></span>COLDSTART · LIVE — scanning signals<span class="caret"></span></span>
     <span class="count"><span id="sbCount">2,481</span> signals today</span>
@@ -254,6 +255,7 @@
   </div>
 </div>
 
+<main>
 <header class="hero">
   <div class="wrap">
     <div class="hero-grid">
@@ -268,7 +270,7 @@
         <p class="urgency"><span class="bolt">⚡</span> Buying signals go stale in weeks. We get you in front of them first — not fortieth.</p>
       </div>
 
-      <div class="device" id="demo">
+      <div class="device" id="demo" aria-hidden="true">
         <div class="device-bar">
           <span class="dots"><i></i><i></i><i></i></span>
           <span class="title">incoming leads</span>
@@ -410,9 +412,9 @@
         </div>
         <div class="offer-cta">
           <p class="kicker">Simple, all-in pricing</p>
-          <div class="price-tag"><span class="amt">€750</span><span class="per">/ month</span></div>
+          <div class="price-tag"><span class="amt">€750</span><span class="per">/ month · ex. VAT</span></div>
           <p class="price-sub">Everything above included · billed monthly · cancel anytime</p>
-          <p class="price-setup">＋ <b>€350</b> one-time onboarding &amp; setup</p>
+          <p class="price-setup">＋ <b>€350</b> one-time onboarding &amp; setup · ex. VAT</p>
           <a class="btn btn-primary" href="mailto:adzius.lech@gmail.com?subject=Coldstart%20%E2%80%94%20sample%20leads&body=Hi%2C%20my%20niche%20is%20___%20and%20I%20sell%20___.%20Can%20you%20send%20a%20few%20sample%20leads%3F">Get my sample leads →</a>
           <p class="price-free">Start free — we'll send real sample leads for your niche before you pay a cent.</p>
         </div>
@@ -420,6 +422,7 @@
     </div>
   </div>
 </section>
+</main>
 
 <footer>
   <div class="wrap">
