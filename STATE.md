@@ -58,6 +58,14 @@ python -m leadengine.cli deliver   # no-op until SLACK_WEBHOOK_URL is set
   idempotent. CLI: `queue`, `approve <id> --email`, `reject <id>`, `send [--dry-run]`.
   Recipient address is operator-supplied, NEVER AI-guessed.
 
+## Deployment (2026-06-30)
+- Git: private repo **github.com/adziusmaster/lead-engine** (HTTPS remote via gh token).
+  Secrets (.env, *.db, *.csv, logs/) git-ignored, never pushed.
+- Site hosted on Netlify: **https://whimsical-heliotrope-a56c01.netlify.app**
+  (publish dir = `site`). Can rename site / add custom domain in Netlify later.
+- Contact wired in: CTA email **adzius.lech@gmail.com**, sender name **Andrzej Lech**.
+- See `DEPLOY.md`. Engine still runs locally (launchd), not hosted.
+
 ## Sales assets (2026-06-29)
 - `site/index.html` — standalone static pitch website (full HTML doc, self-contained,
   no deps), built from REAL leads.db (GitLab/Stripe/Patronus). CTA = "Send me an email"
