@@ -73,14 +73,19 @@ sources:
     enabled: true
     feeds:
       - "https://techcrunch.com/category/venture/feed/"
-    lookback_days: 30
-    max_per_feed: 50
+      - "https://techcrunch.com/category/startups/feed/"
+      - "https://tech.eu/feed/"
+      - "https://www.eu-startups.com/feed/"
+      - "https://news.crunchbase.com/feed/"
+      - "https://techfundingnews.com/feed/"
+    lookback_days: 45
+    max_per_feed: 40
     base_score: 0.5
     require_funding_terms: true
 
 scoring:
   min_score: 0.4
-  max_enrich_per_run: 40
+  max_enrich_per_run: 60
 
 output:
   sqlite_path: "data/coldstart.db"
