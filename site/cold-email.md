@@ -1,6 +1,6 @@
 # Cold-email templates — selling the Lead Engine (done-for-you)
 
-**Pitch site to link:** `{{your site url}}`  (host `site/index.html` — see README.md)
+**Pitch site to link:** `https://whimsical-heliotrope-a56c01.netlify.app`  (host `site/index.html` — see README.md)
 
 The ask is a **reply by email**, not a booked call. Lower friction: they just hit reply.
 
@@ -26,11 +26,11 @@ signal — a relevant hire, fresh funding, a tool they're outgrowing — each al
 with the opening email drafted. You approve the ones you like and they send.
 
 Three real, unedited leads it surfaced in a single run (for a recruiting-software client):
-{{your site url}}
+https://whimsical-heliotrope-a56c01.netlify.app
 
 Reply with your niche and I'll send back a few sample leads for {{their company}} — no call needed.
 
-{{your name}}
+Andrzej Lech
 
 ---
 
@@ -45,11 +45,11 @@ funding rounds, switching intent — qualifies the companies worth contacting, a
 email for each. You just approve and send.
 
 One run for a sample client turned 77 signals into 3 leads worth pursuing, each with a drafted
-email. Three real examples here: {{your site url}}
+email. Three real examples here: https://whimsical-heliotrope-a56c01.netlify.app
 
 Want me to run it against {{their company}}'s niche and email you the leads? Just reply "yes".
 
-{{your name}}
+Andrzej Lech
 
 ---
 
@@ -65,11 +65,11 @@ I do done-for-you prospecting that's a bit different from the usual list vendors
 companies showing a buying signal *right now*, qualifies each one strictly (competitors and
 tyre-kickers get dropped before you ever see them), and hands you the first email already written.
 
-Real sample output: {{your site url}}
+Real sample output: https://whimsical-heliotrope-a56c01.netlify.app
 
 If it's useful, reply and I'll send a few live leads for {{their niche}} this week.
 
-{{your name}}
+Andrzej Lech
 
 ---
 
@@ -82,4 +82,4 @@ contacting. The value is what it *throws away*, so you only spend time on real p
 
 Reply with your niche and I'll send the sample leads over — that's the whole ask.
 
-{{your name}}
+Andrzej Lech
