@@ -1,6 +1,6 @@
-# Cold-email templates — selling the Lead Engine (done-for-you)
+# Cold-email templates — selling Coldstart (done-for-you)
 
-**Pitch site to link:** `https://whimsical-heliotrope-a56c01.netlify.app`  (host `site/index.html` — see README.md)
+**Pitch site to link:** `https://getcoldstart.netlify.app`  (host `site/index.html` — see README.md)
 
 The ask is a **reply by email**, not a booked call. Lower friction: they just hit reply.
 
@@ -26,7 +26,7 @@ signal — a relevant hire, fresh funding, a tool they're outgrowing — each al
 with the opening email drafted. You approve the ones you like and they send.
 
 Three real, unedited leads it surfaced in a single run (for a recruiting-software client):
-https://whimsical-heliotrope-a56c01.netlify.app
+https://getcoldstart.netlify.app
 
 Reply with your niche and I'll send back a few sample leads for {{their company}} — no call needed.
 
@@ -45,7 +45,7 @@ funding rounds, switching intent — qualifies the companies worth contacting, a
 email for each. You just approve and send.
 
 One run for a sample client turned 77 signals into 3 leads worth pursuing, each with a drafted
-email. Three real examples here: https://whimsical-heliotrope-a56c01.netlify.app
+email. Three real examples here: https://getcoldstart.netlify.app
 
 Want me to run it against {{their company}}'s niche and email you the leads? Just reply "yes".
 
@@ -65,7 +65,7 @@ I do done-for-you prospecting that's a bit different from the usual list vendors
 companies showing a buying signal *right now*, qualifies each one strictly (competitors and
 tyre-kickers get dropped before you ever see them), and hands you the first email already written.
 
-Real sample output: https://whimsical-heliotrope-a56c01.netlify.app
+Real sample output: https://getcoldstart.netlify.app
 
 If it's useful, reply and I'll send a few live leads for {{their niche}} this week.
 

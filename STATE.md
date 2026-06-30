@@ -59,9 +59,10 @@ python -m leadengine.cli deliver   # no-op until SLACK_WEBHOOK_URL is set
   Recipient address is operator-supplied, NEVER AI-guessed.
 
 ## Deployment (2026-06-30)
+- **Brand: Coldstart** (renamed from "Lead Engine"). Site name → getcoldstart.netlify.app.
 - Git: private repo **github.com/adziusmaster/lead-engine** (HTTPS remote via gh token).
   Secrets (.env, *.db, *.csv, logs/) git-ignored, never pushed.
-- Site hosted on Netlify: **https://whimsical-heliotrope-a56c01.netlify.app**
+- Site hosted on Netlify: **https://getcoldstart.netlify.app**
   (publish dir = `site`). Can rename site / add custom domain in Netlify later.
 - Contact wired in: CTA email **adzius.lech@gmail.com**, sender name **Andrzej Lech**.
 - See `DEPLOY.md`. Engine still runs locally (launchd), not hosted.
