@@ -10,7 +10,7 @@ class EmailSender(ABC):
     enabled: bool = False
 
     @abstractmethod
-    def send(self, to: str, subject: str, body: str) -> bool:
+    def send(self, to: str, subject: str, body: str, html: str | None = None) -> bool:
         raise NotImplementedError
 
 
@@ -19,5 +19,5 @@ class NullSender(EmailSender):
 
     enabled = False
 
-    def send(self, to: str, subject: str, body: str) -> bool:
+    def send(self, to: str, subject: str, body: str, html: str | None = None) -> bool:
         return False

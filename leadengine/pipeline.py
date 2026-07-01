@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 from .config import Config, LLMSettings
 from .delivery import SlackDelivery
-from .email import EmailSender, build_email_sender
+from .email import EmailSender, build_email_sender, render_html, render_text
 from .enrich import enrich
 from .llm import build_llm
 from .signals import score_item
@@ -118,7 +118,8 @@ def send_approved(
     for lead in storage.approved_unsent():
         if not lead.recipient_email:
             continue  # approval requires a real address; never send without one
-        if sender.send(lead.recipient_email, lead.subject, lead.draft):
+        text, html = render_text(lead.draft), render_html(lead.draft)
+        if sender.send(lead.recipient_email, lead.subject, text, html):
             storage.mark_sent(lead.fingerprint, stamp)
             sent += 1
         else:

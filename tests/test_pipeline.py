@@ -24,7 +24,12 @@ def test_send_approved_sends_and_marks_sent(tmp_path):
     sent, failed = send_approved(CONFIG, sender=sender, storage=db, now="2026-06-29T00:00:00Z")
 
     assert (sent, failed) == (1, 0)
-    assert sender.sent == [("vp@acme.com", "Scaling your team", "Worth a chat?")]
+    # send_approved renders the stored draft into a branded text + HTML pair.
+    (to, subject, text, html), = sender.sent
+    assert (to, subject) == ("vp@acme.com", "Scaling your team")
+    assert text.startswith("Worth a chat?")
+    assert "Andrzej Lech" in text  # signature appended
+    assert html is not None and "start" in html  # branded HTML alternative
     assert db.approved_unsent() == []  # left the queue, won't re-send
 
 
@@ -42,7 +47,7 @@ def test_send_approved_keeps_lead_queued_on_failure(tmp_path):
     class FailSender(EmailSender):
         enabled = True
 
-        def send(self, to, subject, body):
+        def send(self, to, subject, body, html=None):
             return False
 
     db = Storage(str(tmp_path / "x.db"))

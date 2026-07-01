@@ -95,4 +95,8 @@ delivery:
   slack:
     enabled: false
   email:
-    enabled: false
+    enabled: true
+    provider: gmail
+    username: adzius.lech@gmail.com   # Gmail account that authenticates + sends
+    from_name: Andrzej Lech
+    password_env: GMAIL_APP_PASSWORD  # Google App Password, read from .env (gitignored)

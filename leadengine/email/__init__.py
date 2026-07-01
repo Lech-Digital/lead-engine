@@ -4,13 +4,17 @@ import os
 
 from ..config import Config
 from .base import EmailSender, NullSender
-from .providers import DryRunSender, ResendSender
+from .providers import DryRunSender, GmailSmtpSender, ResendSender
+from .render import render_html, render_text
 
 __all__ = [
     "EmailSender",
     "NullSender",
     "DryRunSender",
     "ResendSender",
+    "GmailSmtpSender",
+    "render_text",
+    "render_html",
     "build_email_sender",
 ]
 
@@ -31,6 +35,13 @@ def build_email_sender(config: Config) -> EmailSender:
         return ResendSender(
             api_key=api_key,
             from_addr=str(email.get("from_addr", "")).strip(),
+            from_name=str(email.get("from_name", "")).strip(),
+        )
+    if provider == "gmail":
+        password = os.getenv(email.get("password_env", "GMAIL_APP_PASSWORD"), "").strip()
+        return GmailSmtpSender(
+            username=str(email.get("username", "")).strip(),
+            password=password,
             from_name=str(email.get("from_name", "")).strip(),
         )
     return NullSender()
