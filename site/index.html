@@ -248,7 +248,46 @@
     body.js [data-reveal] { opacity: 1; transform: none; transition: none; }
     .btn:hover, .btn:active, .brand:hover .cap, .lead:hover { transform: none; }
     .pdot, .device-bar .blive .pdot, .caret { animation: none; }
+    .overlay { animation: none; }
   }
+
+  /* email composer modal */
+  body.modal-open { overflow: hidden; }
+  .overlay { position: fixed; inset: 0; background: rgba(33,29,68,0.55); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 100; }
+  .overlay.show { display: flex; animation: ov-fade .18s ease; }
+  @keyframes ov-fade { from { opacity: 0; } }
+  .modal { background: var(--cream-2); border: 1.5px solid var(--line-2); border-radius: 16px; box-shadow: 0 10px 0 var(--line-2), 0 30px 60px rgba(44,39,80,0.32); width: 100%; max-width: 470px; max-height: calc(100dvh - 40px); overflow-y: auto; }
+  .overlay.show .modal { animation: modal-pop .2s cubic-bezier(.2,.7,.3,1); }
+  @keyframes modal-pop { from { transform: translateY(14px); opacity: 0; } }
+  .modal-head { display: flex; align-items: flex-start; gap: 12px; padding: 22px 22px 0; }
+  .modal-head h3 { margin: 0; font-size: 1.16rem; letter-spacing: -0.01em; }
+  .modal-head p { margin: 6px 0 0; font-size: 0.9rem; color: var(--ink-soft); }
+  .modal-x { margin-left: auto; flex: none; border: none; background: transparent; font-size: 1.5rem; line-height: 1; color: var(--ink-soft); cursor: pointer; padding: 2px 8px; border-radius: 8px; }
+  .modal-x:hover { background: var(--cream); color: var(--ink); }
+  .modal-body { padding: 16px 22px 22px; display: flex; flex-direction: column; gap: 14px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--orange-d); font-weight: 700; }
+  .field input { font-family: var(--sans); font-size: 1rem; padding: 11px 13px; border: 1.5px solid var(--line-2); border-radius: 10px; background: var(--cream); color: var(--ink); width: 100%; }
+  .field input:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; border-color: var(--blue); }
+  .preview { background: #fff; border: 1.5px solid var(--line); border-radius: 11px; padding: 13px 14px; font-size: 0.86rem; line-height: 1.55; }
+  .preview .to { font-family: var(--mono); font-size: 0.66rem; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--line); padding-bottom: 7px; margin-bottom: 9px; }
+  .preview .subj { font-weight: 700; margin-bottom: 8px; }
+  .preview .bd { white-space: pre-wrap; color: #2b2b2b; }
+  .preview mark { background: #fbe6cf; color: var(--orange-d); padding: 0 3px; border-radius: 3px; font-weight: 600; }
+  .preview mark.empty { background: transparent; color: var(--ink-soft); font-weight: 400; font-style: italic; }
+  .modal-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .modal-actions .btn { padding: 12px 18px; font-size: 0.9rem; }
+  .btn[disabled] { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: 0 5px 0 #7a3c16; }
+  .modal .hint { font-size: 0.78rem; color: var(--ink-soft); margin: 0; }
+  .modal .hint.copied { color: #3c7a70; font-weight: 700; }
+
+  /* palette-matched scrollbars */
+  html { scrollbar-color: var(--orange-d) var(--cream); scrollbar-width: thin; }
+  ::-webkit-scrollbar { width: 12px; height: 12px; }
+  ::-webkit-scrollbar-track { background: var(--cream); }
+  ::-webkit-scrollbar-thumb { background: var(--orange-d); border-radius: 8px; border: 3px solid var(--cream); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--orange); }
+  ::-webkit-scrollbar-corner { background: var(--cream); }
 </style>
 </head>
 <body>
@@ -259,7 +298,7 @@
   <div class="inner">
     <span class="live"><span class="pdot"></span>COLDSTART · LIVE — scanning signals<span class="caret"></span></span>
     <span class="count"><span id="sbCount">2,481</span> signals today</span>
-    <a class="sb-cta" href="mailto:adzius.lech@gmail.com?subject=Coldstart%20%E2%80%94%20interested">Send me an email</a>
+    <a class="sb-cta" data-compose href="mailto:adzius.lech@gmail.com?subject=Coldstart%20%E2%80%94%20interested">Send me an email</a>
   </div>
 </div>
 
@@ -272,7 +311,7 @@
         <h1>Qualified leads — with the first email <span class="hl">already written</span> — in your inbox every morning.</h1>
         <p class="lede">We watch the public web for companies showing a buying signal <em>right now</em> — hiring sprees, fresh funding, tools they're outgrowing — qualify them strictly, and draft the opening email. You approve, and it sends.</p>
         <div class="cta-row">
-          <a class="btn btn-primary" href="mailto:adzius.lech@gmail.com?subject=Coldstart%20%E2%80%94%20interested&body=Hi%2C%20my%20niche%20is%20___.%20Can%20you%20send%20a%20few%20sample%20leads%3F">Send me an email →</a>
+          <a class="btn btn-primary" data-compose href="mailto:adzius.lech@gmail.com?subject=Coldstart%20%E2%80%94%20interested&body=Hi%2C%20my%20niche%20is%20___.%20Can%20you%20send%20a%20few%20sample%20leads%3F">Send me an email →</a>
           <a class="btn btn-ghost" href="#proof">See real leads ↓</a>
         </div>
         <p class="urgency"><span class="bolt">⚡</span> Buying signals go stale in weeks. We get you in front of them first — not fortieth.</p>
@@ -423,7 +462,7 @@
           <div class="price-tag"><span class="amt">€750</span><span class="per">/ month · ex. VAT</span></div>
           <p class="price-sub">Everything above included · billed monthly · cancel anytime</p>
           <p class="price-setup">＋ <b>€350</b> one-time onboarding &amp; setup · ex. VAT</p>
-          <a class="btn btn-primary" href="mailto:adzius.lech@gmail.com?subject=Coldstart%20%E2%80%94%20sample%20leads&body=Hi%2C%20my%20niche%20is%20___%20and%20I%20sell%20___.%20Can%20you%20send%20a%20few%20sample%20leads%3F">Get my sample leads →</a>
+          <a class="btn btn-primary" data-compose href="mailto:adzius.lech@gmail.com?subject=Coldstart%20%E2%80%94%20sample%20leads&body=Hi%2C%20my%20niche%20is%20___%20and%20I%20sell%20___.%20Can%20you%20send%20a%20few%20sample%20leads%3F">Get my sample leads →</a>
           <p class="price-free">Start free — we'll send real sample leads for your niche before you pay a cent.</p>
         </div>
       </div>
@@ -438,6 +477,147 @@
     <p class="mono">COLDSTART · automated buying-signal prospecting · all figures and leads on this page are from real, unedited runs</p>
   </div>
 </footer>
+
+<div class="overlay" id="composer" role="dialog" aria-modal="true" aria-labelledby="c-title" aria-hidden="true">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h3 id="c-title">Sample leads for your niche</h3>
+        <p>A few quick details and I'll write the email for you — you just hit send.</p>
+      </div>
+      <button class="modal-x" id="c-x" type="button" aria-label="Close">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label for="c-name">Your name</label>
+        <input id="c-name" type="text" autocomplete="off" placeholder="e.g. Sam Rivera">
+      </div>
+      <div class="field">
+        <label for="c-niche">Your niche</label>
+        <input id="c-niche" type="text" autocomplete="off" placeholder="e.g. B2B SaaS for dental clinics">
+      </div>
+      <div class="field">
+        <label for="c-sell">What you sell</label>
+        <input id="c-sell" type="text" autocomplete="off" placeholder="e.g. scheduling software">
+      </div>
+      <div class="preview" aria-live="polite">
+        <div class="to">To: adzius.lech@gmail.com</div>
+        <div class="subj" id="c-subj">Coldstart — sample leads</div>
+        <div class="bd">Hi Andrzej,<br><br>I'm <mark class="empty" id="c-pv-name">your name</mark> — I sell <mark class="empty" id="c-pv-sell">what you sell</mark> to <mark class="empty" id="c-pv-niche">your niche</mark>, and I'd like to see the kind of leads Coldstart would find for us.<br><br>Could you send a few sample leads for my niche?<br><br>Thanks!<br><mark class="empty" id="c-pv-name2">your name</mark></div>
+      </div>
+      <p class="hint" id="c-hint">Fill in all three and the draft is ready — no blanks to edit.</p>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="c-open" type="button" disabled>Open in your email app →</button>
+        <button class="btn btn-ghost" id="c-copy" type="button">Copy draft</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var overlay = document.getElementById('composer');
+  if (!overlay) return;
+  var TO = 'adzius.lech@gmail.com';
+  var nameI = document.getElementById('c-name');
+  var nicheI = document.getElementById('c-niche');
+  var sellI = document.getElementById('c-sell');
+  var pvSubj = document.getElementById('c-subj');
+  var pvName = document.getElementById('c-pv-name');
+  var pvName2 = document.getElementById('c-pv-name2');
+  var pvSell = document.getElementById('c-pv-sell');
+  var pvNiche = document.getElementById('c-pv-niche');
+  var openBtn = document.getElementById('c-open');
+  var copyBtn = document.getElementById('c-copy');
+  var hint = document.getElementById('c-hint');
+  var lastTrigger = null;
+
+  function name() { return nameI.value.trim(); }
+  function niche() { return nicheI.value.trim(); }
+  function sell() { return sellI.value.trim(); }
+  function ready() { return !!(name() && niche() && sell()); }
+
+  function mail() {
+    var subject = 'Coldstart — sample leads' + (niche() ? ' for ' + niche() : '');
+    var body = 'Hi Andrzej,\n\nI’m ' + (name() || '___') + ' — I sell ' + (sell() || '___') + ' to ' + (niche() || '___') +
+      ', and I’d like to see the kind of leads Coldstart would find for us.\n\n' +
+      'Could you send a few sample leads for my niche?\n\nThanks!\n' + (name() || '___');
+    return { subject: subject, body: body };
+  }
+
+  function render() {
+    pvSubj.textContent = mail().subject;
+    pvName.textContent = name() || 'your name';
+    pvName.classList.toggle('empty', !name());
+    pvName2.textContent = name() || 'your name';
+    pvName2.classList.toggle('empty', !name());
+    pvSell.textContent = sell() || 'what you sell';
+    pvSell.classList.toggle('empty', !sell());
+    pvNiche.textContent = niche() || 'your niche';
+    pvNiche.classList.toggle('empty', !niche());
+    openBtn.disabled = !ready();
+  }
+
+  function open(trigger) {
+    lastTrigger = trigger || null;
+    overlay.classList.add('show');
+    overlay.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('modal-open');
+    render();
+    setTimeout(function () { nameI.focus(); }, 0);
+  }
+  function close() {
+    overlay.classList.remove('show');
+    overlay.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('modal-open');
+    if (lastTrigger && lastTrigger.focus) lastTrigger.focus();
+  }
+
+  document.querySelectorAll('[data-compose]').forEach(function (a) {
+    a.addEventListener('click', function (e) { e.preventDefault(); open(a); });
+  });
+  nameI.addEventListener('input', render);
+  nicheI.addEventListener('input', render);
+  sellI.addEventListener('input', render);
+
+  openBtn.addEventListener('click', function () {
+    if (!ready()) return;
+    var m = mail();
+    window.location.href = 'mailto:' + TO + '?subject=' + encodeURIComponent(m.subject) + '&body=' + encodeURIComponent(m.body);
+  });
+  copyBtn.addEventListener('click', function () {
+    var m = mail();
+    var text = 'To: ' + TO + '\nSubject: ' + m.subject + '\n\n' + m.body;
+    if (!navigator.clipboard) return;
+    navigator.clipboard.writeText(text).then(function () {
+      hint.textContent = 'Copied — paste it into any email app.';
+      hint.classList.add('copied');
+      setTimeout(function () {
+        hint.textContent = 'Fill in all three and the draft is ready — no blanks to edit.';
+        hint.classList.remove('copied');
+      }, 2200);
+    });
+  });
+
+  document.getElementById('c-x').addEventListener('click', close);
+  overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && overlay.classList.contains('show')) close();
+  });
+  // focus trap
+  overlay.addEventListener('keydown', function (e) {
+    if (e.key !== 'Tab') return;
+    var f = Array.prototype.filter.call(
+      overlay.querySelectorAll('button, input, a[href]'),
+      function (el) { return !el.disabled && el.offsetParent !== null; }
+    );
+    if (!f.length) return;
+    var first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+})();
+</script>
 
 <script>
 (function () {
