@@ -114,7 +114,7 @@
   .device-bar .blive .pdot { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); animation: pulse 1.8s infinite; }
   .device-screen {
     background: repeating-linear-gradient(to bottom, rgba(255,255,255,0.03) 0 1px, transparent 1px 3px), var(--screen);
-    padding: 16px; min-height: 318px; display: flex; flex-direction: column; gap: 12px; justify-content: flex-end;
+    padding: 16px; height: 318px; overflow: hidden; display: flex; flex-direction: column; gap: 12px; justify-content: flex-end;
   }
   .msg { background: var(--screen-2); border: 1px solid #56508A; border-radius: 11px; padding: 13px 14px; color: var(--screen-tx); box-shadow: 0 4px 0 rgba(33,29,68,0.6); opacity: 0; transform: translateY(12px) scale(.98); transition: opacity .4s ease, transform .4s cubic-bezier(.2,.7,.3,1); }
   .msg.in { opacity: 1; transform: none; }
@@ -268,7 +268,7 @@
   <div class="wrap">
     <div class="hero-grid">
       <div>
-        <div class="brand"><span class="cap k-o">C</span><span class="cap k-r">S</span><span class="cap">⌨</span><span class="label">Coldstart</span></div>
+        <a class="brand" href="/" aria-label="Coldstart home"><img src="/logo.svg" alt="Coldstart" width="150" height="40" style="display:block;height:40px;width:auto;"></a>
         <h1>Qualified leads — with the first email <span class="hl">already written</span> — in your inbox every morning.</h1>
         <p class="lede">We watch the public web for companies showing a buying signal <em>right now</em> — hiring sprees, fresh funding, tools they're outgrowing — qualify them strictly, and draft the opening email. You approve, and it sends.</p>
         <div class="cta-row">
