@@ -66,6 +66,8 @@ def main(argv: list[str] | None = None) -> int:
     p_reject.add_argument("fingerprint", help="Lead id (a short prefix is fine)")
     p_send = sub.add_parser("send", help="Send all approved leads via the email provider")
     p_send.add_argument("--dry-run", action="store_true", help="Print sends without calling the API")
+    p_contacted = sub.add_parser("contacted", help="List every company already emailed (never re-contacted)")
+    p_contacted.add_argument("--out", default=None, help="Also write the list to this markdown file")
 
     args = parser.parse_args(argv)
     _load_dotenv()
@@ -110,6 +112,8 @@ def main(argv: list[str] | None = None) -> int:
         return _decide(config, args)
     if args.cmd == "send":
         return _send(config, args.dry_run)
+    if args.cmd == "contacted":
+        return _contacted(config, args.out)
 
     return 1
 
@@ -155,12 +159,41 @@ def _send(config: Config, dry_run: bool) -> int:
     if not sender.enabled:
         print("No email provider configured (set delivery.email in config). Nothing sent.")
         return 0
-    sent, failed = send_approved(config, sender=sender)
+    # preview=dry_run: a dry run hands messages to the sender but never stamps them sent.
+    sent, failed, skipped = send_approved(config, sender=sender, preview=dry_run)
     label = "DRY-RUN: would send" if dry_run else "Sent"
-    print(f"{label} {sent} email(s)" + (f", {failed} failed (still queued)" if failed else ""))
+    note = (f", {failed} failed (still queued)" if failed else "") + (
+        f", {skipped} skipped (already contacted)" if skipped else "")
+    print(f"{label} {sent} email(s){note}")
     if dry_run:
-        for to, subject, _ in getattr(sender, "sent", []):
+        for to, subject, *_ in getattr(sender, "sent", []):
             print(f"  -> {to}  ·  {subject}")
+    return 0
+
+
+def _contacted(config: Config, out: str | None) -> int:
+    storage = Storage(config.sqlite_path)
+    leads = storage.sent()
+    name = config.client.get("name", "Coldstart")
+    if not leads:
+        print("No companies contacted yet.")
+        return 0
+    print(f"{len(leads)} compan{'y' if len(leads) == 1 else 'ies'} contacted:\n")
+    for lead in leads:
+        when = (lead.sent_at or "")[:10]
+        print(f"  {when}  {lead.company or lead.author:<24} {lead.recipient_email}")
+    if out:
+        lines = [f"# {name} — companies already contacted", "",
+                 "Auto-generated from the sent history (`leadengine contacted`). "
+                 "The engine will not email any company on this list again.", "",
+                 "| Date | Company | Sent to | Subject |", "| --- | --- | --- | --- |"]
+        for lead in leads:
+            when = (lead.sent_at or "")[:10]
+            subj = (lead.subject or "").replace("|", "\\|")
+            lines.append(f"| {when} | {lead.company or lead.author} | {lead.recipient_email} | {subj} |")
+        Path(out).parent.mkdir(parents=True, exist_ok=True)
+        Path(out).write_text("\n".join(lines) + "\n", encoding="utf-8")
+        print(f"\nWrote {out}")
     return 0
 
 

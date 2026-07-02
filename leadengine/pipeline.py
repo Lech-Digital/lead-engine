@@ -10,7 +10,7 @@ from .enrich import enrich
 from .llm import build_llm
 from .signals import score_item
 from .sources import build_sources
-from .storage import Storage
+from .storage import Storage, email_domain, normalize_company
 
 
 @dataclass
@@ -102,26 +102,61 @@ def send_approved(
     sender: EmailSender | None = None,
     storage: Storage | None = None,
     now: str | None = None,
-) -> tuple[int, int]:
+    preview: bool = False,
+) -> tuple[int, int, int]:
     """Send every operator-approved lead via the configured transactional email
-    provider. Returns (sent, failed). Idempotent: a lead is stamped `sent` on success
-    so re-running never double-sends; a failure leaves it queued for the next attempt.
+    provider. Returns (sent, failed, skipped). Idempotent: a lead is stamped `sent` on
+    success so re-running never double-sends; a failure leaves it queued for the next
+    attempt.
 
-    Nothing here is automatic — only leads a human explicitly approved (with a real
-    recipient address) are ever sent."""
+    A company is emailed at most once, ever: any approved lead whose company (or
+    recipient domain/address) already appears in the sent history is skipped, so
+    re-harvested duplicates never trigger a second outreach to the same place.
+
+    With `preview=True` the messages are handed to the sender but NOT stamped sent —
+    a dry run must never burn the queue. Nothing here is automatic: only leads a human
+    explicitly approved (with a real recipient address) are ever sent."""
     sender = sender or build_email_sender(config)
     if not sender.enabled:
-        return (0, 0)
+        return (0, 0, 0)
     storage = storage or Storage(config.sqlite_path)
     stamp = now or datetime.now(timezone.utc).isoformat()
-    sent = failed = 0
+
+    # Suppression set built from everyone already contacted, so we never reach the same
+    # place twice. Grown as we go, so duplicates inside this batch are caught too.
+    contacted: set[str] = set()
+    for lead in storage.sent():
+        contacted |= _contact_keys(lead)
+
+    sent = failed = skipped = 0
     for lead in storage.approved_unsent():
         if not lead.recipient_email:
             continue  # approval requires a real address; never send without one
+        if contacted & _contact_keys(lead):
+            skipped += 1
+            continue
         text, html = render_text(lead.draft), render_html(lead.draft)
         if sender.send(lead.recipient_email, lead.subject, text, html):
-            storage.mark_sent(lead.fingerprint, stamp)
+            if not preview:
+                storage.mark_sent(lead.fingerprint, stamp)
+            contacted |= _contact_keys(lead)
             sent += 1
         else:
             failed += 1
-    return (sent, failed)
+    return (sent, failed, skipped)
+
+
+def _contact_keys(lead) -> set[str]:
+    """The identity keys that mark a lead as 'this place, already reached': normalized
+    company name, exact recipient address, and its domain. A match on any means the
+    company has been contacted before."""
+    keys = set()
+    company = normalize_company(lead.company)
+    if company:
+        keys.add(f"co:{company}")
+    if lead.recipient_email:
+        keys.add(f"addr:{lead.recipient_email.strip().lower()}")
+        domain = email_domain(lead.recipient_email)
+        if domain:
+            keys.add(f"dom:{domain}")
+    return keys

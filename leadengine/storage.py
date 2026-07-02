@@ -1,11 +1,28 @@
 from __future__ import annotations
 
 import csv
+import re
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 
 from .models import Lead
+
+# Company-name suffixes stripped before comparing, so "Lucida AI" and "Lucida" (which
+# the engine harvests from different feeds) count as the same place already contacted.
+_CO_SUFFIX = re.compile(r"\b(ai|inc|ltd|llc|labs|gmbh|technologies|technology|corp|group)\b")
+
+
+def normalize_company(name: str) -> str:
+    """A loose comparison key for a company name: lowercased, common suffixes dropped,
+    non-alphanumerics removed. Used only for dedup, never shown to anyone."""
+    stripped = _CO_SUFFIX.sub(" ", (name or "").lower())
+    return re.sub(r"[^a-z0-9]", "", stripped)
+
+
+def email_domain(addr: str) -> str:
+    """The domain of an email address, lowercased ('' if not an address)."""
+    return addr.rsplit("@", 1)[-1].strip().lower() if addr and "@" in addr else ""
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS leads (
@@ -129,6 +146,14 @@ class Storage:
             rows = c.execute(
                 "SELECT * FROM leads WHERE status = 'approved' AND COALESCE(sent_at, '') = ''"
                 " ORDER BY score DESC"
+            ).fetchall()
+        return [_row_to_lead(r) for r in rows]
+
+    def sent(self) -> list[Lead]:
+        """Every lead already emailed, oldest first — the outreach history."""
+        with self._conn() as c:
+            rows = c.execute(
+                "SELECT * FROM leads WHERE status = 'sent' ORDER BY COALESCE(sent_at, '')"
             ).fetchall()
         return [_row_to_lead(r) for r in rows]
 
