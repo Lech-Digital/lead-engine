@@ -62,4 +62,30 @@ public class LeadTests
         // Assert
         act.Should().Throw<DomainException>();
     }
+
+    [Fact]
+    public void Reject_SetsStatusToRejected()
+    {
+        // Arrange
+        var lead = NewLead();
+
+        // Act
+        lead.Reject();
+
+        // Assert
+        lead.Status.Should().Be(LeadStatus.Rejected);
+    }
+
+    [Fact]
+    public void Shelve_SetsStatusToShelved()
+    {
+        // Arrange
+        var lead = NewLead();
+
+        // Act
+        lead.Shelve();
+
+        // Assert
+        lead.Status.Should().Be(LeadStatus.Shelved);
+    }
 }
