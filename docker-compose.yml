@@ -1,0 +1,13 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: coldstart
+      POSTGRES_USER: coldstart
+      POSTGRES_PASSWORD: localdev
+    ports:
+      - "5432:5432"
+    volumes:
+      - coldstart-pgdata:/var/lib/postgresql/data
+volumes:
+  coldstart-pgdata:

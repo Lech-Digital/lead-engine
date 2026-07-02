@@ -6,3 +6,8 @@ __pycache__/
 *.csv
 logs/
 outreach/
+
+# .NET
+bin/
+obj/
+src/Coldstart.Web/appsettings.Development.json
