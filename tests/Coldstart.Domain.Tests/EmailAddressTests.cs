@@ -8,8 +8,11 @@ public class EmailAddressTests
     [Fact]
     public void Ctor_WithValidAddress_NormalizesToLowerTrimmed()
     {
-        // Arrange / Act
-        var email = new EmailAddress("  Anand@Patronus.AI ");
+        // Arrange
+        var raw = "  Anand@Patronus.AI ";
+
+        // Act
+        var email = new EmailAddress(raw);
 
         // Assert
         email.Value.Should().Be("anand@patronus.ai");
@@ -24,7 +27,7 @@ public class EmailAddressTests
         // Arrange
         var act = () => new EmailAddress(bad);
 
-        // Act / Assert
+        // Act & Assert
         act.Should().Throw<DomainException>();
     }
 }
