@@ -4,48 +4,53 @@
     ViewData["Title"] = "Log in";
 }
 
-<main class="wrap auth-page">
-  <h1>Log in</h1>
+<div class="auth-shell">
+  <div class="auth-card">
+    <a class="auth-brand" href="/" aria-label="Coldstart home"><img src="/logo.svg" alt="Coldstart"></a>
+    <h1>Welcome back</h1>
+    <p class="auth-sub">Log in to your customer zone.</p>
 
-  @if (Model.ErrorMessage is not null)
-  {
-      <p class="form-status error">@Model.ErrorMessage</p>
-  }
+    @if (Model.ErrorMessage is not null)
+    {
+        <p class="form-status error">@Model.ErrorMessage</p>
+    }
 
-  <form method="post">
-    <div class="field">
-      <label asp-for="Input.Email">Email</label>
-      <input asp-for="Input.Email" type="email" autocomplete="email" required>
-      <span asp-validation-for="Input.Email"></span>
-    </div>
-    <div class="field">
-      <label asp-for="Input.Password">Password</label>
-      <input asp-for="Input.Password" type="password" autocomplete="current-password" required>
-      <span asp-validation-for="Input.Password"></span>
-    </div>
-    <div class="field">
-      <label asp-for="Input.RememberMe">
-        <input asp-for="Input.RememberMe">
-        Remember me
-      </label>
-    </div>
-    <button class="btn btn-primary" type="submit">Log in →</button>
-  </form>
-
-  @if (Model.ExternalLogins.Any())
-  {
-      <div class="auth-divider"><span>or</span></div>
-      <div class="external-logins">
-        @foreach (var provider in Model.ExternalLogins)
-        {
-            <form asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
-              <button type="submit" class="btn btn-google" name="provider" value="@provider.Name">
-                Continue with @provider.DisplayName
-              </button>
-            </form>
-        }
+    <form method="post">
+      <div class="field">
+        <label asp-for="Input.Email">Email</label>
+        <input asp-for="Input.Email" type="email" autocomplete="email" placeholder="you@company.com" required>
+        <span asp-validation-for="Input.Email"></span>
       </div>
-  }
+      <div class="field">
+        <label asp-for="Input.Password">Password</label>
+        <input asp-for="Input.Password" type="password" autocomplete="current-password" required>
+        <span asp-validation-for="Input.Password"></span>
+      </div>
+      <div class="field auth-remember">
+        <label>
+          <input asp-for="Input.RememberMe" type="checkbox">
+          <span>Remember me</span>
+        </label>
+      </div>
+      <button class="btn btn-primary" type="submit">Log in →</button>
+    </form>
 
-  <p><a asp-page="Register">Need an account? Register</a></p>
-</main>
+    @if (Model.ExternalLogins.Any())
+    {
+        <div class="auth-divider"><span>or</span></div>
+        <div class="external-logins">
+          @foreach (var provider in Model.ExternalLogins)
+          {
+              <form asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                <button type="submit" class="btn btn-google" name="provider" value="@provider.Name">
+                  Continue with @provider.DisplayName
+                </button>
+              </form>
+          }
+        </div>
+    }
+
+    <p class="auth-alt"><a asp-page="Register">Need an account? Register</a></p>
+  </div>
+  <a class="auth-back" href="/">← Back to home</a>
+</div>

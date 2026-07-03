@@ -11,7 +11,17 @@
   <div class="inner">
     <span class="live"><span class="pdot"></span>COLDSTART · LIVE — scanning signals<span class="caret"></span></span>
     <span class="count"><span id="sbCount">2,481</span> signals today</span>
-    <a class="sb-cta" data-compose href="mailto:andrzej.lech.andrzej@@gmail.com?subject=Coldstart%20%E2%80%94%20interested">Send me an email</a>
+    <span class="sb-actions">
+      @if (User.Identity?.IsAuthenticated == true)
+      {
+          <a class="sb-cta sb-cta-ghost" href="/app">Customer zone →</a>
+      }
+      else
+      {
+          <a class="sb-cta sb-cta-ghost" href="/Identity/Account/Login">Log in</a>
+      }
+      <a class="sb-cta" data-compose href="mailto:andrzej.lech.andrzej@@gmail.com?subject=Coldstart%20%E2%80%94%20interested">Send me an email</a>
+    </span>
   </div>
 </div>
 
