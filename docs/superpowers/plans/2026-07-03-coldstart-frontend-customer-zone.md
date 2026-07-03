@@ -472,7 +472,7 @@ git commit -m "feat(app): Inquiry aggregate + SubmitInquiry use case (store + no
 
 **Interfaces:**
 - Consumes: `IInquiryRepository`, `IEmailSender` (Task 3).
-- Produces: EF-backed `InquiryRepository`; MailKit `SmtpEmailSender` bound to `SmtpOptions`; `inquiries` table (migration deferred to Task 6, which regenerates the schema once Identity is added — see note).
+- Produces: EF-backed `InquiryRepository`; MailKit `SmtpEmailSender` bound to `SmtpOptions`; an `AddInquiry` EF migration for the `inquiries` table (required so the Web app's startup `MigrateAsync` has the table by Task 5).
 
 - [ ] **Step 1: Add MailKit + write the failing repo test**
 
@@ -630,12 +630,22 @@ Add to `src/Coldstart.Infrastructure/DependencyInjection.cs` (inside `AddInfrast
 
 (Bring `using Coldstart.Application.Ports;` into the file.)
 
-- [ ] **Step 4: Run repo test to green, build, commit**
+- [ ] **Step 4: Create the AddInquiry migration**
+
+The Web app applies migrations on startup (`MigrateAsync`), so the `inquiries` table must exist as a migration (not just via `EnsureCreated`, which only the tests use) before Task 5's contact POST runs against the web host:
+
+```bash
+dotnet ef migrations add AddInquiry -p src/Coldstart.Infrastructure -s src/Coldstart.Infrastructure -o Migrations
+```
+
+Verify it adds the `inquiries` table (and touches nothing else).
+
+- [ ] **Step 5: Run repo test to green, build, commit**
 
 Run: `dotnet test tests/Coldstart.Infrastructure.Tests --filter InquiryRepositoryTests` → PASS; `dotnet build Coldstart.sln` → 0 warnings.
 ```bash
 git add src/Coldstart.Infrastructure tests/Coldstart.Infrastructure.Tests/InquiryRepositoryTests.cs
-git commit -m "feat(infra): Inquiry EF mapping + repository + MailKit SMTP sender"
+git commit -m "feat(infra): Inquiry EF mapping + repository + MailKit SMTP sender + migration"
 ```
 
 ---
@@ -887,16 +897,15 @@ public sealed class ColdstartDbContext(DbContextOptions<ColdstartDbContext> opti
 }
 ```
 
-- [ ] **Step 3: Regenerate the migration (Identity + Inquiry + CustomerId)**
+- [ ] **Step 3: Add the Identity migration (incremental)**
 
-Because the model changed substantially (Identity tables + Inquiry), replace the SP1 migration with a fresh initial one:
+Add a new migration on top of SP1's `InitialCreate` and Task 4's `AddInquiry` — it should generate the Identity tables (`AspNetUsers`, roles, logins, tokens, etc.) plus the `CustomerId` column on `AspNetUsers`:
 
 ```bash
-rm -rf src/Coldstart.Infrastructure/Migrations
-dotnet ef migrations add InitialCreate -p src/Coldstart.Infrastructure -s src/Coldstart.Infrastructure -o Migrations
+dotnet ef migrations add AddIdentity -p src/Coldstart.Infrastructure -s src/Coldstart.Infrastructure -o Migrations
 ```
 
-(SP1's DB is dev-only/Testcontainers, so replacing the single migration is safe — no production data.)
+Verify it adds only Identity tables + the `CustomerId` column (does not drop `customers`/`leads`/`inquiries`).
 
 - [ ] **Step 4: Wire Identity + Google in Program.cs**
 
