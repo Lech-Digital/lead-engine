@@ -45,6 +45,20 @@ public class AuthFlowTests(ColdstartWebFactory factory) : IClassFixture<Coldstar
         (await db.Leads.CountAsync(l => l.CustomerId == new CustomerId(user.CustomerId!.Value))).Should().BeGreaterThan(0);
     }
 
+    [Fact]
+    public async Task Login_WithoutGoogleConfigured_ShowsEmailPasswordOnly()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+
+        // Act
+        var html = await client.GetStringAsync("/Identity/Account/Login");
+
+        // Assert
+        html.Should().Contain("Password");
+        html.Should().NotContain("Google");
+    }
+
     // GETs the register page, extracts the antiforgery token, and posts the registration form.
     internal static async Task RegisterAsync(HttpClient client, string email, string password)
     {

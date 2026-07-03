@@ -31,5 +31,20 @@
     <button class="btn btn-primary" type="submit">Create account →</button>
   </form>
 
+  @if (Model.ExternalLogins.Any())
+  {
+      <div class="auth-divider"><span>or</span></div>
+      <div class="external-logins">
+        @foreach (var provider in Model.ExternalLogins)
+        {
+            <form asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+              <button type="submit" class="btn btn-google" name="provider" value="@provider.Name">
+                Continue with @provider.DisplayName
+              </button>
+            </form>
+        }
+      </div>
+  }
+
   <p><a asp-page="Login">Already have an account? Log in</a></p>
 </main>

@@ -268,6 +268,16 @@
   .form-status { font-size: 0.84rem; font-weight: 700; color: #3c7a70; margin: 0; min-height: 1em; }
   .form-status.error { color: var(--rose-d, #b3432b); }
 
+  /* auth pages: email/password form + optional external-provider buttons */
+  .auth-page { max-width: 420px; padding-top: 64px; padding-bottom: 64px; }
+  .auth-page form { display: flex; flex-direction: column; gap: 18px; }
+  .auth-divider { display: flex; align-items: center; gap: 12px; margin: 22px 0; color: var(--ink-soft); font-family: var(--mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; }
+  .auth-divider::before, .auth-divider::after { content: ""; flex: 1; height: 1.5px; background: var(--line-2); }
+  .external-logins { display: flex; flex-direction: column; gap: 10px; }
+  .btn-google { display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 100%; background: #fff; color: var(--ink); border: 1.5px solid var(--line-2); box-shadow: 0 4px 0 var(--line-2); font-weight: 700; font-size: 0.94rem; font-family: var(--sans); padding: 13px 20px; border-radius: 11px; cursor: pointer; transition: transform .08s ease, box-shadow .08s ease; }
+  .btn-google::before { content: "G"; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, #4285F4, #34A853 40%, #FBBC05 70%, #EA4335); color: #fff; font-family: var(--sans); font-weight: 800; font-size: 0.72rem; }
+  .btn-google:hover { box-shadow: 0 2px 0 var(--line-2); transform: translateY(2px); }
+
   /* palette-matched scrollbars */
   html { scrollbar-color: var(--orange-d) var(--cream); scrollbar-width: thin; }
   ::-webkit-scrollbar { width: 12px; height: 12px; }

@@ -1,0 +1,14 @@
+@page
+@model Coldstart.Web.Areas.Identity.Pages.Account.ExternalLoginModel
+@{
+    ViewData["Title"] = "External login";
+}
+
+<main class="wrap auth-page">
+  <h1>External login</h1>
+  @if (Model.ErrorMessage is not null)
+  {
+      <p class="form-status error">@Model.ErrorMessage</p>
+  }
+  <p><a asp-page="Login">Back to log in</a></p>
+</main>
