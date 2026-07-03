@@ -630,6 +630,12 @@ Add to `src/Coldstart.Infrastructure/DependencyInjection.cs` (inside `AddInfrast
 
 (Bring `using Coldstart.Application.Ports;` into the file.)
 
+Also re-add the use-case registration in `src/Coldstart.Application/DependencyInjection.cs` inside `AddApplication` (it was deferred from Task 3 so the Web host's DI validation stayed valid until these adapters existed):
+
+```csharp
+        services.AddScoped<Contact.ISubmitInquiry, Contact.SubmitInquiry>();
+```
+
 - [ ] **Step 4: Create the AddInquiry migration**
 
 The Web app applies migrations on startup (`MigrateAsync`), so the `inquiries` table must exist as a migration (not just via `EnsureCreated`, which only the tests use) before Task 5's contact POST runs against the web host:
