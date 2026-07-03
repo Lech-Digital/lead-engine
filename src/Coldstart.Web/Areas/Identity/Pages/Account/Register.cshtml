@@ -1,0 +1,35 @@
+@page
+@model Coldstart.Web.Areas.Identity.Pages.Account.RegisterModel
+@{
+    ViewData["Title"] = "Register";
+}
+
+<main class="wrap auth-page">
+  <h1>Create your account</h1>
+
+  @if (Model.Errors.Count > 0)
+  {
+      <p class="form-status error">@string.Join(" ", Model.Errors)</p>
+  }
+
+  <form method="post">
+    <div class="field">
+      <label asp-for="Input.Email">Email</label>
+      <input asp-for="Input.Email" type="email" autocomplete="email" required>
+      <span asp-validation-for="Input.Email"></span>
+    </div>
+    <div class="field">
+      <label asp-for="Input.Password">Password</label>
+      <input asp-for="Input.Password" type="password" autocomplete="new-password" required>
+      <span asp-validation-for="Input.Password"></span>
+    </div>
+    <div class="field">
+      <label asp-for="Input.ConfirmPassword">Confirm password</label>
+      <input asp-for="Input.ConfirmPassword" type="password" autocomplete="new-password" required>
+      <span asp-validation-for="Input.ConfirmPassword"></span>
+    </div>
+    <button class="btn btn-primary" type="submit">Create account →</button>
+  </form>
+
+  <p><a asp-page="Login">Already have an account? Log in</a></p>
+</main>

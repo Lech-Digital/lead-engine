@@ -1,0 +1,55 @@
+using System.ComponentModel.DataAnnotations;
+using Coldstart.Infrastructure.Identity;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace Coldstart.Web.Areas.Identity.Pages.Account;
+
+public sealed class RegisterModel(
+    UserManager<ApplicationUser> userManager,
+    SignInManager<ApplicationUser> signInManager) : PageModel
+{
+    [BindProperty]
+    public InputModel Input { get; set; } = new();
+
+    public IReadOnlyList<string> Errors { get; private set; } = [];
+
+    public void OnGet(string? returnUrl = null)
+    {
+    }
+
+    public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
+    {
+        if (!ModelState.IsValid)
+            return Page();
+
+        var user = new ApplicationUser { UserName = Input.Email, Email = Input.Email };
+        var result = await userManager.CreateAsync(user, Input.Password);
+
+        if (!result.Succeeded)
+        {
+            Errors = result.Errors.Select(e => e.Description).ToList();
+            return Page();
+        }
+
+        await signInManager.SignInAsync(user, isPersistent: false);
+        return LocalRedirect(returnUrl ?? "/app");
+    }
+
+    public sealed class InputModel
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = "";
+
+        [Required]
+        [DataType(DataType.Password)]
+        public string Password { get; set; } = "";
+
+        [Required]
+        [DataType(DataType.Password)]
+        [Compare(nameof(Password), ErrorMessage = "The password and confirmation password do not match.")]
+        public string ConfirmPassword { get; set; } = "";
+    }
+}

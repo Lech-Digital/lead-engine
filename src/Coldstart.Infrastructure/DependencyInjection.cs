@@ -13,7 +13,6 @@ public static class DependencyInjection
         services.AddScoped<ILeadRepository, LeadRepository>();
         services.AddScoped<ICustomerRepository, CustomerRepository>();
         services.AddScoped<IInquiryRepository, Repositories.InquiryRepository>();
-        services.Configure<Email.SmtpOptions>(o => { }); // bound from config in Web (Task 6)
         services.AddScoped<IEmailSender, Email.SmtpEmailSender>();
         return services;
     }

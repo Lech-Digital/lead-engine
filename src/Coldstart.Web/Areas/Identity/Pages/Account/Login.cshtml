@@ -1,0 +1,36 @@
+@page
+@model Coldstart.Web.Areas.Identity.Pages.Account.LoginModel
+@{
+    ViewData["Title"] = "Log in";
+}
+
+<main class="wrap auth-page">
+  <h1>Log in</h1>
+
+  @if (Model.ErrorMessage is not null)
+  {
+      <p class="form-status error">@Model.ErrorMessage</p>
+  }
+
+  <form method="post">
+    <div class="field">
+      <label asp-for="Input.Email">Email</label>
+      <input asp-for="Input.Email" type="email" autocomplete="email" required>
+      <span asp-validation-for="Input.Email"></span>
+    </div>
+    <div class="field">
+      <label asp-for="Input.Password">Password</label>
+      <input asp-for="Input.Password" type="password" autocomplete="current-password" required>
+      <span asp-validation-for="Input.Password"></span>
+    </div>
+    <div class="field">
+      <label asp-for="Input.RememberMe">
+        <input asp-for="Input.RememberMe">
+        Remember me
+      </label>
+    </div>
+    <button class="btn btn-primary" type="submit">Log in →</button>
+  </form>
+
+  <p><a asp-page="Register">Need an account? Register</a></p>
+</main>
