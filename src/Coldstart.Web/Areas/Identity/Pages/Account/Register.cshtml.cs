@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Coldstart.Application.Customers;
 using Coldstart.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +9,8 @@ namespace Coldstart.Web.Areas.Identity.Pages.Account;
 
 public sealed class RegisterModel(
     UserManager<ApplicationUser> userManager,
-    SignInManager<ApplicationUser> signInManager) : PageModel
+    SignInManager<ApplicationUser> signInManager,
+    IProvisionCustomer provision) : PageModel
 {
     [BindProperty]
     public InputModel Input { get; set; } = new();
@@ -31,6 +33,12 @@ public sealed class RegisterModel(
         {
             Errors = result.Errors.Select(e => e.Description).ToList();
             return Page();
+        }
+
+        if (user.CustomerId is null)
+        {
+            user.CustomerId = await provision.ProvisionAsync(user.Email!, CancellationToken.None);
+            await userManager.UpdateAsync(user);
         }
 
         await signInManager.SignInAsync(user, isPersistent: false);
