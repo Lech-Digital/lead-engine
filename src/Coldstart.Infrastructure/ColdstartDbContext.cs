@@ -8,6 +8,7 @@ public sealed class ColdstartDbContext(DbContextOptions<ColdstartDbContext> opti
 {
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<Lead> Leads => Set<Lead>();
+    public DbSet<Inquiry> Inquiries => Set<Inquiry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

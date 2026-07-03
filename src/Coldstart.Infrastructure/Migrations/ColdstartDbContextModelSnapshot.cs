@@ -36,6 +36,38 @@ namespace Coldstart.Infrastructure.Migrations
                     b.ToTable("customers", (string)null);
                 });
 
+            modelBuilder.Entity("Coldstart.Domain.Inquiry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Message")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Niche")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("WhatYouSell")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("inquiries", (string)null);
+                });
+
             modelBuilder.Entity("Coldstart.Domain.Lead", b =>
                 {
                     b.Property<Guid>("Id")
