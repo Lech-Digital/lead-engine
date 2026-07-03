@@ -2,8 +2,27 @@
 @model Coldstart.Web.Areas.App.Pages.IndexModel
 @{
     ViewData["Title"] = "Customer zone";
+    Layout = "/Pages/Shared/_Layout.cshtml";
 }
 
 <main class="app-zone">
-    <!-- Task 8 fleshes this out with the customer dashboard. -->
+    <h1>Leads — @Model.CustomerName</h1>
+
+    <table class="table">
+        <thead>
+            <tr><th>Company</th><th>Fit</th><th>Status</th><th>Recipient</th><th>Confidence</th></tr>
+        </thead>
+        <tbody>
+        @foreach (var lead in Model.Leads)
+        {
+            <tr>
+                <td>@lead.Company</td>
+                <td>@lead.Fit</td>
+                <td>@lead.Status</td>
+                <td>@(lead.RecipientEmail ?? "—")</td>
+                <td>@lead.EmailConfidence</td>
+            </tr>
+        }
+        </tbody>
+    </table>
 </main>

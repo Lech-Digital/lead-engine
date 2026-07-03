@@ -46,7 +46,7 @@ public class AuthFlowTests(ColdstartWebFactory factory) : IClassFixture<Coldstar
     }
 
     // GETs the register page, extracts the antiforgery token, and posts the registration form.
-    private static async Task RegisterAsync(HttpClient client, string email, string password)
+    internal static async Task RegisterAsync(HttpClient client, string email, string password)
     {
         var html = await client.GetStringAsync("/Identity/Account/Register");
         var marker = "name=\"__RequestVerificationToken\" type=\"hidden\" value=\"";

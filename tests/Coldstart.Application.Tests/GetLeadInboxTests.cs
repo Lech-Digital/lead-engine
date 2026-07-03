@@ -10,7 +10,7 @@ namespace Coldstart.Application.Tests;
 public class GetLeadInboxTests
 {
     [Fact]
-    public async Task ForFirstCustomerAsync_WhenCustomerExists_ReturnsInboxWithLeads()
+    public async Task ForCustomerAsync_WhenCustomerExists_ReturnsInboxWithLeads()
     {
         // Arrange
         var customer = Customer.Create("Coldstart");
@@ -24,7 +24,7 @@ public class GetLeadInboxTests
         var sut = new GetLeadInbox(customers, listLeads);
 
         // Act
-        var result = await sut.ForFirstCustomerAsync(CancellationToken.None);
+        var result = await sut.ForCustomerAsync(customer.Id.Value, CancellationToken.None);
 
         // Assert
         result.CustomerName.Should().Be("Coldstart");
@@ -33,7 +33,7 @@ public class GetLeadInboxTests
     }
 
     [Fact]
-    public async Task ForFirstCustomerAsync_WhenNoCustomers_ReturnsEmptyInboxWithoutCallingListLeads()
+    public async Task ForCustomerAsync_WhenCustomerUnknown_ReturnsEmptyInboxWithoutCallingListLeads()
     {
         // Arrange
         var customers = Substitute.For<ICustomerRepository>();
@@ -43,7 +43,7 @@ public class GetLeadInboxTests
         var sut = new GetLeadInbox(customers, listLeads);
 
         // Act
-        var result = await sut.ForFirstCustomerAsync(CancellationToken.None);
+        var result = await sut.ForCustomerAsync(Guid.NewGuid(), CancellationToken.None);
 
         // Assert
         result.CustomerName.Should().Be("—");
