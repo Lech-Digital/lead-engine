@@ -200,29 +200,36 @@
       </div>
       <button class="modal-x" id="c-x" type="button" aria-label="Close">×</button>
     </div>
-    <div class="modal-body">
+    <form class="modal-body" id="c-form" method="post" asp-page="/Contact">
+      <input type="text" name="Website" id="c-website" class="hp" tabindex="-1" autocomplete="off">
       <div class="field">
         <label for="c-name">Your name</label>
-        <input id="c-name" type="text" autocomplete="off" placeholder="e.g. Sam Rivera">
+        <input id="c-name" name="Name" type="text" autocomplete="off" placeholder="e.g. Sam Rivera" required>
+      </div>
+      <div class="field">
+        <label for="c-email">Your email</label>
+        <input id="c-email" name="Email" type="email" autocomplete="off" placeholder="e.g. sam@acme.com" required>
       </div>
       <div class="field">
         <label for="c-niche">Your niche</label>
-        <input id="c-niche" type="text" autocomplete="off" placeholder="e.g. B2B SaaS for dental clinics">
+        <input id="c-niche" name="Niche" type="text" autocomplete="off" placeholder="e.g. B2B SaaS for dental clinics">
       </div>
       <div class="field">
         <label for="c-sell">What you sell</label>
-        <input id="c-sell" type="text" autocomplete="off" placeholder="e.g. scheduling software">
+        <input id="c-sell" name="WhatYouSell" type="text" autocomplete="off" placeholder="e.g. scheduling software">
       </div>
       <div class="preview" aria-live="polite">
         <div class="to">To: adzius.lech@@gmail.com</div>
         <div class="subj" id="c-subj">Coldstart — sample leads</div>
         <div class="bd">Hi Andrzej,<br><br>I'm <mark class="empty" id="c-pv-name">your name</mark> — I sell <mark class="empty" id="c-pv-sell">what you sell</mark> to <mark class="empty" id="c-pv-niche">your niche</mark>, and I'd like to see the kind of leads Coldstart would find for us.<br><br>Could you send a few sample leads for my niche?<br><br>Thanks!<br><mark class="empty" id="c-pv-name2">your name</mark></div>
       </div>
-      <p class="hint" id="c-hint">Fill in all three and the draft is ready — no blanks to edit.</p>
+      <p class="hint" id="c-hint">Fill in your name and email — or open your email app to send the draft yourself.</p>
+      <p class="form-status" id="c-status" role="status" aria-live="polite"></p>
       <div class="modal-actions">
-        <button class="btn btn-primary" id="c-open" type="button" disabled>Open in your email app →</button>
+        <button class="btn btn-primary" id="c-submit" type="submit">Send my details →</button>
+        <a class="btn btn-ghost" id="c-open" href="mailto:adzius.lech@@gmail.com?subject=Coldstart%20%E2%80%94%20sample%20leads">Open in your email app →</a>
         <button class="btn btn-ghost" id="c-copy" type="button">Copy draft</button>
       </div>
-    </div>
+    </form>
   </div>
 </div>

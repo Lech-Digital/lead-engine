@@ -1,6 +1,8 @@
+using Coldstart.Application.Ports;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Testcontainers.PostgreSql;
 using Xunit;
 
@@ -11,6 +13,8 @@ public sealed class ColdstartWebFactory : WebApplicationFactory<Program>, IAsync
     private readonly PostgreSqlContainer _db =
         new PostgreSqlBuilder("postgres:17").Build();
 
+    public FakeEmailSender Email { get; } = new();
+
     public Task InitializeAsync() => _db.StartAsync();
 
     async Task IAsyncLifetime.DisposeAsync() => await _db.DisposeAsync();
@@ -18,5 +22,10 @@ public sealed class ColdstartWebFactory : WebApplicationFactory<Program>, IAsync
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseSetting("ConnectionStrings:Coldstart", _db.GetConnectionString());
+        builder.ConfigureServices(services =>
+        {
+            services.RemoveAll<IEmailSender>();
+            services.AddSingleton<IEmailSender>(Email);
+        });
     }
 }

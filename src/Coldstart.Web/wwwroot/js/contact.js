@@ -2,6 +2,7 @@
   var overlay = document.getElementById('composer');
   if (!overlay) return;
   var TO = 'adzius.lech@gmail.com';
+  var form = document.getElementById('c-form');
   var nameI = document.getElementById('c-name');
   var nicheI = document.getElementById('c-niche');
   var sellI = document.getElementById('c-sell');
@@ -10,15 +11,16 @@
   var pvName2 = document.getElementById('c-pv-name2');
   var pvSell = document.getElementById('c-pv-sell');
   var pvNiche = document.getElementById('c-pv-niche');
-  var openBtn = document.getElementById('c-open');
+  var openLink = document.getElementById('c-open');
   var copyBtn = document.getElementById('c-copy');
+  var submitBtn = document.getElementById('c-submit');
+  var statusEl = document.getElementById('c-status');
   var hint = document.getElementById('c-hint');
   var lastTrigger = null;
 
   function name() { return nameI.value.trim(); }
   function niche() { return nicheI.value.trim(); }
   function sell() { return sellI.value.trim(); }
-  function ready() { return !!(name() && niche() && sell()); }
 
   function mail() {
     var subject = 'Coldstart — sample leads' + (niche() ? ' for ' + niche() : '');
@@ -29,7 +31,8 @@
   }
 
   function render() {
-    pvSubj.textContent = mail().subject;
+    var m = mail();
+    pvSubj.textContent = m.subject;
     pvName.textContent = name() || 'your name';
     pvName.classList.toggle('empty', !name());
     pvName2.textContent = name() || 'your name';
@@ -38,7 +41,7 @@
     pvSell.classList.toggle('empty', !sell());
     pvNiche.textContent = niche() || 'your niche';
     pvNiche.classList.toggle('empty', !niche());
-    openBtn.disabled = !ready();
+    openLink.href = 'mailto:' + TO + '?subject=' + encodeURIComponent(m.subject) + '&body=' + encodeURIComponent(m.body);
   }
 
   function open(trigger) {
@@ -63,11 +66,38 @@
   nicheI.addEventListener('input', render);
   sellI.addEventListener('input', render);
 
-  openBtn.addEventListener('click', function () {
-    if (!ready()) return;
-    var m = mail();
-    window.location.href = 'mailto:' + TO + '?subject=' + encodeURIComponent(m.subject) + '&body=' + encodeURIComponent(m.body);
-  });
+  // Progressive enhancement: submit via fetch and show a success state.
+  // Without JS the form still posts to /Contact and works server-side.
+  if (form && window.fetch) {
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      statusEl.textContent = '';
+      statusEl.classList.remove('error');
+      submitBtn.disabled = true;
+      var originalLabel = submitBtn.textContent;
+      submitBtn.textContent = 'Sending…';
+      fetch(form.getAttribute('action') || '/Contact', { method: 'POST', body: new FormData(form) })
+        .then(function (res) {
+          if (res.ok) {
+            statusEl.textContent = 'Thanks — I’ll be in touch shortly.';
+            form.reset();
+            render();
+          } else {
+            statusEl.textContent = 'Something went wrong — please use the email link below instead.';
+            statusEl.classList.add('error');
+          }
+        })
+        .catch(function () {
+          statusEl.textContent = 'Something went wrong — please use the email link below instead.';
+          statusEl.classList.add('error');
+        })
+        .finally(function () {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalLabel;
+        });
+    });
+  }
+
   copyBtn.addEventListener('click', function () {
     var m = mail();
     var text = 'To: ' + TO + '\nSubject: ' + m.subject + '\n\n' + m.body;
@@ -76,7 +106,7 @@
       hint.textContent = 'Copied — paste it into any email app.';
       hint.classList.add('copied');
       setTimeout(function () {
-        hint.textContent = 'Fill in all three and the draft is ready — no blanks to edit.';
+        hint.textContent = 'Fill in your name and email — or open your email app to send the draft yourself.';
         hint.classList.remove('copied');
       }, 2200);
     });
@@ -92,7 +122,7 @@
     if (e.key !== 'Tab') return;
     var f = Array.prototype.filter.call(
       overlay.querySelectorAll('button, input, a[href]'),
-      function (el) { return !el.disabled && el.offsetParent !== null; }
+      function (el) { return !el.disabled && el.tabIndex !== -1 && el.offsetParent !== null; }
     );
     if (!f.length) return;
     var first = f[0], last = f[f.length - 1];
