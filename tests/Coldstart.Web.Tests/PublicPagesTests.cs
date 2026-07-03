@@ -20,4 +20,20 @@ public class PublicPagesTests(ColdstartWebFactory factory) : IClassFixture<Colds
         html.Should().Contain("Coldstart");
         html.Should().Contain("Send me an email");
     }
+
+    [Fact]
+    public async Task GetPrivacy_ReturnsOk_WithPolicyMarkers()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+
+        // Act
+        var response = await client.GetAsync("/privacy");
+        var html = await response.Content.ReadAsStringAsync();
+
+        // Assert
+        response.EnsureSuccessStatusCode();
+        html.Should().Contain("Privacy");
+        html.Should().Contain("Schiedam");
+    }
 }
