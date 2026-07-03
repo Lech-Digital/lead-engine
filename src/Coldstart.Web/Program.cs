@@ -1,26 +1,28 @@
+using Coldstart.Application;
+using Coldstart.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddRazorPages();
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure(
+    builder.Configuration.GetConnectionString("Coldstart")
+        ?? throw new InvalidOperationException("Missing ConnectionStrings:Coldstart"));
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+// Dev convenience: apply migrations + seed on startup.
+using (var scope = app.Services.CreateScope())
 {
-    app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
+    var db = scope.ServiceProvider.GetRequiredService<ColdstartDbContext>();
+    await db.Database.MigrateAsync();
+    await DbSeeder.SeedAsync(db, CancellationToken.None);
 }
 
-app.UseHttpsRedirection();
-
+app.UseStaticFiles();
 app.UseRouting();
-
-app.UseAuthorization();
-
-app.MapStaticAssets();
-app.MapRazorPages()
-   .WithStaticAssets();
-
+app.MapRazorPages();
 app.Run();
+
+public partial class Program; // for WebApplicationFactory
