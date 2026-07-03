@@ -1,7 +1,7 @@
 (function () {
   var overlay = document.getElementById('composer');
   if (!overlay) return;
-  var TO = 'adzius.lech@gmail.com';
+  var TO = 'andrzej.lech.andrzej@gmail.com';
   var form = document.getElementById('c-form');
   var nameI = document.getElementById('c-name');
   var nicheI = document.getElementById('c-niche');
