@@ -1,0 +1,20 @@
+{
+  "name": "Coldstart — done-for-you lead engine",
+  "short_name": "Coldstart",
+  "description": "Coldstart finds companies showing buying signals right now, qualifies them strictly, and writes the first email. You approve and send.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F3E9D6",
+  "theme_color": "#A04E1E",
+  "lang": "en",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 268 72" role="img" aria-label="Coldstart">
+  <!-- Keycap mark: monospace "C" on a pressable key — the cold-start motif -->
+  <g>
+    <rect x="6" y="16" width="52" height="50" rx="13" fill="#A04E1E"/>
+    <rect x="6" y="9" width="52" height="50" rx="13" fill="#E07A3E"/>
+    <text x="32" y="45" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="32" font-weight="800" text-anchor="middle" fill="#FBF4E6">C</text>
+  </g>
+  <!-- Wordmark: mono, with the accent carried on "start" to echo the name -->
+  <text x="76" y="47" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="30" font-weight="800" letter-spacing="-0.5" fill="#382C23">Cold<tspan fill="#A04E1E">start</tspan></text>
+</svg>
