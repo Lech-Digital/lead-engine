@@ -30,4 +30,43 @@ public class LeadRepositoryTests(PostgresFixture fixture) : IClassFixture<Postgr
         result[0].RecipientEmail!.Value.Should().Be("anand@patronus.ai");
         result[0].EmailConfidence.Should().Be(EmailConfidence.None);
     }
+
+    [Fact]
+    public async Task ForCustomerAsync_WhenCustomerHasNoLeads_ShouldReturnEmpty()
+    {
+        // Arrange
+        await using var db = fixture.NewDbContext();
+        var repo = new LeadRepository(db);
+        var customerIdWithNoLeads = CustomerId.New();
+
+        // Act
+        var result = await repo.ForCustomerAsync(customerIdWithNoLeads, CancellationToken.None);
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task AddAsync_WhenLeadHasNoRecipientEmail_ShouldRoundTripAsPendingReviewWithNoConfidence()
+    {
+        // Arrange
+        await using var db = fixture.NewDbContext();
+        var customer = Customer.Create("Nimbus Data");
+        db.Customers.Add(customer);
+        await db.SaveChangesAsync();
+        var lead = Lead.Create(customer.Id, "Nimbus Data", Fit.Maybe, "Subj", "Body", DateTimeOffset.UtcNow);
+        var repo = new LeadRepository(db);
+
+        // Act
+        await repo.AddAsync(lead, CancellationToken.None);
+        await using var readDb = fixture.NewDbContext();
+        var readRepo = new LeadRepository(readDb);
+        var result = await readRepo.ForCustomerAsync(customer.Id, CancellationToken.None);
+
+        // Assert
+        result.Should().ContainSingle();
+        result[0].Status.Should().Be(LeadStatus.PendingReview);
+        result[0].RecipientEmail.Should().BeNull();
+        result[0].EmailConfidence.Should().Be(EmailConfidence.None);
+    }
 }

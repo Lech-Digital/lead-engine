@@ -8,7 +8,7 @@ namespace Coldstart.Infrastructure.Tests;
 public sealed class PostgresFixture : IAsyncLifetime
 {
     private readonly PostgreSqlContainer _container =
-        new PostgreSqlBuilder().WithImage("postgres:17").Build();
+        new PostgreSqlBuilder("postgres:17").Build();
 
     public string ConnectionString => _container.GetConnectionString();
 
