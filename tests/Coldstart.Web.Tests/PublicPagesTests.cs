@@ -31,7 +31,7 @@ public class PublicPagesTests(ColdstartWebFactory factory) : IClassFixture<Colds
         var html = await client.GetStringAsync("/");
 
         // Assert
-        html.Should().Contain("hero-login");                     // the persistent, no-scroll login link
+        html.Should().Contain("hero-login");                     // the login button in the hero CTA row
         html.Should().Contain("/Identity/Account/Login");
     }
 

@@ -30,22 +30,20 @@
   <div class="wrap">
     <div class="hero-grid">
       <div>
-        <div class="hero-top">
-          <a class="brand" href="/" aria-label="Coldstart home"><img src="/logo.svg" alt="Coldstart" width="150" height="40" style="display:block;height:40px;width:auto;"></a>
-          @if (User.Identity?.IsAuthenticated == true)
-          {
-              <a class="hero-login" href="/app">Customer zone →</a>
-          }
-          else
-          {
-              <a class="hero-login" href="/Identity/Account/Login">Log in</a>
-          }
-        </div>
+        <a class="brand" href="/" aria-label="Coldstart home"><img src="/logo.svg" alt="Coldstart" width="150" height="40" style="display:block;height:40px;width:auto;"></a>
         <h1>Qualified leads — with the first email <span class="hl">already written</span> — in your inbox every morning.</h1>
         <p class="lede">We watch the public web for companies showing a buying signal <em>right now</em> — hiring sprees, fresh funding, tools they're outgrowing — qualify them strictly, and draft the opening email. You approve, and it sends.</p>
         <div class="cta-row">
           <a class="btn btn-primary" data-compose href="mailto:andrzej.lech.andrzej@@gmail.com?subject=Coldstart%20%E2%80%94%20interested&body=Hi%2C%20my%20niche%20is%20___.%20Can%20you%20send%20a%20few%20sample%20leads%3F">Send me an email →</a>
           <a class="btn btn-ghost" href="#proof">See real leads ↓</a>
+          @if (User.Identity?.IsAuthenticated == true)
+          {
+              <a class="btn btn-ghost hero-login" href="/app">Customer zone →</a>
+          }
+          else
+          {
+              <a class="btn btn-ghost hero-login" href="/Identity/Account/Login">Log in →</a>
+          }
         </div>
         <p class="urgency"><span class="bolt">⚡</span> Buying signals go stale in weeks. We get you in front of them first — not fortieth.</p>
       </div>
