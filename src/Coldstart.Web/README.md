@@ -60,3 +60,57 @@ dotnet user-secrets list --project src/Coldstart.Web
 Tests never read these secrets — `ColdstartWebFactory` (in
 `tests/Coldstart.Web.Tests`) swaps in a fake `IEmailSender` and runs with no
 Google configuration, so the test suite is fully self-contained.
+
+## Harvesting leads
+
+`src/Coldstart.Harvester` is a standalone console runner that executes one
+harvest pass (`IHarvestLeads`) against the real Coldstart niche: it pulls
+Hacker News comments and startup-funding RSS feeds, scores/dedupes them
+deterministically, has an LLM (Groq) qualify and draft outreach for the
+survivors, and saves the fits under the house `Coldstart` customer — the
+same rows the `/app` inbox reads.
+
+The niche config and connection string live in
+`src/Coldstart.Harvester/appsettings.json` (checked in — no secrets). Only
+the Groq API key is a secret and must be set via the .NET Secret Manager:
+
+```bash
+dotnet user-secrets init --project src/Coldstart.Harvester   # one-time
+dotnet user-secrets set "Llm:ApiKey" "<groq-api-key>" --project src/Coldstart.Harvester
+```
+
+Get a key from the [Groq console](https://console.groq.com/keys). Without
+`Llm:ApiKey` set, `GroqLeadEnricher` skips enrichment (returns `null` per
+item) rather than failing the run — harvesting/scoring/dedup still work, but
+nothing gets saved.
+
+Then, with local Postgres up and migrations applied:
+
+```bash
+docker compose up -d db
+dotnet run --project src/Coldstart.Harvester
+```
+
+This prints a summary line:
+
+```
+harvested=95 scored_in=44 deduped=1 enriched=16 saved=1
+```
+
+`harvested` → raw items pulled from HN + RSS; `scored_in` → passed the
+deterministic keyword/signal score gate (`Niche:MinScore`); `deduped` →
+already seen (by content fingerprint); `enriched` → the LLM returned a
+parseable result (regardless of fit); `saved` → `FIT: YES`/`MAYBE` leads
+persisted. A low `saved` count relative to `enriched` is often correct — the
+niche's disqualifiers (competitors, job seekers, anonymous forum chatter,
+large enterprises) are intentionally strict. A `429` from Groq on a given
+item just means that item gets skipped and picked up again on the next run;
+it does not fail the batch. Verify saved leads directly:
+
+```bash
+docker compose exec -T db psql -U coldstart -d coldstart \
+  -c "select \"Company\", \"Fit\", \"Score\", \"Source\" from leads where \"Source\" in ('hackernews','funding') order by \"Score\" desc limit 10;"
+```
+
+Run it as often as you like — it is idempotent per item (fingerprint dedup)
+and safe to re-run against the same database.

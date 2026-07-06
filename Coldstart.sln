@@ -23,6 +23,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Coldstart.Infrastructure.Te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Coldstart.Web.Tests", "tests\Coldstart.Web.Tests\Coldstart.Web.Tests.csproj", "{46EF6D92-C6E6-4F53-B57F-93D367FD128B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Coldstart.Harvester", "src\Coldstart.Harvester\Coldstart.Harvester.csproj", "{9F6829B3-0040-4645-9ADA-75711D2CF8F1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -129,6 +131,18 @@ Global
 		{46EF6D92-C6E6-4F53-B57F-93D367FD128B}.Release|x64.Build.0 = Release|Any CPU
 		{46EF6D92-C6E6-4F53-B57F-93D367FD128B}.Release|x86.ActiveCfg = Release|Any CPU
 		{46EF6D92-C6E6-4F53-B57F-93D367FD128B}.Release|x86.Build.0 = Release|Any CPU
+		{9F6829B3-0040-4645-9ADA-75711D2CF8F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F6829B3-0040-4645-9ADA-75711D2CF8F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F6829B3-0040-4645-9ADA-75711D2CF8F1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9F6829B3-0040-4645-9ADA-75711D2CF8F1}.Debug|x64.Build.0 = Debug|Any CPU
+		{9F6829B3-0040-4645-9ADA-75711D2CF8F1}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{9F6829B3-0040-4645-9ADA-75711D2CF8F1}.Debug|x86.Build.0 = Debug|Any CPU
+		{9F6829B3-0040-4645-9ADA-75711D2CF8F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F6829B3-0040-4645-9ADA-75711D2CF8F1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F6829B3-0040-4645-9ADA-75711D2CF8F1}.Release|x64.ActiveCfg = Release|Any CPU
+		{9F6829B3-0040-4645-9ADA-75711D2CF8F1}.Release|x64.Build.0 = Release|Any CPU
+		{9F6829B3-0040-4645-9ADA-75711D2CF8F1}.Release|x86.ActiveCfg = Release|Any CPU
+		{9F6829B3-0040-4645-9ADA-75711D2CF8F1}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -142,5 +156,6 @@ Global
 		{BB9FC811-98EA-4015-A5EE-6AB3DF4A8CF4} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{D46EE7A3-88E4-4538-8ECA-318DAADB537F} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{46EF6D92-C6E6-4F53-B57F-93D367FD128B} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{9F6829B3-0040-4645-9ADA-75711D2CF8F1} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal
