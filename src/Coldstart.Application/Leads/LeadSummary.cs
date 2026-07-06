@@ -6,4 +6,8 @@ public sealed record LeadSummary(
     string Fit,
     string Status,
     string? RecipientEmail,
-    string EmailConfidence);
+    string EmailConfidence,
+    string Subject,
+    string Draft,
+    string Source,
+    double Score);

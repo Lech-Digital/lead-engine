@@ -14,7 +14,9 @@ public class ListLeadsTests
     {
         // Arrange
         var customerId = CustomerId.New();
-        var lead = Lead.Create(customerId, "Patronus AI", Fit.Yes, "Subj", "Body", DateTimeOffset.UtcNow);
+        var lead = Lead.CreateHarvested(customerId, "Patronus AI", Fit.Yes,
+            "A thought after the $50M", "Body", "funding", "https://source.example/funding",
+            "fingerprint-1", 0.7, "matched signals", DateTimeOffset.UtcNow);
         lead.Approve(new EmailAddress("anand@patronus.ai"));
         var repo = Substitute.For<ILeadRepository>();
         repo.ForCustomerAsync(customerId, Arg.Any<CancellationToken>())
@@ -29,6 +31,10 @@ public class ListLeadsTests
         result[0].Company.Should().Be("Patronus AI");
         result[0].Status.Should().Be("Approved");
         result[0].RecipientEmail.Should().Be("anand@patronus.ai");
+        result[0].Subject.Should().Be("A thought after the $50M");
+        result[0].Draft.Should().Be("Body");
+        result[0].Source.Should().Be("funding");
+        result[0].Score.Should().Be(0.7);
     }
 
     [Fact]

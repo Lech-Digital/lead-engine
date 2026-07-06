@@ -15,7 +15,11 @@ internal sealed class ListLeads(ILeadRepository leads) : IListLeads
                 l.Fit.ToString(),
                 l.Status.ToString(),
                 l.RecipientEmail?.Value,
-                l.EmailConfidence.ToString()))
+                l.EmailConfidence.ToString(),
+                l.Subject,
+                l.Draft,
+                l.Source,
+                l.Score))
             .ToList();
     }
 }
