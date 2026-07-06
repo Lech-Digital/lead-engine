@@ -43,4 +43,26 @@ public class CustomerRepositoryTests(PostgresFixture fixture) : IClassFixture<Po
         found!.Id.Should().Be(customer.Id);
         missing.Should().BeNull();
     }
+
+    [Fact]
+    public async Task Profile_RoundTripsThroughOwnedType()
+    {
+        // Arrange
+        await using var write = fixture.NewDbContext();
+        var customer = Customer.Create("profile-roundtrip@acme.com");
+        customer.UpdateProfile(new CompanyProfile("Acme Ltd", "1 Main St", "NL123", "KVK9", "B2B SaaS", "acme.com", "hi@acme.com"));
+        new CustomerRepository(write);   // (repo uses db directly)
+        write.Customers.Add(customer);
+        await write.SaveChangesAsync();
+
+        // Act
+        await using var read = fixture.NewDbContext();
+        var found = await new CustomerRepository(read).GetAsync(customer.Id, CancellationToken.None);
+
+        // Assert
+        found.Should().NotBeNull();
+        found!.Profile.CompanyName.Should().Be("Acme Ltd");
+        found.Profile.VatNumber.Should().Be("NL123");
+        found.Profile.ContactEmail.Should().Be("hi@acme.com");
+    }
 }

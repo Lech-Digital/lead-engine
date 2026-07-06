@@ -6,6 +6,7 @@ public sealed class Customer
 
     public CustomerId Id { get; private set; } = null!;
     public string Name { get; private set; } = string.Empty;
+    public CompanyProfile Profile { get; private set; } = CompanyProfile.Empty;
     public IReadOnlyList<Lead> Leads => _leads.AsReadOnly();
 
     private Customer() { } // EF materialization
@@ -17,6 +18,8 @@ public sealed class Customer
     }
 
     public static Customer Create(string name) => new(CustomerId.New(), name);
+
+    public void UpdateProfile(CompanyProfile profile) => Profile = profile ?? CompanyProfile.Empty;
 
     public Lead AddLead(string company, Fit fit, string subject, string draft, DateTimeOffset createdAt)
     {

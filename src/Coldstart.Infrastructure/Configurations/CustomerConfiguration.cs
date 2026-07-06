@@ -20,5 +20,17 @@ internal sealed class CustomerConfiguration : IEntityTypeConfiguration<Customer>
             .OnDelete(DeleteBehavior.Cascade);
         builder.Metadata.FindNavigation(nameof(Customer.Leads))!
             .SetPropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.OwnsOne(c => c.Profile, p =>
+        {
+            p.Property(x => x.CompanyName).HasColumnName("ProfileCompanyName");
+            p.Property(x => x.Address).HasColumnName("ProfileAddress");
+            p.Property(x => x.VatNumber).HasColumnName("ProfileVatNumber");
+            p.Property(x => x.KvkNumber).HasColumnName("ProfileKvkNumber");
+            p.Property(x => x.Niche).HasColumnName("ProfileNiche");
+            p.Property(x => x.Website).HasColumnName("ProfileWebsite");
+            p.Property(x => x.ContactEmail).HasColumnName("ProfileContactEmail");
+        });
+        builder.Navigation(c => c.Profile).IsRequired();   // Profile is never null (defaults to Empty)
     }
 }

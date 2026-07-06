@@ -338,6 +338,53 @@ namespace Coldstart.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Coldstart.Domain.Customer", b =>
+                {
+                    b.OwnsOne("Coldstart.Domain.CompanyProfile", "Profile", b1 =>
+                        {
+                            b1.Property<Guid>("CustomerId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Address")
+                                .HasColumnType("text")
+                                .HasColumnName("ProfileAddress");
+
+                            b1.Property<string>("CompanyName")
+                                .HasColumnType("text")
+                                .HasColumnName("ProfileCompanyName");
+
+                            b1.Property<string>("ContactEmail")
+                                .HasColumnType("text")
+                                .HasColumnName("ProfileContactEmail");
+
+                            b1.Property<string>("KvkNumber")
+                                .HasColumnType("text")
+                                .HasColumnName("ProfileKvkNumber");
+
+                            b1.Property<string>("Niche")
+                                .HasColumnType("text")
+                                .HasColumnName("ProfileNiche");
+
+                            b1.Property<string>("VatNumber")
+                                .HasColumnType("text")
+                                .HasColumnName("ProfileVatNumber");
+
+                            b1.Property<string>("Website")
+                                .HasColumnType("text")
+                                .HasColumnName("ProfileWebsite");
+
+                            b1.HasKey("CustomerId");
+
+                            b1.ToTable("customers");
+
+                            b1.WithOwner()
+                                .HasForeignKey("CustomerId");
+                        });
+
+                    b.Navigation("Profile")
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Coldstart.Domain.Lead", b =>
                 {
                     b.HasOne("Coldstart.Domain.Customer", null)
