@@ -36,16 +36,18 @@ public class HarvestLeadsTests
         var leads = Substitute.For<ILeadRepository>();
         leads.ExistsByFingerprintAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(false);
         var customers = Substitute.For<ICustomerRepository>();
-        customers.AllAsync(Arg.Any<CancellationToken>()).Returns(new List<Customer>());
+        customers.GetByNameAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns((Customer?)null);
+        Customer? target = null;
+        customers.AddAsync(Arg.Do<Customer>(c => target = c), Arg.Any<CancellationToken>()).Returns(Task.CompletedTask);
         var sut = new HarvestLeads([source], enricher, leads, customers, Niche());
 
         // Act
         var report = await sut.RunAsync(CancellationToken.None);
 
-        // Assert — only the good item is enriched + saved; weak dropped at the score gate
+        // Assert — only the good item is enriched + saved under the created target customer; weak dropped at the score gate
         report.Harvested.Should().Be(2);
         report.Saved.Should().Be(1);
-        await leads.Received(1).AddAsync(Arg.Is<Lead>(l => l.Company == "Acme" && l.Fingerprint == good.Fingerprint), Arg.Any<CancellationToken>());
+        await leads.Received(1).AddAsync(Arg.Is<Lead>(l => l.Company == "Acme" && l.Fingerprint == good.Fingerprint && l.CustomerId == target!.Id), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -61,7 +63,7 @@ public class HarvestLeadsTests
         leads.ExistsByFingerprintAsync(dup.Fingerprint, Arg.Any<CancellationToken>()).Returns(true);
         leads.ExistsByFingerprintAsync(no.Fingerprint, Arg.Any<CancellationToken>()).Returns(false);
         var customers = Substitute.For<ICustomerRepository>();
-        customers.AllAsync(Arg.Any<CancellationToken>()).Returns(new List<Customer>());
+        customers.GetByNameAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns((Customer?)null);
         var sut = new HarvestLeads([new FakeSource(dup, no)], enricher, leads, customers, Niche());
 
         // Act

@@ -67,8 +67,17 @@ Google configuration, so the test suite is fully self-contained.
 harvest pass (`IHarvestLeads`) against the real Coldstart niche: it pulls
 Hacker News comments and startup-funding RSS feeds, scores/dedupes them
 deterministically, has an LLM (Groq) qualify and draft outreach for the
-survivors, and saves the fits under the house `Coldstart` customer — the
-same rows the `/app` inbox reads.
+survivors, and saves the fits under the customer named by
+`Niche:TargetCustomerName` (get-or-created by name) — the same rows the
+`/app` inbox reads.
+
+**`Niche:TargetCustomerName` must match the email you log into `/app`
+with.** The Customer Zone resolves its data by the logged-in account's
+customer, so harvested leads only show up in the inbox if the harvester was
+configured to target that same customer. `appsettings.json` ships it set to
+the operator's login email (`andrzej.lech.andrzej@gmail.com`); update it if
+the login account changes. The default in `NicheOptions` is `"Coldstart"`
+(used by tests and if the setting is omitted).
 
 The niche config and connection string live in
 `src/Coldstart.Harvester/appsettings.json` (checked in — no secrets). Only

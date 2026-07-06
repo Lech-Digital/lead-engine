@@ -10,6 +10,7 @@ public sealed class NicheOptions
     public List<string> Disqualifiers { get; set; } = [];
     public double MinScore { get; set; } = 0.4;
     public int MaxEnrichPerRun { get; set; } = 60;
+    public string TargetCustomerName { get; set; } = "Coldstart";
     public HackerNewsOptions HackerNews { get; set; } = new();
     public FundingOptions Funding { get; set; } = new();
 }
