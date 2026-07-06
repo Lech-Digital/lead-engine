@@ -334,3 +334,8 @@
   .app-lead-foot .to { font-family: var(--mono); }
   .conf { font-family: var(--mono); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 7px; border-radius: 6px; }
   .conf-verified { background: rgba(60,122,112,0.16); color: #2c6a60; }
+
+  .hero-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 28px; }
+  .hero-top .brand { margin-bottom: 0; }
+  .hero-login { font-family: var(--mono); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; text-decoration: none; color: var(--ink); background: var(--cream-2); border: 1.5px solid var(--line-2); border-radius: 8px; padding: 8px 14px; box-shadow: 0 3px 0 var(--line-2); white-space: nowrap; }
+  .hero-login:hover { transform: translateY(1px); box-shadow: 0 2px 0 var(--line-2); }

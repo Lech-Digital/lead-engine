@@ -22,6 +22,20 @@ public class PublicPagesTests(ColdstartWebFactory factory) : IClassFixture<Colds
     }
 
     [Fact]
+    public async Task GetLanding_HasHeroLoginLink_NotOnlyInStatusbar()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+
+        // Act
+        var html = await client.GetStringAsync("/");
+
+        // Assert
+        html.Should().Contain("hero-login");                     // the persistent, no-scroll login link
+        html.Should().Contain("/Identity/Account/Login");
+    }
+
+    [Fact]
     public async Task GetPrivacy_ReturnsOk_WithPolicyMarkers()
     {
         // Arrange
