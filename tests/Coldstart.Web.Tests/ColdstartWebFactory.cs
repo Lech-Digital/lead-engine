@@ -21,6 +21,8 @@ public sealed class ColdstartWebFactory : WebApplicationFactory<Program>, IAsync
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.UseSetting("Authentication:Google:ClientId", "");
+        builder.UseSetting("Authentication:Google:ClientSecret", "");
         builder.UseSetting("ConnectionStrings:Coldstart", _db.GetConnectionString());
         builder.ConfigureServices(services =>
         {
