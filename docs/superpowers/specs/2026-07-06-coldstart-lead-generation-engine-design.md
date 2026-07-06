@@ -37,7 +37,7 @@ graph TD
     Run --> Enricher[ILeadEnricher]
     Run --> Save[ILeadRepository.AddAsync]
     Sources -.HackerNewsSource / FundingRssSource.-> Infra[(Infrastructure)]
-    Enricher -.LlmLeadEnricher (Claude default).-> Infra
+    Enricher -.LlmLeadEnricher (Groq default).-> Infra
 ```
 
 - **Ports (Application):** `ILeadSource { Task<IReadOnlyList<RawItem>> FetchAsync(ct) }`, `ILeadEnricher { Task<EnrichmentResult?> EnrichAsync(RawItem item, NicheOptions niche, SignalResult signal, ct) }`. Reuse existing `ILeadRepository`/`ICustomerRepository`.
@@ -69,7 +69,7 @@ The `Lead` aggregate gains provenance (needed for dedup + traceability), all `pr
 
 ## LLM enrichment
 
-`LlmLeadEnricher` implements `ILeadEnricher`; the `enrich.py` prompt (system + qualify-first template with the niche's disqualifiers) is ported and the five labelled lines (`FIT/SUMMARY/SUBJECT/DRAFT/COMPANY`) are parsed. **Default provider: Anthropic Claude** (draft quality = the product; platform default for AI apps) — the exact model id + pricing are confirmed at plan time from the **claude-api reference** (a low-cost model such as a Haiku-class model for per-lead enrichment, bounded by `MaxEnrichPerRun`). **Groq remains a drop-in alternative** behind the same port (a `GroqLeadEnricher`), selected by `LlmOptions.Provider` — zero-cost parity with the current Python setup.
+`LlmLeadEnricher` implements `ILeadEnricher`; the `enrich.py` prompt (system + qualify-first template with the niche's disqualifiers) is ported and the five labelled lines (`FIT/SUMMARY/SUBJECT/DRAFT/COMPANY`) are parsed. **Default provider: Groq** (`llama-3.3-70b-versatile`, exactly what the Python engine runs on) via its OpenAI-compatible HTTP API — free, proven on this niche, and **no dependency on Anthropic/Claude**. The port stays provider-agnostic so a different enricher can slot in later behind `LlmOptions.Provider`, but that is not built this stage.
 
 ## Invocation
 
@@ -92,6 +92,6 @@ Per standards (xUnit + NSubstitute + FluentAssertions 7.*; strict AAA; Testconta
 ## Open items / assumptions (confirm before implementation)
 
 - **Scope = full parity (LLM qualify+draft).** (assumed — required for "sellable leads" / retiring Python's generation)
-- **LLM provider = Anthropic Claude by default, Groq swappable behind the port.** (assumed; exact Claude model + pricing decided at plan time via the claude-api reference)
+- **LLM provider = Groq** (`llama-3.3-70b-versatile`), matching Python; no Anthropic/Claude dependency. Groq API key via user-secrets/env. Port stays provider-agnostic for a future swap.
 - Single niche (Coldstart's own) this stage; multi-client niches later.
 - Running live needs the LLM API key in user-secrets; source live-smoke tests need network.
