@@ -36,10 +36,17 @@ internal sealed class GroqLeadEnricher(HttpClient http, IOptions<LlmOptions> opt
             using var resp = await http.SendAsync(req, ct);
             if (!resp.IsSuccessStatusCode) return null;
             var json = await resp.Content.ReadFromJsonAsync<JsonElement>(ct);
-            var content = json.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString();
+            if (!json.TryGetProperty("choices", out var choices)
+                || choices.ValueKind != JsonValueKind.Array
+                || choices.GetArrayLength() == 0) return null;
+            var first = choices[0];
+            if (!first.TryGetProperty("message", out var message)
+                || !message.TryGetProperty("content", out var contentEl)) return null;
+            var content = contentEl.GetString();
             return string.IsNullOrWhiteSpace(content) ? null : EnrichmentParser.Parse(content);
         }
-        catch (Exception ex) when (ex is HttpRequestException or JsonException or TaskCanceledException or InvalidOperationException)
+        catch (Exception ex) when (ex is HttpRequestException or JsonException or TaskCanceledException or InvalidOperationException
+            or KeyNotFoundException or IndexOutOfRangeException)
         {
             return null;   // rate limit / transient → skip (retried next run), never crash the batch
         }
@@ -55,7 +62,7 @@ internal sealed class GroqLeadEnricher(HttpClient http, IOptions<LlmOptions> opt
         (niche described by keywords: {string.Join(", ", n.TargetKeywords)})
 
         WHO IS NOT A FIT — mark FIT: NO if ANY of these apply, even when keywords match:
-        {string.Join("\n", n.Disqualifiers.Select(d => "- " + d))}
+        {(n.Disqualifiers.Count == 0 ? "(none specified)" : string.Join("\n", n.Disqualifiers.Select(d => "- " + d)))}
 
         HARVESTED CONTENT (source: {item.Source} · author: {item.Author}):
         \"\"\"
@@ -66,10 +73,10 @@ internal sealed class GroqLeadEnricher(HttpClient http, IOptions<LlmOptions> opt
 
         Return EXACTLY these five sections, each on its own line with the label:
 
-        FIT: YES | MAYBE | NO
+        FIT: YES | MAYBE | NO — would this specific person plausibly buy the offer? Be strict; default to NO if the content is off-topic, a job seeker, a competitor, or just noise.
         SUMMARY: one sentence — who they are and the concrete reason they do or don't fit.
         SUBJECT: a 4-7 word subject line referencing their specific situation (no clickbait, no emojis).
-        DRAFT: 3-4 sentences from {n.SenderName} ({n.SenderTitle}). Open with a SPECIFIC detail from the content, connect it to one concrete way the offer helps, end with one low-friction question. No greeting or signature. Banned: "I hope this email finds you well", "reaching out", "game-changer", "circle back", "touch base".
+        DRAFT: 3-4 sentences from {n.SenderName} ({n.SenderTitle}). Open with a SPECIFIC detail from the content, connect it to one concrete way the offer helps, end with one low-friction question. No greeting or signature. Banned: "I hope this email finds you well", "I came across", "reaching out", "game-changer", "revolutionize", "synergy", "circle back", "touch base", "in today's fast-paced".
         COMPANY: the real company/org name this is about, or "-" if it cannot be determined. Never guess.
 
         If FIT is NO, still fill SUBJECT and DRAFT with "-".
