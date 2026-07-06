@@ -25,6 +25,23 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Assert
         html.Should().Contain("Patronus AI");
         html.Should().Contain(email); // customer named from the user's email
+        html.Should().Contain("A thought after the $50M"); // subject renders
+        html.Should().Contain("app-lead"); // card markup, not the old plain table
+    }
+
+    [Fact]
+    public async Task App_ShowsAnEmptyState_WhenTheCustomerHasNoLeadsYet()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var email = $"zone-empty-{Guid.NewGuid():N}@test.com";
+        await AuthFlowTests.RegisterAsync(client, email, "Passw0rd!"); // provisions a customer with no leads
+
+        // Act
+        var html = await client.GetStringAsync("/app");
+
+        // Assert
+        html.Should().Contain("No leads yet");
     }
 
     [Fact]

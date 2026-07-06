@@ -309,3 +309,28 @@
   ::-webkit-scrollbar-thumb { background: var(--orange-d); border-radius: 8px; border: 3px solid var(--cream); }
   ::-webkit-scrollbar-thumb:hover { background: var(--orange); }
   ::-webkit-scrollbar-corner { background: var(--cream); }
+
+  /* customer zone (/app) */
+  .app-zone { padding: 40px 0 64px; }
+  .app-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 28px; }
+  .app-head h1 { margin: 4px 0 2px; font-size: 1.7rem; letter-spacing: -0.02em; }
+  .app-sub { color: var(--ink-soft); margin: 0; font-size: 0.95rem; }
+  .app-empty { background: var(--cream-2); border: 1.5px solid var(--line-2); border-radius: 16px; padding: 44px 28px; text-align: center; }
+  .app-empty h2 { margin: 0 0 8px; }
+  .app-empty p { color: var(--ink-soft); margin: 0; }
+  .app-leads { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+  .app-lead { background: var(--cream-2); border: 1.5px solid var(--line-2); border-radius: 14px; box-shadow: 0 4px 0 var(--line-2); padding: 18px 18px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .app-lead-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .app-lead-top h3 { margin: 0; font-size: 1.08rem; letter-spacing: -0.01em; }
+  .fit { font-family: var(--mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
+  .fit-yes { background: rgba(60,122,112,0.16); color: #2c6a60; }
+  .fit-maybe { background: rgba(176,120,20,0.16); color: #8a5e10; }
+  .app-lead-meta { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 0.72rem; color: var(--ink-soft); }
+  .chip { background: var(--cream); border: 1px solid var(--line-2); border-radius: 6px; padding: 2px 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .app-lead-subj { margin: 2px 0 0; font-weight: 700; color: var(--ink); }
+  .app-lead-draft summary { cursor: pointer; font-size: 0.85rem; color: var(--orange-d); font-weight: 700; }
+  .app-lead-draft p { white-space: pre-wrap; font-size: 0.9rem; color: var(--ink); margin: 8px 0 0; }
+  .app-lead-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--line-2); font-size: 0.78rem; color: var(--ink-soft); }
+  .app-lead-foot .to { font-family: var(--mono); }
+  .conf { font-family: var(--mono); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 7px; border-radius: 6px; }
+  .conf-verified { background: rgba(60,122,112,0.16); color: #2c6a60; }
