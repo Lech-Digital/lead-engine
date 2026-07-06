@@ -27,5 +27,13 @@ internal sealed class LeadConfiguration : IEntityTypeConfiguration<Lead>
                 value => new EmailAddress(value));
         builder.Property(l => l.CreatedAt);
         builder.Property(l => l.SentAt);
+        builder.Property(l => l.Source);
+        builder.Property(l => l.SourceUrl);
+        builder.Property(l => l.Fingerprint);
+        builder.Property(l => l.Score);
+        builder.Property(l => l.MatchedSignals);
+        builder.HasIndex(l => l.Fingerprint)
+            .IsUnique()
+            .HasFilter("\"Fingerprint\" <> ''");   // seeded/mock leads have '' — don't collide
     }
 }

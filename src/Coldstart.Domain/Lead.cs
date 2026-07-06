@@ -13,6 +13,11 @@ public sealed class Lead
     public EmailConfidence EmailConfidence { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset? SentAt { get; private set; }
+    public string Source { get; private set; } = "";
+    public string SourceUrl { get; private set; } = "";
+    public string Fingerprint { get; private set; } = "";
+    public double Score { get; private set; }
+    public string MatchedSignals { get; private set; } = "";
 
     private Lead() { } // EF materialization
 
@@ -33,6 +38,21 @@ public sealed class Lead
     public static Lead Create(CustomerId customerId, string company, Fit fit,
         string subject, string draft, DateTimeOffset createdAt) =>
         new(LeadId.New(), customerId, company, fit, subject, draft, createdAt);
+
+    public static Lead CreateHarvested(CustomerId customerId, string company, Fit fit,
+        string subject, string draft, string source, string sourceUrl, string fingerprint,
+        double score, string matchedSignals, DateTimeOffset createdAt)
+    {
+        var lead = new Lead(LeadId.New(), customerId, company, fit, subject, draft, createdAt)
+        {
+            Source = source,
+            SourceUrl = sourceUrl,
+            Fingerprint = fingerprint,
+            Score = score,
+            MatchedSignals = matchedSignals,
+        };
+        return lead;
+    }
 
     public void Approve(EmailAddress recipient)
     {

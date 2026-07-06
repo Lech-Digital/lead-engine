@@ -69,4 +69,26 @@ public class LeadRepositoryTests(PostgresFixture fixture) : IClassFixture<Postgr
         result[0].RecipientEmail.Should().BeNull();
         result[0].EmailConfidence.Should().Be(EmailConfidence.None);
     }
+
+    [Fact]
+    public async Task ExistsByFingerprintAsync_TrueOnlyAfterSaved()
+    {
+        // Arrange
+        await using var db = fixture.NewDbContext();
+        var repo = new LeadRepository(db);
+        var customer = Customer.Create("Coldstart");
+        db.Customers.Add(customer);
+        await db.SaveChangesAsync();
+        var lead = Lead.CreateHarvested(customer.Id, "Acme", Fit.Yes, "s", "b",
+            "funding", "https://x/y", "fp-unique-1", 0.5, "raised", DateTimeOffset.UtcNow);
+
+        // Act
+        var before = await repo.ExistsByFingerprintAsync("fp-unique-1", CancellationToken.None);
+        await repo.AddAsync(lead, CancellationToken.None);
+        var after = await repo.ExistsByFingerprintAsync("fp-unique-1", CancellationToken.None);
+
+        // Assert
+        before.Should().BeFalse();
+        after.Should().BeTrue();
+    }
 }

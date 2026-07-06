@@ -91,15 +91,34 @@ namespace Coldstart.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Fingerprint")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("Fit")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("MatchedSignals")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("RecipientEmail")
                         .HasColumnType("text");
 
+                    b.Property<double>("Score")
+                        .HasColumnType("double precision");
+
                     b.Property<DateTimeOffset?>("SentAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SourceUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -112,6 +131,10 @@ namespace Coldstart.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CustomerId");
+
+                    b.HasIndex("Fingerprint")
+                        .IsUnique()
+                        .HasFilter("\"Fingerprint\" <> ''");
 
                     b.ToTable("leads", (string)null);
                 });
