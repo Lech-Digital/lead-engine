@@ -24,4 +24,23 @@ public class CustomerRepositoryTests(PostgresFixture fixture) : IClassFixture<Po
         // Assert
         all.Should().Contain(c => c.Id == customer.Id && c.Name == "Acme Robotics");
     }
+
+    [Fact]
+    public async Task GetByNameAsync_ReturnsSavedCustomer_OrNull()
+    {
+        // Arrange
+        await using var db = fixture.NewDbContext();
+        var repo = new CustomerRepository(db);
+        var customer = Customer.Create("sam@acme.com");
+        await repo.AddAsync(customer, CancellationToken.None);
+
+        // Act
+        var found = await repo.GetByNameAsync("sam@acme.com", CancellationToken.None);
+        var missing = await repo.GetByNameAsync("nobody@nowhere.com", CancellationToken.None);
+
+        // Assert
+        found.Should().NotBeNull();
+        found!.Id.Should().Be(customer.Id);
+        missing.Should().BeNull();
+    }
 }

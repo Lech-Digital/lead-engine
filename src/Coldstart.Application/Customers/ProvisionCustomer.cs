@@ -7,12 +7,10 @@ internal sealed class ProvisionCustomer(ICustomerRepository customers) : IProvis
 {
     public async Task<Guid> ProvisionAsync(string customerName, CancellationToken ct)
     {
-        var customer = Customer.Create(customerName);
-        var now = DateTimeOffset.UtcNow;
-        // Mock leads until the harvest pipeline lands.
-        customer.AddLead("Patronus AI", Fit.Yes, "Anand — a thought after the $50M", "…", now);
-        customer.AddLead("Lago", Fit.Yes, "hiring GTM at Lago", "…", now);
-        customer.AddLead("Visiblie", Fit.Maybe, "congrats on the €500K", "…", now);
+        var existing = await customers.GetByNameAsync(customerName, ct);
+        if (existing is not null) return existing.Id.Value;
+
+        var customer = Customer.Create(customerName);   // no mock leads — real leads come from the harvester
         await customers.AddAsync(customer, ct);
         return customer.Id.Value;
     }

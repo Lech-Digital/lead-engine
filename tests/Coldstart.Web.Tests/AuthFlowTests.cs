@@ -27,7 +27,7 @@ public class AuthFlowTests(ColdstartWebFactory factory) : IClassFixture<Coldstar
     }
 
     [Fact]
-    public async Task Register_ProvisionsCustomerWithSeededLeads()
+    public async Task Register_ProvisionsCustomerWithNoLeads()
     {
         // Arrange
         var client = factory.CreateClient();
@@ -42,7 +42,7 @@ public class AuthFlowTests(ColdstartWebFactory factory) : IClassFixture<Coldstar
         var db = scope.ServiceProvider.GetRequiredService<ColdstartDbContext>();
         var user = await users.FindByEmailAsync(email);
         user!.CustomerId.Should().NotBeNull();
-        (await db.Leads.CountAsync(l => l.CustomerId == new CustomerId(user.CustomerId!.Value))).Should().BeGreaterThan(0);
+        (await db.Leads.CountAsync(l => l.CustomerId == new CustomerId(user.CustomerId!.Value))).Should().Be(0);
     }
 
     [Fact]

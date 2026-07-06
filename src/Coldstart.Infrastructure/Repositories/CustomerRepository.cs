@@ -14,4 +14,7 @@ internal sealed class CustomerRepository(ColdstartDbContext db) : ICustomerRepos
         await db.Customers.AddAsync(customer, ct);
         await db.SaveChangesAsync(ct);
     }
+
+    public async Task<Customer?> GetByNameAsync(string name, CancellationToken ct) =>
+        await db.Customers.FirstOrDefaultAsync(c => c.Name == name, ct);
 }
