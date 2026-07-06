@@ -11,6 +11,7 @@ public static class DependencyInjection
         services.AddScoped<IGetLeadInbox, GetLeadInbox>();
         services.AddScoped<Contact.ISubmitInquiry, Contact.SubmitInquiry>();
         services.AddScoped<Customers.IProvisionCustomer, Customers.ProvisionCustomer>();
+        services.AddScoped<Harvest.IHarvestLeads, Harvest.HarvestLeads>();
         return services;
     }
 }
