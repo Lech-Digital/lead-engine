@@ -39,4 +39,40 @@ public class HackerNewsSourceTests
         items[0].Url.Should().Be("https://news.ycombinator.com/item?id=42");
         sut.ScoreWeight.Should().Be(0.7);
     }
+
+    [Fact]
+    public async Task FetchAsync_WhenResponseBodyIsNotAnObject_ReturnsEmptyWithoutThrowing()
+    {
+        // Arrange
+        const string json = "null";
+        var http = new HttpClient(new StubHandler(json));
+        var niche = new NicheOptions { HackerNews = new() { Queries = ["hiring"], ScoreWeight = 0.7 } };
+        var sut = new HackerNewsSource(http, niche);
+
+        // Act
+        Func<Task> act = async () => await sut.FetchAsync(CancellationToken.None);
+
+        // Assert
+        await act.Should().NotThrowAsync();
+        var items = await sut.FetchAsync(CancellationToken.None);
+        items.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task FetchAsync_SkipsHitsWithNoText()
+    {
+        // Arrange
+        const string json = """
+        {"hits":[{"objectID":"9","author":"x","created_at":"2026-07-01T00:00:00Z"}]}
+        """;
+        var http = new HttpClient(new StubHandler(json));
+        var niche = new NicheOptions { HackerNews = new() { Queries = ["hiring"], ScoreWeight = 0.7 } };
+        var sut = new HackerNewsSource(http, niche);
+
+        // Act
+        var items = await sut.FetchAsync(CancellationToken.None);
+
+        // Assert
+        items.Should().BeEmpty();
+    }
 }

@@ -23,24 +23,28 @@ internal sealed class HackerNewsSource(HttpClient http, NicheOptions niche) : IL
         {
             var url = $"{Algolia}?query={Uri.EscapeDataString(query)}&tags=comment" +
                       $"&numericFilters=created_at_i>{cutoff}&hitsPerPage={_o.MaxPerQuery}";
-            JsonElement root;
             try
             {
-                root = await http.GetFromJsonAsync<JsonElement>(url, ct);
+                var root = await http.GetFromJsonAsync<JsonElement>(url, ct);
+                if (root.ValueKind != JsonValueKind.Object
+                    || !root.TryGetProperty("hits", out var hits)
+                    || hits.ValueKind != JsonValueKind.Array)
+                {
+                    continue;   // one odd response must not kill the run
+                }
+                foreach (var h in hits.EnumerateArray())
+                {
+                    var text = Str(h, "comment_text");
+                    if (string.IsNullOrEmpty(text)) text = Str(h, "story_text");
+                    if (string.IsNullOrEmpty(text)) continue;
+                    var oid = Str(h, "objectID");
+                    items.Add(new RawItem("hackernews", oid, Str(h, "story_title"), StripHtml(text),
+                        Str(h, "author"), $"https://news.ycombinator.com/item?id={oid}", Str(h, "created_at")));
+                }
             }
             catch (Exception ex) when (ex is HttpRequestException or JsonException or TaskCanceledException)
             {
                 continue;   // one bad query must not kill the run
-            }
-            if (!root.TryGetProperty("hits", out var hits)) continue;
-            foreach (var h in hits.EnumerateArray())
-            {
-                var text = Str(h, "comment_text");
-                if (string.IsNullOrEmpty(text)) text = Str(h, "story_text");
-                if (string.IsNullOrEmpty(text)) continue;
-                var oid = Str(h, "objectID");
-                items.Add(new RawItem("hackernews", oid, Str(h, "story_title"), StripHtml(text),
-                    Str(h, "author"), $"https://news.ycombinator.com/item?id={oid}", Str(h, "created_at")));
             }
         }
         return items;
