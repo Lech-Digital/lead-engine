@@ -25,6 +25,9 @@ public class LeadReviewTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Assert
         html.Should().Contain("Pending Co");
         html.Should().Contain("app-tabs");
+        html.Should().Contain("data-tab=\"new\" href=\"/app?tab=new\">New <span class=\"app-tab-count\">1</span>");
+        html.Should().Contain("data-tab=\"accepted\" href=\"/app?tab=accepted\">Accepted <span class=\"app-tab-count\">0</span>");
+        html.Should().Contain("data-tab=\"discarded\" href=\"/app?tab=discarded\">Discarded <span class=\"app-tab-count\">0</span>");
     }
 
     [Fact]
@@ -44,6 +47,36 @@ public class LeadReviewTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         html.Should().Contain("Shelved Co");
         html.Should().Contain("Autoskip Co");
         html.Should().Contain("Auto-skipped");
+        // Tab-count spans come straight from the New/Accepted/Discarded partition logic, so these
+        // prove both leads were routed into the Discarded buckets (Shelved + Rejected), not New/Accepted.
+        html.Should().Contain("data-tab=\"discarded\" href=\"/app?tab=discarded\">Discarded <span class=\"app-tab-count\">2</span>");
+        html.Should().Contain("data-tab=\"new\" href=\"/app?tab=new\">New <span class=\"app-tab-count\">0</span>");
+    }
+
+    [Fact]
+    public async Task Index_RoutesAcceptedAndSentToAcceptedTab_WithDragFlags()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var email = $"review3-{Guid.NewGuid():N}@test.com";
+        await AuthFlowTests.RegisterAsync(client, email, "Passw0rd!");
+        await AddLeadForUserAsync(email, "Ready Co", "fp-" + Guid.NewGuid().ToString("N"), LeadStatus.Approved);
+        await AddLeadForUserAsync(email, "Gone Co", "fp-" + Guid.NewGuid().ToString("N"), LeadStatus.Sent);
+
+        // Act
+        var html = await client.GetStringAsync("/app?tab=accepted");
+
+        // Assert
+        // Tab-count spans come straight from the New/Accepted/Discarded partition logic, so these
+        // prove both leads were routed into the Accepted bucket (Approved + Sent), not New/Discarded.
+        html.Should().Contain("data-tab=\"accepted\" href=\"/app?tab=accepted\">Accepted <span class=\"app-tab-count\">2</span>");
+        html.Should().Contain("data-tab=\"new\" href=\"/app?tab=new\">New <span class=\"app-tab-count\">0</span>");
+        html.Should().Contain("data-tab=\"discarded\" href=\"/app?tab=discarded\">Discarded <span class=\"app-tab-count\">0</span>");
+        html.Should().Contain("Ready Co");
+        html.Should().Contain("Gone Co");
+        // Only Sent cards are non-draggable; Approved (Ready) cards are draggable.
+        html.Should().Contain("draggable=\"false\"");
+        html.Should().Contain("draggable=\"true\"");
     }
 
     // Inserts a lead in a specific status for the given registered user's customer.
