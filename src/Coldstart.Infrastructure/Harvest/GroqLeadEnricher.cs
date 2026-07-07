@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Coldstart.Application.Harvest;
@@ -5,14 +6,33 @@ using Microsoft.Extensions.Options;
 
 namespace Coldstart.Infrastructure.Harvest;
 
-internal sealed class GroqLeadEnricher(HttpClient http, IOptions<LlmOptions> options) : ILeadEnricher
+internal sealed class GroqLeadEnricher : ILeadEnricher
 {
     private const string System =
         "You are a top-performing B2B SDR known for replies, not blasts. You read one piece of " +
         "public web content, judge honestly whether the author/company is a real fit for a " +
         "specific offer, and if so write outreach so specific it could not have been sent to " +
         "anyone else. You never invent facts. You would rather say NO than send a generic pitch.";
-    private readonly LlmOptions _o = options.Value;
+
+    // Retry ceiling for rate-limit / transient responses. On the free tier a batch
+    // otherwise loses ~2/3 of its calls to 429s that are silently dropped.
+    private const int MaxRetries = 3;
+    private static readonly TimeSpan MaxBackoff = TimeSpan.FromSeconds(30);
+
+    private readonly HttpClient _http;
+    private readonly LlmOptions _o;
+    private readonly Func<TimeSpan, CancellationToken, Task> _delay;
+
+    public GroqLeadEnricher(HttpClient http, IOptions<LlmOptions> options)
+        : this(http, options, Task.Delay) { }
+
+    // Test seam: inject a no-op / capturing delay so retry paths run without real waits.
+    internal GroqLeadEnricher(HttpClient http, IOptions<LlmOptions> options, Func<TimeSpan, CancellationToken, Task> delay)
+    {
+        _http = http;
+        _o = options.Value;
+        _delay = delay;
+    }
 
     public async Task<EnrichmentResult?> EnrichAsync(RawItem item, NicheOptions niche, SignalResult signal, CancellationToken ct)
     {
@@ -28,28 +48,49 @@ internal sealed class GroqLeadEnricher(HttpClient http, IOptions<LlmOptions> opt
                 new { role = "user", content = prompt },
             },
         };
-        try
+        for (var attempt = 0; ; attempt++)
         {
-            using var req = new HttpRequestMessage(HttpMethod.Post, _o.BaseUrl)
-            { Content = JsonContent.Create(body) };
-            req.Headers.Add("Authorization", $"Bearer {_o.ApiKey}");
-            using var resp = await http.SendAsync(req, ct);
-            if (!resp.IsSuccessStatusCode) return null;
-            var json = await resp.Content.ReadFromJsonAsync<JsonElement>(ct);
-            if (!json.TryGetProperty("choices", out var choices)
-                || choices.ValueKind != JsonValueKind.Array
-                || choices.GetArrayLength() == 0) return null;
-            var first = choices[0];
-            if (!first.TryGetProperty("message", out var message)
-                || !message.TryGetProperty("content", out var contentEl)) return null;
-            var content = contentEl.GetString();
-            return string.IsNullOrWhiteSpace(content) ? null : EnrichmentParser.Parse(content);
+            try
+            {
+                // A fresh request per attempt — an HttpRequestMessage cannot be re-sent.
+                using var req = new HttpRequestMessage(HttpMethod.Post, _o.BaseUrl)
+                { Content = JsonContent.Create(body) };
+                req.Headers.Add("Authorization", $"Bearer {_o.ApiKey}");
+                using var resp = await _http.SendAsync(req, ct);
+                if (IsTransient(resp.StatusCode) && attempt < MaxRetries)
+                {
+                    await _delay(BackoffFor(resp, attempt), ct);
+                    continue;   // rate-limited / transient → back off and retry within this run
+                }
+                if (!resp.IsSuccessStatusCode) return null;
+                var json = await resp.Content.ReadFromJsonAsync<JsonElement>(ct);
+                if (!json.TryGetProperty("choices", out var choices)
+                    || choices.ValueKind != JsonValueKind.Array
+                    || choices.GetArrayLength() == 0) return null;
+                var first = choices[0];
+                if (!first.TryGetProperty("message", out var message)
+                    || !message.TryGetProperty("content", out var contentEl)) return null;
+                var content = contentEl.GetString();
+                return string.IsNullOrWhiteSpace(content) ? null : EnrichmentParser.Parse(content);
+            }
+            catch (Exception ex) when (ex is HttpRequestException or JsonException or TaskCanceledException or InvalidOperationException
+                or KeyNotFoundException or IndexOutOfRangeException)
+            {
+                return null;   // non-retryable transient → skip (retried next run), never crash the batch
+            }
         }
-        catch (Exception ex) when (ex is HttpRequestException or JsonException or TaskCanceledException or InvalidOperationException
-            or KeyNotFoundException or IndexOutOfRangeException)
-        {
-            return null;   // rate limit / transient → skip (retried next run), never crash the batch
-        }
+    }
+
+    private static bool IsTransient(HttpStatusCode status) =>
+        status is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable;
+
+    // Honor a server Retry-After (capped), else exponential backoff: 1s, 2s, 4s…
+    private static TimeSpan BackoffFor(HttpResponseMessage resp, int attempt)
+    {
+        if (resp.Headers.RetryAfter?.Delta is { } delta && delta > TimeSpan.Zero)
+            return delta < MaxBackoff ? delta : MaxBackoff;
+        var seconds = Math.Min(Math.Pow(2, attempt), MaxBackoff.TotalSeconds);
+        return TimeSpan.FromSeconds(seconds);
     }
 
     // Ported from enrich.py PROMPT_TEMPLATE.
