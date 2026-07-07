@@ -54,12 +54,41 @@ public sealed class Lead
         return lead;
     }
 
-    public void Approve(EmailAddress recipient)
+    public void Approve(EmailAddress? recipient = null)
     {
         if (Status == LeadStatus.Sent)
-            throw new DomainException("Cannot approve an already-sent lead.");
-        RecipientEmail = recipient ?? throw new DomainException("Approval requires a recipient email.");
+            throw new DomainException("Cannot change a lead that has already been sent.");
+        if (recipient is not null) RecipientEmail = recipient;
         Status = LeadStatus.Approved;
+    }
+
+    public void SetRecipient(EmailAddress recipient)
+    {
+        if (Status == LeadStatus.Sent)
+            throw new DomainException("Cannot change a lead that has already been sent.");
+        RecipientEmail = recipient ?? throw new DomainException("Recipient is required.");
+    }
+
+    public void ReviseDraft(string subject, string draft)
+    {
+        if (Status == LeadStatus.Sent)
+            throw new DomainException("Cannot edit a lead that has already been sent.");
+        Subject = subject ?? "";
+        Draft = draft ?? "";
+    }
+
+    public void Discard()
+    {
+        if (Status == LeadStatus.Sent)
+            throw new DomainException("Cannot discard a lead that has already been sent.");
+        Status = LeadStatus.Shelved;
+    }
+
+    public void Reopen()
+    {
+        if (Status == LeadStatus.Sent)
+            throw new DomainException("Cannot reopen a lead that has already been sent.");
+        Status = LeadStatus.PendingReview;
     }
 
     public void Reject() => Status = LeadStatus.Rejected;
