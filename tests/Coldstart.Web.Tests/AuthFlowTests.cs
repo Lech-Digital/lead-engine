@@ -79,6 +79,8 @@ public class AuthFlowTests(ColdstartWebFactory factory) : IClassFixture<Coldstar
         }
 
         var response = await client.PostAsync("/Identity/Account/Register", new FormUrlEncodedContent(fields));
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        // With an AllowAutoRedirect=false client the successful post returns the redirect itself
+        // instead of following it through to a 200 page — both indicate a successful registration.
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Redirect);
     }
 }

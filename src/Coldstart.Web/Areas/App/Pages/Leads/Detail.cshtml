@@ -1,0 +1,40 @@
+@page "/app/leads/{id:guid}"
+@model Coldstart.Web.Areas.App.Pages.Leads.DetailModel
+@{ ViewData["Title"] = "Lead"; Layout = "/Pages/Shared/_Layout.cshtml"; var lead = Model.Lead; var sent = lead.Status == "Sent"; }
+
+<main class="wrap auth-shell">
+  <div class="auth-card app-detail">
+    <p class="auth-alt"><a href="/app">← Back to your leads</a></p>
+    <div class="app-lead-top"><h1>@lead.Company</h1><span class="fit fit-@lead.Fit.ToLower()">@lead.Fit</span></div>
+    <div class="app-lead-meta"><span class="chip">@lead.Source</span><span class="score">score @lead.Score.ToString("0.00")</span><span class="status">@lead.Status</span></div>
+    @if (!string.IsNullOrEmpty(lead.SourceUrl)) { <p><a href="@lead.SourceUrl" target="_blank" rel="noopener">View signal source</a></p> }
+
+    <div asp-validation-summary="All" class="field-error"></div>
+
+    <form method="post">
+      <div class="field"><label asp-for="Input.Subject">Subject</label><input asp-for="Input.Subject" disabled="@sent"></div>
+      <div class="field"><label asp-for="Input.Draft">Draft</label><textarea asp-for="Input.Draft" rows="8" disabled="@sent"></textarea></div>
+      <div class="field"><label asp-for="Input.Recipient">Recipient email</label><input asp-for="Input.Recipient" type="email" disabled="@sent"></div>
+
+      @if (!sent)
+      {
+        <div class="app-detail-actions">
+          <button class="btn btn-ghost" type="submit" asp-page-handler="Save">Save draft</button>
+          <button class="btn btn-primary" type="submit" asp-page-handler="Accept">Accept</button>
+          <button class="btn btn-ghost" type="submit" asp-page-handler="MarkSent">Mark as sent</button>
+          <button class="btn btn-ghost" type="submit" asp-page-handler="Discard">Discard</button>
+          <button class="btn btn-ghost" type="submit" asp-page-handler="Reopen">Move to New</button>
+        </div>
+      }
+      else { <p class="app-sub">This lead was sent@(lead.SentAt is null ? "" : $" on {lead.SentAt:yyyy-MM-dd}") and is read-only.</p> }
+    </form>
+
+    @if (lead.ContactLinks.Count > 0)
+    {
+      <div class="app-contact">
+        <h2 class="app-group-head">Find the recipient</h2>
+        <ul>@foreach (var link in lead.ContactLinks) { <li><a href="@link.Url" target="_blank" rel="noopener">@link.Label</a></li> }</ul>
+      </div>
+    }
+  </div>
+</main>
