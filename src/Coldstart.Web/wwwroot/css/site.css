@@ -310,6 +310,22 @@
   ::-webkit-scrollbar-thumb:hover { background: var(--orange); }
   ::-webkit-scrollbar-corner { background: var(--cream); }
 
+  /* dashboard shell (/app app-bar + profile summary) */
+  .app-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px clamp(20px,5vw,56px); border-bottom: 2px solid var(--line-2); background: var(--cream-2); }
+  .app-nav { display: flex; align-items: center; gap: 16px; }
+  .app-nav a { font-family: var(--mono); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); text-decoration: none; }
+  .app-nav a:hover { color: var(--ink); }
+  .app-profile { margin: 24px 0 8px; }
+  .app-profile-empty { display: flex; align-items: center; justify-content: space-between; gap: 16px; background: var(--cream-2); border: 1.5px dashed var(--line-2); border-radius: 14px; padding: 20px 22px; }
+  .app-profile-empty p { margin: 4px 0 0; color: var(--ink-soft); font-size: 0.9rem; }
+  .app-profile-card { position: relative; background: var(--cream-2); border: 1.5px solid var(--line-2); border-radius: 14px; box-shadow: 0 4px 0 var(--line-2); padding: 20px 22px; }
+  .app-profile-card h2 { margin: 0 0 12px; font-size: 1.2rem; }
+  .app-profile-card dl { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px 24px; margin: 0; }
+  .app-profile-card dt { font-family: var(--mono); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--orange-d); }
+  .app-profile-card dd { margin: 0; }
+  .app-edit-link { position: absolute; top: 18px; right: 20px; font-family: var(--mono); font-size: 0.72rem; color: var(--orange-d); text-decoration: none; font-weight: 700; }
+  .app-leads-title { font-size: 1.3rem; margin: 24px 0 14px; }
+
   /* customer zone (/app) */
   .app-zone { padding: 40px 0 64px; }
   .app-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 28px; }

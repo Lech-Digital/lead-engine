@@ -1,0 +1,21 @@
+@page "/app/profile"
+@model Coldstart.Web.Areas.App.Pages.ProfileModel
+@{ ViewData["Title"] = "Company profile"; Layout = "/Pages/Shared/_Layout.cshtml"; }
+
+<main class="wrap auth-shell">
+  <div class="auth-card">
+    <h1>Company profile</h1>
+    <p class="auth-sub">Shown on your account. All fields optional.</p>
+    <form method="post">
+      <div class="field"><label asp-for="Input.CompanyName">Company name</label><input asp-for="Input.CompanyName"></div>
+      <div class="field"><label asp-for="Input.Address">Address</label><input asp-for="Input.Address"></div>
+      <div class="field"><label asp-for="Input.VatNumber">VAT number</label><input asp-for="Input.VatNumber"></div>
+      <div class="field"><label asp-for="Input.KvkNumber">KvK number</label><input asp-for="Input.KvkNumber"></div>
+      <div class="field"><label asp-for="Input.Niche">Niche</label><input asp-for="Input.Niche"></div>
+      <div class="field"><label asp-for="Input.Website">Website</label><input asp-for="Input.Website"></div>
+      <div class="field"><label asp-for="Input.ContactEmail">Contact email</label><input asp-for="Input.ContactEmail" type="email"></div>
+      <button class="btn btn-primary" type="submit">Save →</button>
+    </form>
+    <p class="auth-alt"><a href="/app">← Back to your leads</a></p>
+  </div>
+</main>

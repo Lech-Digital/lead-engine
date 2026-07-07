@@ -2,22 +2,45 @@
 @model Coldstart.Web.Areas.App.Pages.IndexModel
 @{ ViewData["Title"] = "Your leads"; Layout = "/Pages/Shared/_Layout.cshtml"; }
 
-<main class="wrap app-zone">
-  <header class="app-head">
-    <div>
-      <p class="eyebrow">Customer zone</p>
-      <h1>@Model.CustomerName</h1>
-      <p class="app-sub">@Model.Leads.Count qualified lead@(Model.Leads.Count == 1 ? "" : "s") from your morning harvest.</p>
-    </div>
+<header class="app-bar">
+  <a class="brand" href="/"><img src="/logo.svg" alt="Coldstart" style="height:30px;width:auto;display:block;"></a>
+  <nav class="app-nav">
+    <a href="/app/profile">Company profile</a>
     <form method="post" asp-page="/Account/Logout" asp-area="Identity"><button class="btn btn-ghost" type="submit">Log out</button></form>
-  </header>
+  </nav>
+</header>
 
+<main class="wrap app-zone">
+  <section class="app-profile">
+    @if (Model.Profile.IsEmpty)
+    {
+      <div class="app-profile-empty">
+        <div><strong>Add your company details</strong><p>Address, VAT, KvK, niche — shown on your account.</p></div>
+        <a class="btn btn-primary" href="/app/profile">Add details →</a>
+      </div>
+    }
+    else
+    {
+      <div class="app-profile-card">
+        <h2>@(Model.Profile.CompanyName ?? Model.CustomerName)</h2>
+        <dl>
+          @if (!string.IsNullOrWhiteSpace(Model.Profile.Address)) { <div><dt>Address</dt><dd>@Model.Profile.Address</dd></div> }
+          @if (!string.IsNullOrWhiteSpace(Model.Profile.VatNumber)) { <div><dt>VAT</dt><dd>@Model.Profile.VatNumber</dd></div> }
+          @if (!string.IsNullOrWhiteSpace(Model.Profile.KvkNumber)) { <div><dt>KvK</dt><dd>@Model.Profile.KvkNumber</dd></div> }
+          @if (!string.IsNullOrWhiteSpace(Model.Profile.Niche)) { <div><dt>Niche</dt><dd>@Model.Profile.Niche</dd></div> }
+          @if (!string.IsNullOrWhiteSpace(Model.Profile.Website)) { <div><dt>Website</dt><dd>@Model.Profile.Website</dd></div> }
+          @if (!string.IsNullOrWhiteSpace(Model.Profile.ContactEmail)) { <div><dt>Contact</dt><dd>@Model.Profile.ContactEmail</dd></div> }
+        </dl>
+        <a class="app-edit-link" href="/app/profile">Edit</a>
+      </div>
+    }
+  </section>
+
+  <p class="app-sub">@Model.CustomerName</p>
+  <h1 class="app-leads-title">Leads @(Model.Leads.Count == 0 ? "" : $"({Model.Leads.Count})")</h1>
   @if (Model.Leads.Count == 0)
   {
-    <div class="app-empty">
-      <h2>No leads yet</h2>
-      <p>Your next harvest will fill this in — freshly qualified companies with the first email already drafted.</p>
-    </div>
+    <div class="app-empty"><h2>No leads yet</h2><p>Your next harvest will fill this in — freshly qualified companies with the first email already drafted.</p></div>
   }
   else
   {
@@ -25,24 +48,11 @@
       @foreach (var lead in Model.Leads)
       {
         <article class="app-lead">
-          <div class="app-lead-top">
-            <h3>@lead.Company</h3>
-            <span class="fit fit-@lead.Fit.ToLower()">@lead.Fit</span>
-          </div>
-          <div class="app-lead-meta">
-            <span class="chip">@lead.Source</span>
-            <span class="score">score @lead.Score.ToString("0.00")</span>
-          </div>
+          <div class="app-lead-top"><h3>@lead.Company</h3><span class="fit fit-@lead.Fit.ToLower()">@lead.Fit</span></div>
+          <div class="app-lead-meta"><span class="chip">@lead.Source</span><span class="score">score @lead.Score.ToString("0.00")</span></div>
           <p class="app-lead-subj">@lead.Subject</p>
-          <details class="app-lead-draft">
-            <summary>Preview draft</summary>
-            <p>@lead.Draft</p>
-          </details>
-          <div class="app-lead-foot">
-            <span class="to">@(string.IsNullOrEmpty(lead.RecipientEmail) ? "—" : lead.RecipientEmail)</span>
-            <span class="conf conf-@lead.EmailConfidence.ToLower()">@lead.EmailConfidence</span>
-            <span class="status">@lead.Status</span>
-          </div>
+          <details class="app-lead-draft"><summary>Preview draft</summary><p>@lead.Draft</p></details>
+          <div class="app-lead-foot"><span class="to">@(string.IsNullOrEmpty(lead.RecipientEmail) ? "—" : lead.RecipientEmail)</span><span class="conf conf-@lead.EmailConfidence.ToLower()">@lead.EmailConfidence</span><span class="status">@lead.Status</span></div>
         </article>
       }
     </div>

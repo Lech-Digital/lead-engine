@@ -1,3 +1,4 @@
+using System.Net;
 using Coldstart.Domain;
 using Coldstart.Infrastructure;
 using Coldstart.Infrastructure.Identity;
@@ -73,6 +74,58 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         htmlB.Should().NotContain("Acme A");
     }
 
+    [Fact]
+    public async Task App_ShowsEmptyProfilePrompt_ForFreshCustomer()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        await AuthFlowTests.RegisterAsync(client, $"prof-{Guid.NewGuid():N}@test.com", "Passw0rd!");
+
+        // Act
+        var html = await client.GetStringAsync("/app");
+
+        // Assert
+        html.Should().Contain("Add your company details");   // empty-profile prompt
+        html.Should().Contain("app-bar");                     // dashboard shell
+    }
+
+    [Fact]
+    public async Task ProfilePost_PersistsAndRendersOnZone()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        await AuthFlowTests.RegisterAsync(client, $"prof2-{Guid.NewGuid():N}@test.com", "Passw0rd!");
+        var form = await AntiforgeryForm(client, "/app/profile", new()
+        {
+            ["Input.CompanyName"] = "Acme Ltd", ["Input.VatNumber"] = "NL999",
+            ["Input.Niche"] = "B2B SaaS", ["Input.Address"] = "", ["Input.KvkNumber"] = "",
+            ["Input.Website"] = "", ["Input.ContactEmail"] = "",
+        });
+
+        // Act
+        var post = await client.PostAsync("/app/profile", new FormUrlEncodedContent(form));
+        var zoneHtml = await client.GetStringAsync("/app");
+
+        // Assert
+        post.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Redirect);
+        zoneHtml.Should().Contain("Acme Ltd");
+        zoneHtml.Should().Contain("NL999");
+    }
+
+    [Fact]
+    public async Task GetProfile_WhenNotAuthenticated_RedirectsToLogin()
+    {
+        // Arrange
+        var client = factory.CreateClient(new() { AllowAutoRedirect = false });
+
+        // Act
+        var response = await client.GetAsync("/app/profile");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        response.Headers.Location!.OriginalString.Should().Contain("/Identity/Account/Login");
+    }
+
     // Inserts a real harvested lead into the given registered user's customer via a service scope.
     private async Task AddLeadForUserAsync(string email, string company, string fingerprint)
     {
@@ -85,5 +138,20 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
             DateTimeOffset.UtcNow);
         db.Leads.Add(lead);
         await db.SaveChangesAsync();
+    }
+
+    // GETs the given path, extracts the antiforgery token, and merges it into the form fields.
+    private static async Task<Dictionary<string, string>> AntiforgeryForm(HttpClient client, string path, Dictionary<string, string> fields)
+    {
+        var html = await client.GetStringAsync(path);
+        var marker = "name=\"__RequestVerificationToken\" type=\"hidden\" value=\"";
+        var start = html.IndexOf(marker, StringComparison.Ordinal);
+        if (start >= 0)
+        {
+            start += marker.Length;
+            var end = html.IndexOf('"', start);
+            fields["__RequestVerificationToken"] = html[start..end];
+        }
+        return fields;
     }
 }
