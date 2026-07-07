@@ -101,6 +101,38 @@ public class LeadReviewTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         (await resp.Content.ReadAsStringAsync()).Should().Contain("\"ok\":true");
         var discarded = await client.GetStringAsync("/app?tab=discarded");
         discarded.Should().Contain("Move Co");
+        // Tab-count spans come straight from the New/Accepted/Discarded partition logic, so these
+        // prove the lead actually moved into Discarded (not just that "Move Co" appears somewhere
+        // on the page, since Index.cshtml renders all three panels on every request).
+        discarded.Should().Contain("data-tab=\"discarded\" href=\"/app?tab=discarded\">Discarded <span class=\"app-tab-count\">1</span>");
+        discarded.Should().Contain("data-tab=\"new\" href=\"/app?tab=new\">New <span class=\"app-tab-count\">0</span>");
+    }
+
+    [Fact]
+    public async Task Move_ToAccepted_ApprovesLeadAndReturnsOk()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var email = $"move2-{Guid.NewGuid():N}@test.com";
+        await AuthFlowTests.RegisterAsync(client, email, "Passw0rd!");
+        var id = await AddLeadIdForUserAsync(email, "Accept Co", "fp-" + Guid.NewGuid().ToString("N"));
+        var token = await AntiforgeryToken(client, "/app");
+
+        // Act
+        var req = new HttpRequestMessage(HttpMethod.Post, "/app?handler=Move");
+        req.Headers.Add("RequestVerificationToken", token);
+        req.Content = new FormUrlEncodedContent(new Dictionary<string, string> { ["id"] = id.ToString(), ["tab"] = "accepted" });
+        var resp = await client.SendAsync(req);
+
+        // Assert
+        resp.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await resp.Content.ReadAsStringAsync()).Should().Contain("\"ok\":true");
+        var accepted = await client.GetStringAsync("/app?tab=accepted");
+        accepted.Should().Contain("Accept Co");
+        // Tab-count spans prove the lead actually moved into Accepted (not just that "Accept Co"
+        // appears somewhere on the page, since Index.cshtml renders all three panels on every request).
+        accepted.Should().Contain("data-tab=\"accepted\" href=\"/app?tab=accepted\">Accepted <span class=\"app-tab-count\">1</span>");
+        accepted.Should().Contain("data-tab=\"new\" href=\"/app?tab=new\">New <span class=\"app-tab-count\">0</span>");
     }
 
     // Returns the created lead's id (PendingReview).
