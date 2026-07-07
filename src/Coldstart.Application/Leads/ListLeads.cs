@@ -9,6 +9,9 @@ internal sealed class ListLeads(ILeadRepository leads) : IListLeads
     {
         var found = await leads.ForCustomerAsync(customerId, ct);
         return found
+            // The inbox is the review queue — qualified-out (Rejected) and set-aside
+            // (Shelved) leads are persisted for dedup but never shown here.
+            .Where(l => l.Status is not (LeadStatus.Rejected or LeadStatus.Shelved))
             .Select(l => new LeadSummary(
                 l.Id.Value,
                 l.Company,

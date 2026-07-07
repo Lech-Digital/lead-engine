@@ -12,7 +12,7 @@ internal sealed class HarvestLeads(
 {
     public async Task<HarvestReport> RunAsync(CancellationToken ct)
     {
-        int harvested = 0, scoredIn = 0, deduped = 0, enriched = 0, saved = 0;
+        int harvested = 0, scoredIn = 0, deduped = 0, enriched = 0, saved = 0, rejected = 0;
 
         // Phase 1: harvest + cheap score gate + dedup (no LLM spend yet).
         var candidates = new List<(RawItem item, SignalResult signal)>();
@@ -39,15 +39,24 @@ internal sealed class HarvestLeads(
             var result = await enricher.EnrichAsync(item, niche, signal, ct);
             if (result is null) continue;         // LLM failed/empty → retried next run
             enriched++;
-            if (result.Fit == Fit.No) continue;   // qualified out
             var company = string.IsNullOrWhiteSpace(result.Company) || result.Company == "-" ? item.Author : result.Company;
             var lead = Lead.CreateHarvested(target.Id, company, result.Fit, result.Subject, result.Draft,
                 item.Source, item.Url, item.Fingerprint, signal.Score, string.Join(",", signal.Matched), DateTimeOffset.UtcNow);
+            if (result.Fit == Fit.No)
+            {
+                // Persist NO as Rejected so its fingerprint is remembered. Without this the same
+                // lead is re-harvested and re-sent to the LLM (re-paid) every run. The ListLeads
+                // read model keeps Rejected/Shelved out of the customer inbox.
+                lead.Reject();
+                await leads.AddAsync(lead, ct);
+                rejected++;
+                continue;
+            }
             await leads.AddAsync(lead, ct);
             saved++;
         }
 
-        return new HarvestReport(harvested, scoredIn, deduped, enriched, saved);
+        return new HarvestReport(harvested, scoredIn, deduped, enriched, saved, rejected);
     }
 
     private async Task<Customer> ResolveTargetCustomerAsync(CancellationToken ct)

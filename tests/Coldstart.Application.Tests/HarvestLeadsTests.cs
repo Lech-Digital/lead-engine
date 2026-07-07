@@ -69,9 +69,12 @@ public class HarvestLeadsTests
         // Act
         var report = await sut.RunAsync(CancellationToken.None);
 
-        // Assert — dup skipped before enrich; the other enriches to FIT:NO and is not saved
+        // Assert — dup skipped before enrich; the other enriches to FIT:NO, not saved but
+        // persisted as Rejected so its fingerprint is remembered (no re-enrich next run)
         report.Saved.Should().Be(0);
-        await leads.DidNotReceive().AddAsync(Arg.Any<Lead>(), Arg.Any<CancellationToken>());
+        report.Rejected.Should().Be(1);
+        await leads.Received(1).AddAsync(
+            Arg.Is<Lead>(l => l.Fingerprint == no.Fingerprint && l.Status == LeadStatus.Rejected), Arg.Any<CancellationToken>());
 
         // the duplicate must be skipped before any LLM spend; the non-dup is enriched
         await enricher.DidNotReceive().EnrichAsync(

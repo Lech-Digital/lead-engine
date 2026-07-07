@@ -36,4 +36,4 @@ using var scope = host.Services.CreateScope();
 var harvest = scope.ServiceProvider.GetRequiredService<IHarvestLeads>();
 var report = await harvest.RunAsync(CancellationToken.None);
 Console.WriteLine($"harvested={report.Harvested} scored_in={report.ScoredIn} deduped={report.Deduped} " +
-                  $"enriched={report.Enriched} saved={report.Saved}");
+                  $"enriched={report.Enriched} saved={report.Saved} rejected={report.Rejected}");

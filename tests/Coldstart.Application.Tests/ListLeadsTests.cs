@@ -38,6 +38,31 @@ public class ListLeadsTests
     }
 
     [Fact]
+    public async Task ForCustomerAsync_ExcludesRejectedAndShelvedLeads()
+    {
+        // Arrange
+        var customerId = CustomerId.New();
+        Lead Harvested(string company, string fingerprint) => Lead.CreateHarvested(customerId, company, Fit.Yes,
+            "subj", "body", "funding", "https://source.example/x", fingerprint, 0.7, "sig", DateTimeOffset.UtcNow);
+        var pending = Harvested("Shown Co", "fp-pending");
+        var rejected = Harvested("Rejected Co", "fp-rejected");
+        rejected.Reject();
+        var shelved = Harvested("Shelved Co", "fp-shelved");
+        shelved.Shelve();
+        var repo = Substitute.For<ILeadRepository>();
+        repo.ForCustomerAsync(customerId, Arg.Any<CancellationToken>())
+            .Returns(new[] { pending, rejected, shelved });
+        var sut = new ListLeads(repo);
+
+        // Act
+        var result = await sut.ForCustomerAsync(customerId, CancellationToken.None);
+
+        // Assert — only the active (non-Rejected, non-Shelved) lead surfaces in the inbox
+        result.Should().ContainSingle();
+        result[0].Company.Should().Be("Shown Co");
+    }
+
+    [Fact]
     public async Task ForCustomerAsync_WhenNoLeads_ReturnsEmpty()
     {
         // Arrange
