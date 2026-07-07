@@ -94,4 +94,32 @@ public class LeadWorkflowTests
         // Assert
         act.Should().Throw<DomainException>();
     }
+
+    [Fact]
+    public void SetRecipient_WhenPendingReview_UpdatesRecipient()
+    {
+        // Arrange
+        var lead = Harvested();
+
+        // Act
+        lead.SetRecipient(new EmailAddress("ceo@acme.com"));
+
+        // Assert
+        lead.RecipientEmail!.Value.Should().Be("ceo@acme.com");
+    }
+
+    [Fact]
+    public void SetRecipient_WhenSent_Throws()
+    {
+        // Arrange
+        var lead = Harvested();
+        lead.Approve(new EmailAddress("ceo@acme.com"));
+        lead.MarkSent(DateTimeOffset.UtcNow);
+
+        // Act
+        var act = () => lead.SetRecipient(new EmailAddress("new@acme.com"));
+
+        // Assert
+        act.Should().Throw<DomainException>();
+    }
 }
