@@ -1,3 +1,4 @@
+using System.Net;
 using Coldstart.Domain;
 using Coldstart.Infrastructure;
 using Coldstart.Infrastructure.Identity;
@@ -77,6 +78,52 @@ public class LeadReviewTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Only Sent cards are non-draggable; Approved (Ready) cards are draggable.
         html.Should().Contain("draggable=\"false\"");
         html.Should().Contain("draggable=\"true\"");
+    }
+
+    [Fact]
+    public async Task Move_ToDiscarded_ShelvesLeadAndReturnsOk()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var email = $"move-{Guid.NewGuid():N}@test.com";
+        await AuthFlowTests.RegisterAsync(client, email, "Passw0rd!");
+        var id = await AddLeadIdForUserAsync(email, "Move Co", "fp-" + Guid.NewGuid().ToString("N"));
+        var token = await AntiforgeryToken(client, "/app");
+
+        // Act
+        var req = new HttpRequestMessage(HttpMethod.Post, "/app?handler=Move");
+        req.Headers.Add("RequestVerificationToken", token);
+        req.Content = new FormUrlEncodedContent(new Dictionary<string, string> { ["id"] = id.ToString(), ["tab"] = "discarded" });
+        var resp = await client.SendAsync(req);
+
+        // Assert
+        resp.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await resp.Content.ReadAsStringAsync()).Should().Contain("\"ok\":true");
+        var discarded = await client.GetStringAsync("/app?tab=discarded");
+        discarded.Should().Contain("Move Co");
+    }
+
+    // Returns the created lead's id (PendingReview).
+    private async Task<Guid> AddLeadIdForUserAsync(string email, string company, string fingerprint)
+    {
+        using var scope = factory.Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var db = scope.ServiceProvider.GetRequiredService<ColdstartDbContext>();
+        var user = await users.FindByEmailAsync(email);
+        var lead = Lead.CreateHarvested(new CustomerId(user!.CustomerId!.Value), company, Fit.Yes,
+            "subj", "body", "hackernews", "https://x/1", fingerprint, 0.7, "outbound", DateTimeOffset.UtcNow);
+        db.Leads.Add(lead);
+        await db.SaveChangesAsync();
+        return lead.Id.Value;
+    }
+
+    private static async Task<string> AntiforgeryToken(HttpClient client, string path)
+    {
+        var html = await client.GetStringAsync(path);
+        var marker = "name=\"__RequestVerificationToken\" type=\"hidden\" value=\"";
+        var start = html.IndexOf(marker, StringComparison.Ordinal) + marker.Length;
+        var end = html.IndexOf('"', start);
+        return html[start..end];
     }
 
     // Inserts a lead in a specific status for the given registered user's customer.

@@ -11,6 +11,7 @@
 </header>
 
 <main class="wrap app-zone">
+  @Html.AntiForgeryToken()
   <section class="app-profile">
     @if (Model.Profile.IsEmpty)
     {
@@ -78,3 +79,4 @@
     @{ Cards(Model.AutoSkipped, true, "No auto-skipped leads."); }
   </section>
 </main>
+<script src="~/js/app-leads.js" defer></script>

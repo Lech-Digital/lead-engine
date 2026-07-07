@@ -22,6 +22,9 @@ internal sealed class LeadWorkflow(ILeadRepository leads) : ILeadWorkflow
             return LeadActionResult.Ok;
         });
 
+    public Task<LeadActionResult> ApproveAsync(Guid customerId, Guid leadId, CancellationToken ct) =>
+        MutateAsync(customerId, leadId, ct, lead => { lead.Approve(); return LeadActionResult.Ok; });
+
     public Task<LeadActionResult> DiscardAsync(Guid customerId, Guid leadId, CancellationToken ct) =>
         MutateAsync(customerId, leadId, ct, lead => { lead.Discard(); return LeadActionResult.Ok; });
 

@@ -3,12 +3,13 @@ using Coldstart.Application.Leads;
 using Coldstart.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Coldstart.Web.Areas.App.Pages;
 
 [Authorize]
-public sealed class IndexModel(UserManager<ApplicationUser> users, IGetLeadInbox inbox, IGetCompanyProfile profiles) : PageModel
+public sealed class IndexModel(UserManager<ApplicationUser> users, IGetLeadInbox inbox, IGetCompanyProfile profiles, ILeadWorkflow workflow) : PageModel
 {
     public string CustomerName { get; private set; } = "—";
     public CompanyProfileView Profile { get; private set; } = new(null, null, null, null, null, null, null);
@@ -40,5 +41,21 @@ public sealed class IndexModel(UserManager<ApplicationUser> users, IGetLeadInbox
         Sent = result.Leads.Where(l => l.Status == "Sent").ToList();
         Shelved = result.Leads.Where(l => l.Status == "Shelved").ToList();
         AutoSkipped = result.Leads.Where(l => l.Status == "Rejected").ToList();
+    }
+
+    public async Task<IActionResult> OnPostMoveAsync(Guid id, string tab, CancellationToken ct)
+    {
+        var user = await users.GetUserAsync(User);
+        if (user?.CustomerId is null) return new JsonResult(new { ok = false, message = "Not signed in." });
+        var cid = user.CustomerId.Value;
+
+        var result = tab switch
+        {
+            "new" => await workflow.ReopenAsync(cid, id, ct),
+            "accepted" => await workflow.ApproveAsync(cid, id, ct),
+            "discarded" => await workflow.DiscardAsync(cid, id, ct),
+            _ => LeadActionResult.Invalid("Unknown tab."),
+        };
+        return new JsonResult(new { ok = result.IsOk, status = result.Status.ToString(), message = result.Message });
     }
 }

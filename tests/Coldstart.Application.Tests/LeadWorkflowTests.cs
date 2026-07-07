@@ -71,6 +71,27 @@ public class LeadWorkflowTests
     }
 
     [Fact]
+    public async Task ApproveAsync_KeepsExistingDraft()
+    {
+        // Arrange
+        var customerId = Guid.NewGuid();
+        var lead = LeadFor(new CustomerId(customerId));
+        var repo = Substitute.For<ILeadRepository>();
+        repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns(lead);
+        var sut = new LeadWorkflow(repo);
+
+        // Act
+        var result = await sut.ApproveAsync(customerId, lead.Id.Value, CancellationToken.None);
+
+        // Assert
+        result.IsOk.Should().BeTrue();
+        lead.Status.Should().Be(LeadStatus.Approved);
+        lead.Subject.Should().Be("subj");
+        lead.Draft.Should().Be("body");
+        await repo.Received(1).UpdateAsync(lead, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task MarkSentAsync_WithoutRecipient_ReturnsInvalid()
     {
         // Arrange
