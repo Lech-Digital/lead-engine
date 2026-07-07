@@ -37,24 +37,44 @@
   </section>
 
   <p class="app-sub">@Model.CustomerName</p>
-  <h1 class="app-leads-title">Leads @(Model.Leads.Count == 0 ? "" : $"({Model.Leads.Count})")</h1>
-  @if (Model.Leads.Count == 0)
-  {
-    <div class="app-empty"><h2>No leads yet</h2><p>Your next harvest will fill this in — freshly qualified companies with the first email already drafted.</p></div>
+
+  <nav class="app-tabs" aria-label="Lead tabs">
+    <a class="app-tab @(Model.Tab == "new" ? "is-active" : "")" data-tab="new" href="/app?tab=new">New <span class="app-tab-count">@Model.NewCount</span></a>
+    <a class="app-tab @(Model.Tab == "accepted" ? "is-active" : "")" data-tab="accepted" href="/app?tab=accepted">Accepted <span class="app-tab-count">@Model.AcceptedCount</span></a>
+    <a class="app-tab @(Model.Tab == "discarded" ? "is-active" : "")" data-tab="discarded" href="/app?tab=discarded">Discarded <span class="app-tab-count">@Model.DiscardedCount</span></a>
+  </nav>
+
+  @{
+    void Card(Coldstart.Application.Leads.LeadSummary lead, bool draggable)
+    {
+      <article class="app-lead" data-lead-id="@lead.Id" draggable="@(draggable ? "true" : "false")">
+        <div class="app-lead-top"><h3><a href="/app/leads/@lead.Id">@lead.Company</a></h3><span class="fit fit-@lead.Fit.ToLower()">@lead.Fit</span></div>
+        <div class="app-lead-meta"><span class="chip">@lead.Source</span><span class="score">score @lead.Score.ToString("0.00")</span></div>
+        <p class="app-lead-subj">@lead.Subject</p>
+      </article>
+    }
+    void Cards(IReadOnlyList<Coldstart.Application.Leads.LeadSummary> leads, bool draggable, string emptyText)
+    {
+      if (leads.Count == 0) { <p class="app-group-empty">@emptyText</p> }
+      else { <div class="app-leads">@foreach (var l in leads) { Card(l, draggable); }</div> }
+    }
   }
-  else
-  {
-    <div class="app-leads">
-      @foreach (var lead in Model.Leads)
-      {
-        <article class="app-lead">
-          <div class="app-lead-top"><h3>@lead.Company</h3><span class="fit fit-@lead.Fit.ToLower()">@lead.Fit</span></div>
-          <div class="app-lead-meta"><span class="chip">@lead.Source</span><span class="score">score @lead.Score.ToString("0.00")</span></div>
-          <p class="app-lead-subj">@lead.Subject</p>
-          <details class="app-lead-draft"><summary>Preview draft</summary><p>@lead.Draft</p></details>
-          <div class="app-lead-foot"><span class="to">@(string.IsNullOrEmpty(lead.RecipientEmail) ? "—" : lead.RecipientEmail)</span><span class="conf conf-@lead.EmailConfidence.ToLower()">@lead.EmailConfidence</span><span class="status">@lead.Status</span></div>
-        </article>
-      }
-    </div>
-  }
+
+  <section class="app-panel @(Model.Tab == "new" ? "is-active" : "")" data-panel="new">
+    @{ Cards(Model.New, true, "No leads yet — your next harvest will fill this in."); }
+  </section>
+
+  <section class="app-panel @(Model.Tab == "accepted" ? "is-active" : "")" data-panel="accepted">
+    <h2 class="app-group-head">Ready</h2>
+    @{ Cards(Model.AcceptedReady, true, "Nothing accepted yet."); }
+    <h2 class="app-group-head">Sent</h2>
+    @{ Cards(Model.Sent, false, "Nothing sent yet."); }
+  </section>
+
+  <section class="app-panel @(Model.Tab == "discarded" ? "is-active" : "")" data-panel="discarded">
+    <h2 class="app-group-head">You discarded</h2>
+    @{ Cards(Model.Shelved, true, "You haven't discarded anything."); }
+    <h2 class="app-group-head">Auto-skipped · FIT:NO</h2>
+    @{ Cards(Model.AutoSkipped, true, "No auto-skipped leads."); }
+  </section>
 </main>
