@@ -22,7 +22,7 @@
     else
     {
       <div class="app-profile-card">
-        <h2>@(Model.Profile.CompanyName ?? Model.CustomerName)</h2>
+        <h2>@(string.IsNullOrWhiteSpace(Model.Profile.CompanyName) ? Model.CustomerName : Model.Profile.CompanyName)</h2>
         <dl>
           @if (!string.IsNullOrWhiteSpace(Model.Profile.Address)) { <div><dt>Address</dt><dd>@Model.Profile.Address</dd></div> }
           @if (!string.IsNullOrWhiteSpace(Model.Profile.VatNumber)) { <div><dt>VAT</dt><dd>@Model.Profile.VatNumber</dd></div> }
