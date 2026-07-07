@@ -38,17 +38,17 @@ public class ListLeadsTests
     }
 
     [Fact]
-    public async Task ForCustomerAsync_ExcludesRejectedAndShelvedLeads()
+    public async Task ForCustomerAsync_ReturnsAllStatuses_IncludingRejectedAndShelved()
     {
         // Arrange
         var customerId = CustomerId.New();
-        Lead Harvested(string company, string fingerprint) => Lead.CreateHarvested(customerId, company, Fit.Yes,
-            "subj", "body", "funding", "https://source.example/x", fingerprint, 0.7, "sig", DateTimeOffset.UtcNow);
-        var pending = Harvested("Shown Co", "fp-pending");
-        var rejected = Harvested("Rejected Co", "fp-rejected");
+        Lead Harvested(string company, string fp) => Lead.CreateHarvested(customerId, company, Fit.Yes,
+            "subj", "body", "funding", "https://source.example/x", fp, 0.7, "sig", DateTimeOffset.UtcNow);
+        var pending = Harvested("Pending Co", "fp-p");
+        var rejected = Harvested("Rejected Co", "fp-r");
         rejected.Reject();
-        var shelved = Harvested("Shelved Co", "fp-shelved");
-        shelved.Shelve();
+        var shelved = Harvested("Shelved Co", "fp-s");
+        shelved.Discard();
         var repo = Substitute.For<ILeadRepository>();
         repo.ForCustomerAsync(customerId, Arg.Any<CancellationToken>())
             .Returns(new[] { pending, rejected, shelved });
@@ -57,9 +57,9 @@ public class ListLeadsTests
         // Act
         var result = await sut.ForCustomerAsync(customerId, CancellationToken.None);
 
-        // Assert — only the active (non-Rejected, non-Shelved) lead surfaces in the inbox
-        result.Should().ContainSingle();
-        result[0].Company.Should().Be("Shown Co");
+        // Assert — no filtering; the page routes each status to its tab
+        result.Should().HaveCount(3);
+        result.Select(r => r.Status).Should().Contain(new[] { "PendingReview", "Rejected", "Shelved" });
     }
 
     [Fact]

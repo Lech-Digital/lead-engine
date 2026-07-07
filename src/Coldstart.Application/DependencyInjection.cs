@@ -9,6 +9,7 @@ public static class DependencyInjection
     {
         services.AddScoped<IListLeads, ListLeads>();
         services.AddScoped<IGetLeadInbox, GetLeadInbox>();
+        services.AddScoped<IGetLeadDetail, GetLeadDetail>();
         services.AddScoped<ILeadWorkflow, LeadWorkflow>();
         services.AddScoped<Contact.ISubmitInquiry, Contact.SubmitInquiry>();
         services.AddScoped<Customers.IProvisionCustomer, Customers.ProvisionCustomer>();
