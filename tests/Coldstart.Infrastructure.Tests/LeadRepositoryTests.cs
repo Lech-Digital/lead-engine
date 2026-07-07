@@ -91,4 +91,42 @@ public class LeadRepositoryTests(PostgresFixture fixture) : IClassFixture<Postgr
         before.Should().BeFalse();
         after.Should().BeTrue();
     }
+
+    [Fact]
+    public async Task GetAsync_ThenUpdate_PersistsStatusChange()
+    {
+        // Arrange
+        await using var db = fixture.NewDbContext();
+        var customer = Customer.Create("repo-update@test.com");
+        await new CustomerRepository(db).AddAsync(customer, CancellationToken.None);
+        var lead = Lead.CreateHarvested(customer.Id, "Acme", Fit.Yes, "s", "b",
+            "hackernews", "https://x/1", "fp-upd", 0.7, "outbound", DateTimeOffset.UtcNow);
+        var repo = new LeadRepository(db);
+        await repo.AddAsync(lead, CancellationToken.None);
+
+        // Act
+        var loaded = await repo.GetAsync(lead.Id, CancellationToken.None);
+        loaded!.Approve(new EmailAddress("ceo@acme.com"));
+        await repo.UpdateAsync(loaded, CancellationToken.None);
+
+        // Assert
+        await using var read = fixture.NewDbContext();
+        var reloaded = await new LeadRepository(read).GetAsync(lead.Id, CancellationToken.None);
+        reloaded!.Status.Should().Be(LeadStatus.Approved);
+        reloaded.RecipientEmail!.Value.Should().Be("ceo@acme.com");
+    }
+
+    [Fact]
+    public async Task GetAsync_WhenMissing_ReturnsNull()
+    {
+        // Arrange
+        await using var db = fixture.NewDbContext();
+        var repo = new LeadRepository(db);
+
+        // Act
+        var loaded = await repo.GetAsync(LeadId.New(), CancellationToken.None);
+
+        // Assert
+        loaded.Should().BeNull();
+    }
 }

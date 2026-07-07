@@ -20,4 +20,13 @@ internal sealed class LeadRepository(ColdstartDbContext db) : ILeadRepository
 
     public async Task<bool> ExistsByFingerprintAsync(string fingerprint, CancellationToken ct) =>
         await db.Leads.AnyAsync(l => l.Fingerprint == fingerprint && fingerprint != "", ct);
+
+    public async Task<Lead?> GetAsync(LeadId id, CancellationToken ct) =>
+        await db.Leads.FirstOrDefaultAsync(l => l.Id == id, ct);
+
+    public async Task UpdateAsync(Lead lead, CancellationToken ct)
+    {
+        db.Leads.Update(lead);
+        await db.SaveChangesAsync(ct);
+    }
 }
