@@ -7,7 +7,7 @@
     <p class="auth-alt"><a href="/app">← Back to your leads</a></p>
     <div class="app-lead-top"><h1>@lead.Company</h1><span class="fit fit-@lead.Fit.ToLower()">@lead.Fit</span></div>
     <div class="app-lead-meta"><span class="chip">@lead.Source</span><span class="score">score @lead.Score.ToString("0.00")</span><span class="status">@lead.Status</span></div>
-    @if (!string.IsNullOrEmpty(lead.SourceUrl)) { <p><a href="@lead.SourceUrl" target="_blank" rel="noopener">View signal source</a></p> }
+    @if (!string.IsNullOrEmpty(lead.SourceUrl)) { <div class="app-links"><a class="app-link-out" href="@lead.SourceUrl" target="_blank" rel="noopener">View signal source</a></div> }
 
     <div asp-validation-summary="All" class="field-error"></div>
 
@@ -33,7 +33,7 @@
     {
       <div class="app-contact">
         <h2 class="app-group-head">Find the recipient</h2>
-        <ul>@foreach (var link in lead.ContactLinks) { <li><a href="@link.Url" target="_blank" rel="noopener">@link.Label</a></li> }</ul>
+        <ul class="app-links">@foreach (var link in lead.ContactLinks) { <li><a class="app-link-out" href="@link.Url" target="_blank" rel="noopener">@link.Label</a></li> }</ul>
       </div>
     }
   </div>

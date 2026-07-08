@@ -392,8 +392,9 @@
   .app-detail-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
   .app-detail-actions .btn { padding: 11px 18px; font-size: 0.88rem; }
   .app-contact { margin-top: 22px; }
-  .app-contact ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
-  .app-contact a { color: var(--orange-d); font-weight: 700; text-decoration: none; }
-  .app-contact a:hover { text-decoration: underline; }
+  .app-links { list-style: none; padding: 0; margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .app-link-out { display: inline-flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 0.73rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink); text-decoration: none; background: var(--cream-2); border: 1.5px solid var(--line-2); border-radius: 8px; padding: 7px 12px; box-shadow: 0 3px 0 var(--line-2); transition: transform .08s ease, box-shadow .08s ease, color .08s ease; }
+  .app-link-out:hover, .app-link-out:focus-visible { color: var(--orange-d); transform: translateY(2px); box-shadow: 0 1px 0 var(--line-2); }
+  .app-link-out::after { content: "↗"; color: var(--orange); font-size: 0.85em; }
   .field-error { color: var(--rose-d, #b3432b); font-size: 0.86rem; font-weight: 600; }
   .field-error:empty { display: none; }
