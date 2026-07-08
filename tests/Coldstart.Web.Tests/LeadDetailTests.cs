@@ -17,7 +17,7 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Arrange
         var client = factory.CreateClient();
         var email = $"detail-{Guid.NewGuid():N}@test.com";
-        await AuthFlowTests.RegisterAsync(client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
         var id = await AddLeadForUserAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"));
 
         // Act
@@ -34,7 +34,7 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Arrange
         var client = factory.CreateClient();
         var email = $"detail2-{Guid.NewGuid():N}@test.com";
-        await AuthFlowTests.RegisterAsync(client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
         var id = await AddLeadForUserAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"));
         var form = await AntiforgeryForm(client, $"/app/leads/{id}", new()
         {
@@ -56,12 +56,12 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Arrange — owner creates a lead
         var owner = factory.CreateClient();
         var ownerEmail = $"owner-{Guid.NewGuid():N}@test.com";
-        await AuthFlowTests.RegisterAsync(owner, ownerEmail, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, owner, ownerEmail, "Passw0rd!");
         var id = await AddLeadForUserAsync(ownerEmail, "Owner Co", "fp-" + Guid.NewGuid().ToString("N"));
 
         // attacker is a different logged-in customer
         var attacker = factory.CreateClient(new() { AllowAutoRedirect = false });
-        await AuthFlowTests.RegisterAsync(attacker, $"attacker-{Guid.NewGuid():N}@test.com", "Passw0rd!");
+        await TestAuth.SignInAsync(factory, attacker, $"attacker-{Guid.NewGuid():N}@test.com", "Passw0rd!");
 
         // Act
         var response = await attacker.GetAsync($"/app/leads/{id}");

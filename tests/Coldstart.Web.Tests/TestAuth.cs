@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Coldstart.Application.Customers;
 using Coldstart.Infrastructure.Identity;
+using Coldstart.Web;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -48,5 +49,19 @@ internal static class TestAuth
     {
         var res = await PostFormAsync(client, path, fields);
         return await res.Content.ReadAsStringAsync();
+    }
+
+    // Creates the account (known password, confirmed, provisioned tenant unless role is SuperAdmin)
+    // then signs `client` in through the Login form — the replacement for the removed Register flow.
+    internal static async Task SignInAsync(ColdstartWebFactory factory, HttpClient client,
+        string email, string password, string? role = null)
+    {
+        await CreateUserAsync(factory, email, password, role, provisionTenant: role != ColdstartRoles.SuperAdmin);
+        await PostFormAsync(client, "/Identity/Account/Login", new()
+        {
+            ["Input.Email"] = email,
+            ["Input.Password"] = password,
+            ["Input.RememberMe"] = "false",
+        });
     }
 }

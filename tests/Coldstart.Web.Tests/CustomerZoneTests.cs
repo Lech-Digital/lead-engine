@@ -17,7 +17,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Arrange
         var client = factory.CreateClient();
         var email = $"zone-{Guid.NewGuid():N}@test.com";
-        await AuthFlowTests.RegisterAsync(client, email, "Passw0rd!"); // signs in; provisions a customer (no leads now)
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!"); // signs in; provisions a customer (no leads now)
         await AddLeadForUserAsync(email, "Patronus AI", "fp-zone-1");
 
         // Act
@@ -36,7 +36,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Arrange
         var client = factory.CreateClient();
         var email = $"zone-empty-{Guid.NewGuid():N}@test.com";
-        await AuthFlowTests.RegisterAsync(client, email, "Passw0rd!"); // provisions a customer with no leads
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!"); // provisions a customer with no leads
 
         // Act
         var html = await client.GetStringAsync("/app");
@@ -51,12 +51,12 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Arrange
         var clientA = factory.CreateClient();
         var emailA = $"zone-a-{Guid.NewGuid():N}@test.com";
-        await AuthFlowTests.RegisterAsync(clientA, emailA, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, clientA, emailA, "Passw0rd!");
         await AddLeadForUserAsync(emailA, "Acme A", "fp-zone-a");
 
         var clientB = factory.CreateClient();
         var emailB = $"zone-b-{Guid.NewGuid():N}@test.com";
-        await AuthFlowTests.RegisterAsync(clientB, emailB, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, clientB, emailB, "Passw0rd!");
         await AddLeadForUserAsync(emailB, "Acme B", "fp-zone-b");
 
         // Act
@@ -79,7 +79,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange
         var client = factory.CreateClient();
-        await AuthFlowTests.RegisterAsync(client, $"prof-{Guid.NewGuid():N}@test.com", "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, $"prof-{Guid.NewGuid():N}@test.com", "Passw0rd!");
 
         // Act
         var html = await client.GetStringAsync("/app");
@@ -94,7 +94,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange
         var client = factory.CreateClient();
-        await AuthFlowTests.RegisterAsync(client, $"prof2-{Guid.NewGuid():N}@test.com", "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, $"prof2-{Guid.NewGuid():N}@test.com", "Passw0rd!");
         var form = await AntiforgeryForm(client, "/app/profile", new()
         {
             ["Input.CompanyName"] = "Acme Ltd", ["Input.VatNumber"] = "NL999",
