@@ -36,6 +36,20 @@ public class AuthFlowTests(ColdstartWebFactory factory) : IClassFixture<Coldstar
     }
 
     [Fact]
+    public async Task Register_Post_IsDisabled_RedirectsToLogin()
+    {
+        // Arrange
+        var client = factory.CreateClient(new() { AllowAutoRedirect = false });
+
+        // Act
+        var response = await client.PostAsync("/Identity/Account/Register", new FormUrlEncodedContent(new Dictionary<string, string>()));
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        response.Headers.Location!.OriginalString.Should().Contain("/Identity/Account/Login");
+    }
+
+    [Fact]
     public async Task Login_AsSuperAdmin_RedirectsToAdmin()
     {
         // Arrange
