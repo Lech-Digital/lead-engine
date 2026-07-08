@@ -49,34 +49,48 @@
     void Card(Coldstart.Application.Leads.LeadSummary lead, bool draggable)
     {
       <article class="app-lead" data-lead-id="@lead.Id" draggable="@(draggable ? "true" : "false")">
-        <div class="app-lead-top"><h3><a href="/app/leads/@lead.Id">@lead.Company</a></h3><span class="fit fit-@lead.Fit.ToLower()">@lead.Fit</span></div>
+        <div class="app-lead-top">
+          <h3><a href="/app/leads/@lead.Id">@lead.Company</a><span class="go" aria-hidden="true">→</span></h3>
+          <span class="fit fit-@lead.Fit.ToLower()">@lead.Fit</span>
+        </div>
         <div class="app-lead-meta"><span class="chip">@lead.Source</span><span class="score">score @lead.Score.ToString("0.00")</span></div>
         <p class="app-lead-subj">@lead.Subject</p>
       </article>
     }
-    void Cards(IReadOnlyList<Coldstart.Application.Leads.LeadSummary> leads, bool draggable, string emptyText)
+    void Bucket(string bucket, IReadOnlyList<Coldstart.Application.Leads.LeadSummary> leads, bool draggable, string emptyText)
     {
-      if (leads.Count == 0) { <p class="app-group-empty">@emptyText</p> }
-      else { <div class="app-leads">@foreach (var l in leads) { Card(l, draggable); }</div> }
+      <div class="app-leads" data-bucket="@bucket" data-count="@leads.Count">
+        @foreach (var l in leads) { Card(l, draggable); }
+        <p class="app-group-empty">@emptyText</p>
+      </div>
     }
   }
 
   <section class="app-panel @(Model.Tab == "new" ? "is-active" : "")" data-panel="new">
-    @{ Cards(Model.New, true, "No leads yet — your next harvest will fill this in."); }
+    @{ Bucket("new", Model.New, true, "No leads yet — your next harvest will fill this in."); }
   </section>
 
   <section class="app-panel @(Model.Tab == "accepted" ? "is-active" : "")" data-panel="accepted">
     <h2 class="app-group-head">Ready</h2>
-    @{ Cards(Model.AcceptedReady, true, "Nothing accepted yet."); }
+    @{ Bucket("ready", Model.AcceptedReady, true, "Nothing accepted yet."); }
     <h2 class="app-group-head">Sent</h2>
-    @{ Cards(Model.Sent, false, "Nothing sent yet."); }
+    @{ Bucket("sent", Model.Sent, false, "Nothing sent yet."); }
   </section>
 
   <section class="app-panel @(Model.Tab == "discarded" ? "is-active" : "")" data-panel="discarded">
     <h2 class="app-group-head">You discarded</h2>
-    @{ Cards(Model.Shelved, true, "You haven't discarded anything."); }
+    @{ Bucket("shelved", Model.Shelved, true, "You haven't discarded anything."); }
     <h2 class="app-group-head">Auto-skipped · FIT:NO</h2>
-    @{ Cards(Model.AutoSkipped, true, "No auto-skipped leads."); }
+    @{ Bucket("autoskip", Model.AutoSkipped, true, "No auto-skipped leads."); }
   </section>
+
+  <dialog id="move-error" class="modal" aria-labelledby="move-error-title">
+    <form method="dialog" class="modal-card">
+      <p class="modal-eyebrow">Move blocked</p>
+      <h2 class="modal-title" id="move-error-title">Couldn't move that lead</h2>
+      <p class="modal-detail" id="move-error-detail"></p>
+      <div class="modal-actions"><button class="btn btn-primary" value="ok" autofocus>Got it</button></div>
+    </form>
+  </dialog>
 </main>
 <script src="~/js/app-leads.js" defer></script>
