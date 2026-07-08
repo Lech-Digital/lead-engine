@@ -16,6 +16,7 @@ internal sealed class HarvestLeads(
 
         // Phase 1: harvest + cheap score gate + dedup (no LLM spend yet).
         var candidates = new List<(RawItem item, SignalResult signal)>();
+        var seen = new HashSet<string>();   // fingerprints already taken this run
         foreach (var source in sources.Where(s => s.Enabled))
         {
             IReadOnlyList<RawItem> items;
@@ -28,6 +29,10 @@ internal sealed class HarvestLeads(
                 if (signal.Score < niche.MinScore) continue;
                 scoredIn++;
                 if (await leads.ExistsByFingerprintAsync(item.Fingerprint, ct)) { deduped++; continue; }
+                // The same item can surface twice in one run (e.g. an HN comment matching several
+                // queries). Dedup within the run too, or the second save collides on the unique
+                // fingerprint index. Empty fingerprints are exempt (mirrors the partial DB index).
+                if (item.Fingerprint.Length != 0 && !seen.Add(item.Fingerprint)) { deduped++; continue; }
                 candidates.Add((item, signal));
             }
         }

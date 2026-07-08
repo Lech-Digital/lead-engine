@@ -51,6 +51,34 @@ public class HarvestLeadsTests
     }
 
     [Fact]
+    public async Task RunAsync_WhenSameItemHarvestedTwiceInOneRun_DedupesWithinRun()
+    {
+        // Arrange — the same HN comment matched two search queries, so the source emits it
+        // twice with an identical fingerprint (same Source:ExternalId). The DB doesn't know it yet.
+        var first = new RawItem("fake", "1", "", "hiring outbound SDR", "", "u1", "");
+        var again = new RawItem("fake", "1", "", "hiring outbound SDR", "", "u1", "");
+        var enricher = Substitute.For<ILeadEnricher>();
+        enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<CancellationToken>())
+            .Returns(new EnrichmentResult(Fit.Yes, "s", "subj", "draft", "Acme"));
+        var leads = Substitute.For<ILeadRepository>();
+        leads.ExistsByFingerprintAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(false);
+        var customers = Substitute.For<ICustomerRepository>();
+        customers.GetByNameAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns((Customer?)null);
+        var sut = new HarvestLeads([new FakeSource(first, again)], enricher, leads, customers, Niche());
+
+        // Act
+        var report = await sut.RunAsync(CancellationToken.None);
+
+        // Assert — the duplicate is dropped in the harvest phase, so it never re-enriches
+        // (no double LLM spend) and the unique-fingerprint save happens exactly once
+        report.Harvested.Should().Be(2);
+        report.Deduped.Should().Be(1);
+        report.Saved.Should().Be(1);
+        await enricher.Received(1).EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<CancellationToken>());
+        await leads.Received(1).AddAsync(Arg.Is<Lead>(l => l.Fingerprint == first.Fingerprint), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task RunAsync_SkipsDuplicatesAndFitNo()
     {
         // Arrange
