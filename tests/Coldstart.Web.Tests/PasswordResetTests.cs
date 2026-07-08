@@ -49,7 +49,7 @@ public class PasswordResetTests(ColdstartWebFactory factory) : IClassFixture<Col
     public async Task ResetPassword_ViaEmailedLink_SetsPasswordAndSignsIn()
     {
         // Arrange
-        var client = factory.CreateClient();
+        var client = factory.CreateClient(new() { AllowAutoRedirect = false });
         var email = $"reset2-{Guid.NewGuid():N}@test.com";
         await TestAuth.CreateUserAsync(factory, email, "OldPassw0rd!");
         factory.Email.Sent.Clear();
@@ -58,7 +58,7 @@ public class PasswordResetTests(ColdstartWebFactory factory) : IClassFixture<Col
         var code = Regex.Match(link, @"code=([^&\s]+)").Groups[1].Value;
 
         // Act — post a new password using the code from the link
-        await TestAuth.PostFormAsync(client, "/Identity/Account/ResetPassword", new()
+        var response = await TestAuth.PostFormAsync(client, "/Identity/Account/ResetPassword", new()
         {
             ["Input.Email"] = email,
             ["Input.Code"] = code,
@@ -66,11 +66,39 @@ public class PasswordResetTests(ColdstartWebFactory factory) : IClassFixture<Col
             ["Input.ConfirmPassword"] = "BrandNewP4ss!",
         });
 
-        // Assert — the new password now authenticates
+        // Assert — redirects to /app and the new password now authenticates
+        response.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        response.Headers.Location!.OriginalString.Should().Be("/app");
         using var scope = factory.Services.CreateScope();
         var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var user = await users.FindByEmailAsync(email);
         (await users.CheckPasswordAsync(user!, "BrandNewP4ss!")).Should().BeTrue();
         user!.EmailConfirmed.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ResetPassword_ForSuperAdmin_RedirectsToAdmin()
+    {
+        // Arrange
+        var client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        var email = $"reset-admin-{Guid.NewGuid():N}@test.com";
+        await TestAuth.CreateUserAsync(factory, email, "OldPassw0rd!", ColdstartRoles.SuperAdmin, provisionTenant: false);
+        factory.Email.Sent.Clear();
+        await TestAuth.PostFormAsync(client, "/Identity/Account/ForgotPassword", new() { ["Input.Email"] = email });
+        var link = Regex.Match(factory.Email.Sent.Single().Body, @"/Identity/Account/ResetPassword\?\S+").Value;
+        var code = Regex.Match(link, @"code=([^&\s]+)").Groups[1].Value;
+
+        // Act — post a new password using the code from the link
+        var response = await TestAuth.PostFormAsync(client, "/Identity/Account/ResetPassword", new()
+        {
+            ["Input.Email"] = email,
+            ["Input.Code"] = code,
+            ["Input.Password"] = "BrandNewP4ss!",
+            ["Input.ConfirmPassword"] = "BrandNewP4ss!",
+        });
+
+        // Assert — SuperAdmins land on /admin
+        response.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        response.Headers.Location!.OriginalString.Should().Be("/admin");
     }
 }
