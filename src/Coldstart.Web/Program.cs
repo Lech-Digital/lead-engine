@@ -27,6 +27,8 @@ builder.Services.ConfigureApplicationCookie(o =>
     o.AccessDeniedPath = "/Identity/Account/Login";
 });
 
+builder.Services.Configure<DataProtectionTokenProviderOptions>(o => o.TokenLifespan = TimeSpan.FromDays(7));
+
 var authBuilder = builder.Services.AddAuthentication();
 var googleId = builder.Configuration["Authentication:Google:ClientId"];
 var googleSecret = builder.Configuration["Authentication:Google:ClientSecret"];
