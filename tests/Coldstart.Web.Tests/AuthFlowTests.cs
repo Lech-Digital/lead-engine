@@ -1,4 +1,5 @@
 using System.Net;
+using Coldstart.Web;
 using FluentAssertions;
 using Xunit;
 
@@ -18,6 +19,39 @@ public class AuthFlowTests(ColdstartWebFactory factory) : IClassFixture<Coldstar
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Redirect);
         response.Headers.Location!.OriginalString.Should().Contain("/Identity/Account/Login");
+    }
+
+    [Fact]
+    public async Task Register_IsDisabled_RedirectsToLogin()
+    {
+        // Arrange
+        var client = factory.CreateClient(new() { AllowAutoRedirect = false });
+
+        // Act
+        var response = await client.GetAsync("/Identity/Account/Register");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        response.Headers.Location!.OriginalString.Should().Contain("/Identity/Account/Login");
+    }
+
+    [Fact]
+    public async Task Login_AsSuperAdmin_RedirectsToAdmin()
+    {
+        // Arrange
+        var client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        var email = $"sa-{Guid.NewGuid():N}@test.com";
+        await TestAuth.CreateUserAsync(factory, email, "Passw0rd!", ColdstartRoles.SuperAdmin, provisionTenant: false);
+
+        // Act
+        var response = await TestAuth.PostFormAsync(client, "/Identity/Account/Login", new()
+        {
+            ["Input.Email"] = email, ["Input.Password"] = "Passw0rd!", ["Input.RememberMe"] = "false",
+        });
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        response.Headers.Location!.OriginalString.Should().Be("/admin");
     }
 
     [Fact]

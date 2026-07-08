@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Coldstart.Infrastructure.Identity;
+using Coldstart.Web;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +8,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Coldstart.Web.Areas.Identity.Pages.Account;
 
-public sealed class LoginModel(SignInManager<ApplicationUser> signInManager) : PageModel
+public sealed class LoginModel(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> users) : PageModel
 {
     [BindProperty]
     public InputModel Input { get; set; } = new();
@@ -41,7 +42,9 @@ public sealed class LoginModel(SignInManager<ApplicationUser> signInManager) : P
             return Page();
         }
 
-        return LocalRedirect(returnUrl ?? "/app");
+        if (returnUrl is not null) return LocalRedirect(returnUrl);
+        var user = await users.FindByEmailAsync(Input.Email);
+        return LocalRedirect(await RoleRedirect.PathForAsync(users, user!, CancellationToken.None));
     }
 
     public sealed class InputModel
