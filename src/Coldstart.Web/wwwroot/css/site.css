@@ -372,17 +372,17 @@
   .app-lead[draggable="true"] { cursor: grab; }
   .app-lead.dragging { opacity: 0.5; transform: none; box-shadow: 0 4px 0 var(--line-2); }
 
-  /* move-blocked modal (/app) */
-  .modal { border: none; padding: 0; background: transparent; max-width: 400px; width: calc(100% - 40px); color: var(--ink); }
-  .modal::backdrop { background: rgba(56, 44, 35, 0.45); }
-  .modal-card { margin: 0; background: var(--cream-2); border: 2px solid var(--line-2); border-radius: 16px; box-shadow: 0 10px 0 var(--line-2); padding: 22px 22px 18px; }
-  .modal-eyebrow { font-family: var(--mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--orange-d); margin: 0 0 8px; }
-  .modal-title { font-size: 1.15rem; margin: 0 0 8px; letter-spacing: -0.01em; }
-  .modal-detail { margin: 0 0 18px; color: var(--ink-soft); font-size: 0.95rem; }
-  .modal-actions { display: flex; justify-content: flex-end; }
-  .modal[open] .modal-card { animation: modal-pop .16s ease; }
-  @keyframes modal-pop { from { transform: translateY(6px) scale(.98); opacity: 0; } to { transform: none; opacity: 1; } }
-  @media (prefers-reduced-motion: reduce) { .modal[open] .modal-card { animation: none; } }
+  /* move-blocked modal (/app) — namespaced to avoid the landing-page .modal component */
+  .lead-modal { border: none; padding: 0; background: transparent; max-width: 400px; width: calc(100% - 40px); color: var(--ink); }
+  .lead-modal::backdrop { background: rgba(56, 44, 35, 0.45); }
+  .lead-modal-card { margin: 0; background: var(--cream-2); border: 2px solid var(--line-2); border-radius: 16px; box-shadow: 0 10px 0 var(--line-2); padding: 22px 22px 18px; }
+  .lead-modal-eyebrow { font-family: var(--mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--orange-d); margin: 0 0 8px; }
+  .lead-modal-title { font-size: 1.15rem; margin: 0 0 8px; letter-spacing: -0.01em; }
+  .lead-modal-detail { margin: 0 0 18px; color: var(--ink-soft); font-size: 0.95rem; }
+  .lead-modal-actions { display: flex; justify-content: flex-end; }
+  .lead-modal[open] .lead-modal-card { animation: lead-modal-pop .16s ease; }
+  @keyframes lead-modal-pop { from { transform: translateY(6px) scale(.98); opacity: 0; } to { transform: none; opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .lead-modal[open] .lead-modal-card { animation: none; } }
 
   /* lead detail (/app/leads/{id}) */
   .app-detail { max-width: 560px; }
@@ -391,6 +391,8 @@
   .app-detail .status { font-family: var(--mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); }
   .app-detail-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
   .app-detail-actions .btn { padding: 11px 18px; font-size: 0.88rem; }
+  /* the detail page sits in .auth-card, which forces .btn-primary full-width; keep it inline here */
+  .app-detail-actions .btn-primary { width: auto; margin-top: 0; }
   .app-contact { margin-top: 22px; }
   .app-links { list-style: none; padding: 0; margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
   .app-link-out { display: inline-flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 0.73rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink); text-decoration: none; background: var(--cream-2); border: 1.5px solid var(--line-2); border-radius: 8px; padding: 7px 12px; box-shadow: 0 3px 0 var(--line-2); transition: transform .08s ease, box-shadow .08s ease, color .08s ease; }
