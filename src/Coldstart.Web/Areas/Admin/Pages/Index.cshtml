@@ -1,0 +1,40 @@
+@page "/admin"
+@model Coldstart.Web.Areas.Admin.Pages.IndexModel
+@{ ViewData["Title"] = "Admin"; Layout = "/Pages/Shared/_Layout.cshtml"; }
+
+<header class="app-bar">
+  <a class="brand" href="/"><img src="/logo.svg" alt="Coldstart" style="height:30px;width:auto;display:block;"></a>
+  <nav class="app-nav">
+    <form method="post" asp-page="/Account/Logout" asp-area="Identity"><button class="btn btn-ghost" type="submit">Log out</button></form>
+  </nav>
+</header>
+
+<main class="wrap app-zone">
+  <h1>Company admins</h1>
+  @if (Model.StatusMessage is not null) { <p class="form-status">@Model.StatusMessage</p> }
+
+  <form method="post" class="admin-invite">
+    <div asp-validation-summary="All" class="field-error"></div>
+    <div class="field"><label asp-for="Input.Company">Company name</label><input asp-for="Input.Company" required></div>
+    <div class="field"><label asp-for="Input.Email">Admin email</label><input asp-for="Input.Email" type="email" required></div>
+    <button class="btn btn-primary" type="submit">Send invite →</button>
+  </form>
+
+  <h2 class="app-group-head">Pending</h2>
+  @if (Model.Pending.Count == 0) { <p class="app-group-empty">No pending invites.</p> }
+  else
+  {
+    <ul class="app-links">
+      @foreach (var r in Model.Pending) { <li><span class="app-link-out">@r.Email · expires in @r.DaysLeft d</span></li> }
+    </ul>
+  }
+
+  <h2 class="app-group-head">Accepted</h2>
+  @if (Model.Accepted.Count == 0) { <p class="app-group-empty">No accepted admins yet.</p> }
+  else
+  {
+    <ul class="app-links">
+      @foreach (var r in Model.Accepted) { <li><span class="app-link-out">@r.Email</span></li> }
+    </ul>
+  }
+</main>
