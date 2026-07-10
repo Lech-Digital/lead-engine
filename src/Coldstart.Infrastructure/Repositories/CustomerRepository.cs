@@ -26,4 +26,13 @@ internal sealed class CustomerRepository(ColdstartDbContext db) : ICustomerRepos
         db.Customers.Update(customer);
         await db.SaveChangesAsync(ct);
     }
+
+    public async Task DeleteAsync(CustomerId id, CancellationToken ct)
+    {
+        var leads = await db.Leads.Where(l => l.CustomerId == id).ToListAsync(ct);
+        db.Leads.RemoveRange(leads);
+        var customer = await db.Customers.FirstOrDefaultAsync(c => c.Id == id, ct);
+        if (customer is not null) db.Customers.Remove(customer);
+        await db.SaveChangesAsync(ct);
+    }
 }

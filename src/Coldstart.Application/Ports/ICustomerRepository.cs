@@ -9,4 +9,5 @@ public interface ICustomerRepository
     Task<Customer?> GetByNameAsync(string name, CancellationToken ct);
     Task<Customer?> GetAsync(CustomerId id, CancellationToken ct);
     Task UpdateAsync(Customer customer, CancellationToken ct);
+    Task DeleteAsync(CustomerId id, CancellationToken ct);
 }

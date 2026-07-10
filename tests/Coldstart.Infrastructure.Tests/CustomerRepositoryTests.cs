@@ -65,4 +65,27 @@ public class CustomerRepositoryTests(PostgresFixture fixture) : IClassFixture<Po
         found.Profile.VatNumber.Should().Be("NL123");
         found.Profile.ContactEmail.Should().Be("hi@acme.com");
     }
+
+    [Fact]
+    public async Task DeleteAsync_RemovesCustomerAndItsLeads()
+    {
+        // Arrange
+        await using var db = fixture.NewDbContext();
+        var customers = new CustomerRepository(db);
+        var leads = new LeadRepository(db);
+        var customer = Customer.Create("delete-me@test.com");
+        await customers.AddAsync(customer, CancellationToken.None);
+        var lead = customer.AddLead("Lead Co", Fit.Yes, "subj", "draft", DateTimeOffset.UtcNow);
+        await leads.AddAsync(lead, CancellationToken.None);
+
+        // Act
+        await customers.DeleteAsync(customer.Id, CancellationToken.None);
+
+        // Assert
+        await using var readDb = fixture.NewDbContext();
+        var readCustomers = new CustomerRepository(readDb);
+        var readLeads = new LeadRepository(readDb);
+        (await readCustomers.GetAsync(customer.Id, CancellationToken.None)).Should().BeNull();
+        (await readLeads.ForCustomerAsync(customer.Id, CancellationToken.None)).Should().BeEmpty();
+    }
 }
