@@ -1,3 +1,6 @@
+using System.Text.RegularExpressions;
+using Coldstart.Application.Ports;
+using Coldstart.Domain;
 using Coldstart.Web;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,9 +30,20 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Act
         var html = await client.GetStringAsync("/admin");
 
-        // Assert
-        html.Should().Contain(pending).And.Contain("Pending");
-        html.Should().Contain(active).And.Contain("Active");
+        // Assert — each email's status must appear within that email's own table row, not just anywhere on the page
+        RowContaining(html, pending).Should().Contain("Pending");
+        RowContaining(html, active).Should().Contain("Active");
+    }
+
+    // Extracts the single <tr>...</tr> that contains the given text, so status assertions are row-scoped
+    // rather than free-floating substring checks against the whole page.
+    private static string RowContaining(string html, string needle)
+    {
+        foreach (Match row in Regex.Matches(html, "<tr\\b.*?</tr>", RegexOptions.Singleline))
+        {
+            if (row.Value.Contains(needle)) return row.Value;
+        }
+        throw new Xunit.Sdk.XunitException($"No <tr> found containing \"{needle}\".");
     }
 
     [Fact]
@@ -58,13 +72,23 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
         var invitee = $"revoke-{Guid.NewGuid():N}@test.com";
         await TestAuth.PostFormAsync(client, "/admin?handler=Invite", new() { ["Input.Company"] = "Rev Co", ["Input.Email"] = invitee });
 
+        Guid customerId;
+        using (var setupScope = factory.Services.CreateScope())
+        {
+            var mgr0 = setupScope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            customerId = (await mgr0.FindByEmailAsync(invitee))!.CustomerId!.Value;
+        }
+
         // Act
         await TestAuth.PostFormAsync(client, "/admin?handler=Revoke", new() { ["email"] = invitee });
 
-        // Assert
+        // Assert — both the user and its provisioned tenant are gone
         using var scope = factory.Services.CreateScope();
         var mgr = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         (await mgr.FindByEmailAsync(invitee)).Should().BeNull();
+
+        var customers = scope.ServiceProvider.GetRequiredService<ICustomerRepository>();
+        (await customers.GetAsync(new CustomerId(customerId), CancellationToken.None)).Should().BeNull();
     }
 
     [Fact]
@@ -129,19 +153,25 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
         var target = $"removeme-{Guid.NewGuid():N}@test.com";
         await TestAuth.CreateUserAsync(factory, target, "Passw0rd!");
         string userId;
+        Guid customerId;
         using (var scope = factory.Services.CreateScope())
         {
             var mgr = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-            userId = (await mgr.FindByEmailAsync(target))!.Id;
+            var user = (await mgr.FindByEmailAsync(target))!;
+            userId = user.Id;
+            customerId = user.CustomerId!.Value;
         }
 
         // Act
         await TestAuth.PostFormAsync(admin, "/admin?handler=Remove", new() { ["id"] = userId });
 
-        // Assert
+        // Assert — both the user and its tenant are gone
         using var scope2 = factory.Services.CreateScope();
         var users = scope2.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         (await users.FindByEmailAsync(target)).Should().BeNull();
+
+        var customers = scope2.ServiceProvider.GetRequiredService<ICustomerRepository>();
+        (await customers.GetAsync(new CustomerId(customerId), CancellationToken.None)).Should().BeNull();
     }
 
     [Fact]

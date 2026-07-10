@@ -154,9 +154,16 @@ public sealed class IndexModel(
         if (user is not null)
         {
             var customerId = user.CustomerId;
-            await users.DeleteAsync(user);
-            if (customerId is { } cid) await deleteCustomer.DeleteAsync(cid, ct);
-            StatusMessage = "Account removed.";
+            var result = await users.DeleteAsync(user);
+            if (!result.Succeeded)
+            {
+                StatusMessage = "Could not remove that account.";
+            }
+            else
+            {
+                if (customerId is { } cid) await deleteCustomer.DeleteAsync(cid, ct);
+                StatusMessage = "Account removed.";
+            }
         }
         await LoadAsync(ct);
         return Page();

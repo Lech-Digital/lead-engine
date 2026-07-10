@@ -46,12 +46,24 @@ public sealed class ExternalLoginModel(
         if (signInResult.Succeeded)
             return LocalRedirect(returnUrl);
 
+        if (signInResult.IsLockedOut)
+        {
+            ErrorMessage = "This account is blocked. Contact your administrator.";
+            return RedirectToPage("./Login");
+        }
+
         var emailClaim = info.Principal.FindFirstValue(ClaimTypes.Email);
         if (!string.IsNullOrEmpty(emailClaim))
         {
             var existing = await userManager.FindByEmailAsync(emailClaim);
             if (existing is not null)
             {
+                if (!await signInManager.CanSignInAsync(existing))
+                {
+                    ErrorMessage = "This account is blocked. Contact your administrator.";
+                    return RedirectToPage("./Login");
+                }
+
                 // Merge: link the external login to the pre-existing local account.
                 await userManager.AddLoginAsync(existing, info);
                 await signInManager.SignInAsync(existing, isPersistent: false);
@@ -83,6 +95,12 @@ public sealed class ExternalLoginModel(
 
         user.CustomerId = await provision.ProvisionAsync(user.Email!, HttpContext.RequestAborted);
         await userManager.UpdateAsync(user);
+
+        if (!await signInManager.CanSignInAsync(user))
+        {
+            ErrorMessage = "This account is blocked. Contact your administrator.";
+            return RedirectToPage("./Login");
+        }
 
         await signInManager.SignInAsync(user, isPersistent: false);
         return LocalRedirect(returnUrl);
