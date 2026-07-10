@@ -122,6 +122,60 @@ public sealed class IndexModel(
         return Page();
     }
 
+    public async Task<IActionResult> OnPostBlockAsync(string id, CancellationToken ct)
+    {
+        var user = await GuardTargetAsync(id);
+        if (user is not null)
+        {
+            await users.SetLockoutEnabledAsync(user, true);
+            await users.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
+            await users.UpdateSecurityStampAsync(user);   // invalidate any live cookie
+            StatusMessage = $"{user.Email} is blocked.";
+        }
+        await LoadAsync(ct);
+        return Page();
+    }
+
+    public async Task<IActionResult> OnPostUnblockAsync(string id, CancellationToken ct)
+    {
+        var user = await GuardTargetAsync(id);
+        if (user is not null)
+        {
+            await users.SetLockoutEndDateAsync(user, null);
+            StatusMessage = $"{user.Email} is active again.";
+        }
+        await LoadAsync(ct);
+        return Page();
+    }
+
+    public async Task<IActionResult> OnPostRemoveAsync(string id, CancellationToken ct)
+    {
+        var user = await GuardTargetAsync(id);
+        if (user is not null)
+        {
+            var customerId = user.CustomerId;
+            await users.DeleteAsync(user);
+            if (customerId is { } cid) await deleteCustomer.DeleteAsync(cid, ct);
+            StatusMessage = "Account removed.";
+        }
+        await LoadAsync(ct);
+        return Page();
+    }
+
+    // Returns the target only if it is safe to act on: exists, is not a SuperAdmin, and is not the current user.
+    private async Task<ApplicationUser?> GuardTargetAsync(string id)
+    {
+        var user = await users.FindByIdAsync(id);
+        if (user is null) { StatusMessage = "No such account."; return null; }
+        if (await users.IsInRoleAsync(user, ColdstartRoles.SuperAdmin)
+            || string.Equals(user.Email, User.Identity?.Name, StringComparison.OrdinalIgnoreCase))
+        {
+            StatusMessage = "That account can't be modified.";
+            return null;
+        }
+        return user;
+    }
+
     private async Task<bool> IsCompanyAdminAsync(ApplicationUser user) =>
         await users.IsInRoleAsync(user, ColdstartRoles.CompanyAdmin);
 

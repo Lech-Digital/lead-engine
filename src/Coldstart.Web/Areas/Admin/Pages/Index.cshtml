@@ -45,6 +45,18 @@
               <form method="post" asp-page-handler="CopyLink"><input type="hidden" name="email" value="@r.Email"><button class="btn btn-ghost btn-sm" type="submit">Copy link</button></form>
               <form method="post" asp-page-handler="Revoke" onsubmit="return confirm('Revoke the invite for @r.Email?');"><input type="hidden" name="email" value="@r.Email"><button class="btn btn-ghost btn-sm" type="submit">Revoke</button></form>
             }
+            @if (r.Status != "Pending" && r.CanManage)
+            {
+              @if (r.Status == "Blocked")
+              {
+                <form method="post" asp-page-handler="Unblock"><input type="hidden" name="id" value="@r.Id"><button class="btn btn-ghost btn-sm" type="submit">Unblock</button></form>
+              }
+              else
+              {
+                <form method="post" asp-page-handler="Block"><input type="hidden" name="id" value="@r.Id"><button class="btn btn-ghost btn-sm" type="submit">Block</button></form>
+              }
+              <form method="post" asp-page-handler="Remove" onsubmit="return confirm('Remove @r.Email and delete their data? This cannot be undone.');"><input type="hidden" name="id" value="@r.Id"><button class="btn btn-ghost btn-sm" type="submit">Remove</button></form>
+            }
           </td>
         </tr>
       }

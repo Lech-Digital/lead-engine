@@ -82,4 +82,88 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Assert
         html.Should().Contain("/Identity/Account/ResetPassword").And.Contain(System.Net.WebUtility.UrlEncode(invitee).Replace("%40", "@"));
     }
+
+    [Fact]
+    public async Task Block_ThenLogin_IsRejected_AndUnblock_Restores()
+    {
+        // Arrange — an active user with a known password + tenant
+        var admin = factory.CreateClient(new() { AllowAutoRedirect = false });
+        await TestAuth.SignInAsync(factory, admin, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        var target = $"blockme-{Guid.NewGuid():N}@test.com";
+        await TestAuth.CreateUserAsync(factory, target, "Passw0rd!");
+        string userId;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var mgr = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            userId = (await mgr.FindByEmailAsync(target))!.Id;
+        }
+
+        // Act — block, then attempt to log in on a fresh client
+        await TestAuth.PostFormAsync(admin, "/admin?handler=Block", new() { ["id"] = userId });
+        var blocked = factory.CreateClient(new() { AllowAutoRedirect = false });
+        await TestAuth.PostFormAsync(blocked, "/Identity/Account/Login",
+            new() { ["Input.Email"] = target, ["Input.Password"] = "Passw0rd!", ["Input.RememberMe"] = "false" });
+        var appWhileBlocked = await blocked.GetAsync("/app");
+
+        // Assert — blocked user is not authenticated (bounced to login)
+        appWhileBlocked.StatusCode.Should().Be(System.Net.HttpStatusCode.Redirect);
+        appWhileBlocked.Headers.Location!.OriginalString.Should().Contain("/Identity/Account/Login");
+
+        // Act — unblock, then log in again
+        await TestAuth.PostFormAsync(admin, "/admin?handler=Unblock", new() { ["id"] = userId });
+        var ok = factory.CreateClient(new() { AllowAutoRedirect = false });
+        await TestAuth.PostFormAsync(ok, "/Identity/Account/Login",
+            new() { ["Input.Email"] = target, ["Input.Password"] = "Passw0rd!", ["Input.RememberMe"] = "false" });
+        var appAfterUnblock = await ok.GetAsync("/app");
+
+        // Assert — now authenticated (200, not redirected to login)
+        appAfterUnblock.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task Remove_DeletesUserAndTenant()
+    {
+        // Arrange
+        var admin = factory.CreateClient();
+        await TestAuth.SignInAsync(factory, admin, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        var target = $"removeme-{Guid.NewGuid():N}@test.com";
+        await TestAuth.CreateUserAsync(factory, target, "Passw0rd!");
+        string userId;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var mgr = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            userId = (await mgr.FindByEmailAsync(target))!.Id;
+        }
+
+        // Act
+        await TestAuth.PostFormAsync(admin, "/admin?handler=Remove", new() { ["id"] = userId });
+
+        // Assert
+        using var scope2 = factory.Services.CreateScope();
+        var users = scope2.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        (await users.FindByEmailAsync(target)).Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Remove_SuperAdmin_IsRejected()
+    {
+        // Arrange
+        var admin = factory.CreateClient();
+        var bossEmail = $"boss-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, admin, bossEmail, "Passw0rd!", ColdstartRoles.SuperAdmin);
+        string bossId;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var mgr = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            bossId = (await mgr.FindByEmailAsync(bossEmail))!.Id;
+        }
+
+        // Act — try to remove self (a SuperAdmin)
+        await TestAuth.PostFormAsync(admin, "/admin?handler=Remove", new() { ["id"] = bossId });
+
+        // Assert — still there
+        using var scope2 = factory.Services.CreateScope();
+        var users = scope2.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        (await users.FindByEmailAsync(bossEmail)).Should().NotBeNull();
+    }
 }
