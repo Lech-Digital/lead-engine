@@ -1,0 +1,29 @@
+# Build outputs (rebuilt inside the image)
+**/bin/
+**/obj/
+
+# VCS / local tooling
+.git/
+.vs/
+.vscode/
+.idea/
+
+# Secrets & local config (never bake into the image)
+.env
+**/appsettings.Development.json
+
+# Python engine, docs, tests — not needed to build the web app
+.venv/
+__pycache__/
+*.pyc
+leadengine/
+clients/
+docs/
+outreach/
+tests/
+logs/
+*.db
+*.csv
+
+# Deploy artifacts
+deploy/.env.prod

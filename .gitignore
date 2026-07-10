@@ -11,3 +11,6 @@ outreach/
 bin/
 obj/
 src/Coldstart.Web/appsettings.Development.json
+
+# Deploy secrets
+deploy/.env.prod

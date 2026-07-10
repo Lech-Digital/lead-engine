@@ -1,0 +1,62 @@
+# Production stack for getcoldstart.nl — app + Postgres + Caddy (auto-HTTPS).
+# Run on the server with:
+#   docker compose --env-file deploy/.env.prod -f docker-compose.prod.yml up -d --build
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: coldstart
+      POSTGRES_USER: coldstart
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/.env.prod}
+    volumes:
+      - coldstart-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coldstart -d coldstart"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Coldstart: "Host=db;Port=5432;Database=coldstart;Username=coldstart;Password=${POSTGRES_PASSWORD}"
+      # Persist Data Protection keys so invite/reset links + login cookies survive redeploys.
+      DataProtection__KeyPath: /app/keys
+      # Transactional email (Resend SMTP). Values come from deploy/.env.prod.
+      Smtp__Host: ${SMTP_HOST:-smtp.resend.com}
+      Smtp__Port: ${SMTP_PORT:-465}
+      Smtp__Username: ${SMTP_USERNAME:-resend}
+      Smtp__Password: ${SMTP_PASSWORD:?set SMTP_PASSWORD (Resend API key) in deploy/.env.prod}
+      Smtp__FromName: ${SMTP_FROM_NAME:-Coldstart}
+      Smtp__FromAddress: ${SMTP_FROM_ADDRESS:-noreply@getcoldstart.nl}
+    volumes:
+      - coldstart-dpkeys:/app/keys
+    expose:
+      - "8080"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - web
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  coldstart-pgdata:
+  coldstart-dpkeys:
+  caddy-data:
+  caddy-config:

@@ -1,5 +1,6 @@
 using Coldstart.Application;
 using Coldstart.Infrastructure;
+using Microsoft.AspNetCore.DataProtection;
 using Coldstart.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +29,12 @@ builder.Services.ConfigureApplicationCookie(o =>
 });
 
 builder.Services.Configure<DataProtectionTokenProviderOptions>(o => o.TokenLifespan = TimeSpan.FromDays(7));
+
+// In production, persist Data Protection keys to a mounted volume so invite/reset
+// tokens and auth cookies survive container redeploys. No-op in dev (unset).
+var dpKeyPath = builder.Configuration["DataProtection:KeyPath"];
+if (!string.IsNullOrWhiteSpace(dpKeyPath))
+    builder.Services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(dpKeyPath));
 
 var authBuilder = builder.Services.AddAuthentication();
 var googleId = builder.Configuration["Authentication:Google:ClientId"];

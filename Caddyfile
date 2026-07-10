@@ -1,0 +1,10 @@
+# Automatic HTTPS via Let's Encrypt. Requires the domain's A record to point at
+# this server and ports 80/443 open. Everything is served by the one web app.
+getcoldstart.nl {
+	reverse_proxy web:8080
+}
+
+# Send www to the bare domain.
+www.getcoldstart.nl {
+	redir https://getcoldstart.nl{uri} permanent
+}
