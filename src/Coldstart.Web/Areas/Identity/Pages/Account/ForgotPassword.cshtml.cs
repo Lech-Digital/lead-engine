@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text;
 using Coldstart.Application.Ports;
 using Coldstart.Infrastructure.Identity;
+using Coldstart.Web.Email;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -29,9 +30,8 @@ public sealed class ForgotPasswordModel(UserManager<ApplicationUser> users, IEma
             var code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
             var link = Url.Page("/Account/ResetPassword", pageHandler: null,
                 values: new { area = "Identity", code, email = Input.Email }, protocol: Request.Scheme)!;
-            await email.SendAsync(Input.Email, "Reset your Coldstart password",
-                $"Set a new password for your Coldstart account:\n\n{link}\n\nThis link expires in 7 days. If you didn't ask for this, ignore this email.",
-                null, ct);
+            var content = EmailTemplates.PasswordReset(link);
+            await email.SendAsync(Input.Email, content.Subject, content.TextBody, content.HtmlBody, ct);
         }
 
         Sent = true;   // neutral result regardless of whether the account exists

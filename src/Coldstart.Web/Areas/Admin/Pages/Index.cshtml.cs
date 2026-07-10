@@ -4,6 +4,7 @@ using System.Text;
 using Coldstart.Application.Customers;
 using Coldstart.Application.Ports;
 using Coldstart.Infrastructure.Identity;
+using Coldstart.Web.Email;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -63,9 +64,8 @@ public sealed class IndexModel(
         var code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
         var link = Url.Page("/Account/ResetPassword", pageHandler: null,
             values: new { area = "Identity", code, email = Input.Email }, protocol: Request.Scheme)!;
-        await email.SendAsync(Input.Email, "You've been invited to Coldstart",
-            $"You've been invited to Coldstart as the admin for {Input.Company}.\n\n" +
-            $"Set your password to get started:\n\n{link}\n\nThis link expires in 7 days.", null, ct);
+        var content = EmailTemplates.Invitation(Input.Company, link);
+        await email.SendAsync(Input.Email, content.Subject, content.TextBody, content.HtmlBody, ct);
 
         StatusMessage = $"Invitation sent to {Input.Email}.";
         Input = new InputModel();

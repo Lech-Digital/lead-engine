@@ -58,6 +58,7 @@ public class AdminInviteTests(ColdstartWebFactory factory) : IClassFixture<Colds
         (await db.Customers.AnyAsync(c => c.Id == new CustomerId(user.CustomerId!.Value))).Should().BeTrue();
         factory.Email.Sent.Should().ContainSingle(m => m.To == invitee);
         factory.Email.Sent.Single().TextBody.Should().Contain("/Identity/Account/ResetPassword");
+        factory.Email.Sent.Single().HtmlBody!.Should().Contain("/Identity/Account/ResetPassword").And.Contain("Acme Co");
     }
 
     [Fact]

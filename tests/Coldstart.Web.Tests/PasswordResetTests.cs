@@ -27,6 +27,8 @@ public class PasswordResetTests(ColdstartWebFactory factory) : IClassFixture<Col
         // Assert
         factory.Email.Sent.Should().ContainSingle(m => m.To == email);
         factory.Email.Sent.Single().TextBody.Should().Contain("/Identity/Account/ResetPassword");
+        factory.Email.Sent.Single().HtmlBody.Should().NotBeNull();
+        factory.Email.Sent.Single().HtmlBody!.Should().Contain("/Identity/Account/ResetPassword").And.Contain("getcoldstart.nl");
     }
 
     [Fact]
