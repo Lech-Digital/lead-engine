@@ -10,18 +10,26 @@ internal sealed class SmtpEmailSender(IOptions<SmtpOptions> options) : IEmailSen
 {
     private readonly SmtpOptions _o = options.Value;
 
-    public async Task SendAsync(string to, string subject, string body, CancellationToken ct)
+    public async Task SendAsync(string to, string subject, string textBody, string? htmlBody, CancellationToken ct)
     {
-        var msg = new MimeMessage();
-        msg.From.Add(new MailboxAddress(_o.FromName, string.IsNullOrWhiteSpace(_o.FromAddress) ? _o.Username : _o.FromAddress));
-        msg.To.Add(MailboxAddress.Parse(to));
-        msg.Subject = subject;
-        msg.Body = new TextPart("plain") { Text = body };
+        var msg = BuildMessage(_o, to, subject, textBody, htmlBody);
 
         using var client = new SmtpClient();
         await client.ConnectAsync(_o.Host, _o.Port, SecureSocketOptions.SslOnConnect, ct);
         await client.AuthenticateAsync(_o.Username, _o.Password, ct);
         await client.SendAsync(msg, ct);
         await client.DisconnectAsync(true, ct);
+    }
+
+    internal static MimeMessage BuildMessage(SmtpOptions o, string to, string subject, string textBody, string? htmlBody)
+    {
+        var msg = new MimeMessage();
+        msg.From.Add(new MailboxAddress(o.FromName, string.IsNullOrWhiteSpace(o.FromAddress) ? o.Username : o.FromAddress));
+        msg.To.Add(MailboxAddress.Parse(to));
+        msg.Subject = subject;
+        msg.Body = string.IsNullOrEmpty(htmlBody)
+            ? new TextPart("plain") { Text = textBody }
+            : new BodyBuilder { TextBody = textBody, HtmlBody = htmlBody }.ToMessageBody();
+        return msg;
     }
 }

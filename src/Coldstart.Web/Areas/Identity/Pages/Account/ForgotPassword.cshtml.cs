@@ -31,7 +31,7 @@ public sealed class ForgotPasswordModel(UserManager<ApplicationUser> users, IEma
                 values: new { area = "Identity", code, email = Input.Email }, protocol: Request.Scheme)!;
             await email.SendAsync(Input.Email, "Reset your Coldstart password",
                 $"Set a new password for your Coldstart account:\n\n{link}\n\nThis link expires in 7 days. If you didn't ask for this, ignore this email.",
-                ct);
+                null, ct);
         }
 
         Sent = true;   // neutral result regardless of whether the account exists

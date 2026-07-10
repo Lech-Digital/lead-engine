@@ -17,7 +17,7 @@ internal sealed class SubmitInquiry(IInquiryRepository inquiries, IEmailSender e
                    $"Niche: {inquiry.Niche}\nSells: {inquiry.WhatYouSell}\nMessage: {inquiry.Message ?? "(none)"}";
         try
         {
-            await email.SendAsync(NotifyTo, $"New inquiry from {inquiry.Name}", body, ct);
+            await email.SendAsync(NotifyTo, $"New inquiry from {inquiry.Name}", body, null, ct);
         }
         catch
         {

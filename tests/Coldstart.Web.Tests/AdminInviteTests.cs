@@ -57,7 +57,7 @@ public class AdminInviteTests(ColdstartWebFactory factory) : IClassFixture<Colds
         (await users.IsInRoleAsync(user, ColdstartRoles.CompanyAdmin)).Should().BeTrue();
         (await db.Customers.AnyAsync(c => c.Id == new CustomerId(user.CustomerId!.Value))).Should().BeTrue();
         factory.Email.Sent.Should().ContainSingle(m => m.To == invitee);
-        factory.Email.Sent.Single().Body.Should().Contain("/Identity/Account/ResetPassword");
+        factory.Email.Sent.Single().TextBody.Should().Contain("/Identity/Account/ResetPassword");
     }
 
     [Fact]

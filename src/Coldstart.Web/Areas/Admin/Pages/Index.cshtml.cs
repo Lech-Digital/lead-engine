@@ -65,7 +65,7 @@ public sealed class IndexModel(
             values: new { area = "Identity", code, email = Input.Email }, protocol: Request.Scheme)!;
         await email.SendAsync(Input.Email, "You've been invited to Coldstart",
             $"You've been invited to Coldstart as the admin for {Input.Company}.\n\n" +
-            $"Set your password to get started:\n\n{link}\n\nThis link expires in 7 days.", ct);
+            $"Set your password to get started:\n\n{link}\n\nThis link expires in 7 days.", null, ct);
 
         StatusMessage = $"Invitation sent to {Input.Email}.";
         Input = new InputModel();

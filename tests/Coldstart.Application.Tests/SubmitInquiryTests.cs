@@ -24,7 +24,7 @@ public class SubmitInquiryTests
 
         // Assert
         await repo.Received(1).AddAsync(Arg.Is<Inquiry>(i => i.Name == "Sam" && i.Email.Value == "sam@acme.com"), Arg.Any<CancellationToken>());
-        await email.Received(1).SendAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Is<string>(b => b.Contains("Sam")), Arg.Any<CancellationToken>());
+        await email.Received(1).SendAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Is<string>(b => b.Contains("Sam")), Arg.Any<string?>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -33,7 +33,7 @@ public class SubmitInquiryTests
         // Arrange
         var repo = Substitute.For<IInquiryRepository>();
         var email = Substitute.For<IEmailSender>();
-        email.SendAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+        email.SendAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
             .Returns<Task>(_ => throw new InvalidOperationException("smtp down"));
         var sut = new SubmitInquiry(repo, email);
 

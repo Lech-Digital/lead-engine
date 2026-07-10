@@ -26,7 +26,7 @@ public class PasswordResetTests(ColdstartWebFactory factory) : IClassFixture<Col
 
         // Assert
         factory.Email.Sent.Should().ContainSingle(m => m.To == email);
-        factory.Email.Sent.Single().Body.Should().Contain("/Identity/Account/ResetPassword");
+        factory.Email.Sent.Single().TextBody.Should().Contain("/Identity/Account/ResetPassword");
     }
 
     [Fact]
@@ -54,7 +54,7 @@ public class PasswordResetTests(ColdstartWebFactory factory) : IClassFixture<Col
         await TestAuth.CreateUserAsync(factory, email, "OldPassw0rd!");
         factory.Email.Sent.Clear();
         await TestAuth.PostFormAsync(client, "/Identity/Account/ForgotPassword", new() { ["Input.Email"] = email });
-        var link = Regex.Match(factory.Email.Sent.Single().Body, @"/Identity/Account/ResetPassword\?\S+").Value;
+        var link = Regex.Match(factory.Email.Sent.Single().TextBody, @"/Identity/Account/ResetPassword\?\S+").Value;
         var code = Regex.Match(link, @"code=([^&\s]+)").Groups[1].Value;
 
         // Act — post a new password using the code from the link
@@ -85,7 +85,7 @@ public class PasswordResetTests(ColdstartWebFactory factory) : IClassFixture<Col
         await TestAuth.CreateUserAsync(factory, email, "OldPassw0rd!", ColdstartRoles.SuperAdmin, provisionTenant: false);
         factory.Email.Sent.Clear();
         await TestAuth.PostFormAsync(client, "/Identity/Account/ForgotPassword", new() { ["Input.Email"] = email });
-        var link = Regex.Match(factory.Email.Sent.Single().Body, @"/Identity/Account/ResetPassword\?\S+").Value;
+        var link = Regex.Match(factory.Email.Sent.Single().TextBody, @"/Identity/Account/ResetPassword\?\S+").Value;
         var code = Regex.Match(link, @"code=([^&\s]+)").Groups[1].Value;
 
         // Act — post a new password using the code from the link
