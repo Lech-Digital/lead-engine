@@ -19,6 +19,7 @@ public sealed class IndexModel(
     UserManager<ApplicationUser> users,
     IProvisionCustomer provision,
     ICustomerRepository customers,
+    IDeleteCustomer deleteCustomer,
     IEmailSender email) : PageModel
 {
     [BindProperty]
@@ -26,6 +27,7 @@ public sealed class IndexModel(
 
     public string? StatusMessage { get; private set; }
     public IReadOnlyList<UserRow> Rows { get; private set; } = [];
+    public (string Email, string Url)? CopyLink { get; private set; }
 
     public sealed record UserRow(string Id, string Email, string Company, string Role, string Status, int? DaysLeft, bool CanManage);
 
@@ -67,6 +69,67 @@ public sealed class IndexModel(
         Input = new InputModel();
         await LoadAsync(ct);
         return Page();
+    }
+
+    public async Task<IActionResult> OnPostResendAsync(string email, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(email)) { StatusMessage = "No account specified."; await LoadAsync(ct); return Page(); }
+
+        var user = await users.FindByEmailAsync(email);
+        if (user is { EmailConfirmed: false } && await IsCompanyAdminAsync(user))
+        {
+            var company = await CompanyNameAsync(user, ct);
+            await SendInviteAsync(user, company, ct);
+            StatusMessage = $"Invitation re-sent to {email}.";
+        }
+        else StatusMessage = "Nothing to resend for that account.";
+        await LoadAsync(ct);
+        return Page();
+    }
+
+    public async Task<IActionResult> OnPostRevokeAsync(string email, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(email)) { StatusMessage = "No account specified."; await LoadAsync(ct); return Page(); }
+
+        var user = await users.FindByEmailAsync(email);
+        if (user is { EmailConfirmed: false } && await IsCompanyAdminAsync(user))
+        {
+            var customerId = user.CustomerId;
+            var result = await users.DeleteAsync(user);
+            if (!result.Succeeded)
+            {
+                StatusMessage = $"Could not remove {email}.";
+            }
+            else
+            {
+                if (customerId is { } cid) await deleteCustomer.DeleteAsync(cid, ct);
+                StatusMessage = $"Invitation to {email} revoked.";
+            }
+        }
+        else StatusMessage = "Only pending invites can be revoked.";
+        await LoadAsync(ct);
+        return Page();
+    }
+
+    public async Task<IActionResult> OnPostCopyLinkAsync(string email, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(email)) { StatusMessage = "No account specified."; await LoadAsync(ct); return Page(); }
+
+        var user = await users.FindByEmailAsync(email);
+        if (user is { EmailConfirmed: false } && await IsCompanyAdminAsync(user))
+            CopyLink = (email, await BuildSetPasswordLinkAsync(user));
+        await LoadAsync(ct);
+        return Page();
+    }
+
+    private async Task<bool> IsCompanyAdminAsync(ApplicationUser user) =>
+        await users.IsInRoleAsync(user, ColdstartRoles.CompanyAdmin);
+
+    private async Task<string> CompanyNameAsync(ApplicationUser user, CancellationToken ct)
+    {
+        if (user.CustomerId is not { } cid) return "your company";
+        var all = await customers.AllAsync(ct);
+        return all.FirstOrDefault(c => c.Id.Value == cid)?.Name ?? "your company";
     }
 
     private async Task SendInviteAsync(ApplicationUser user, string company, CancellationToken ct)

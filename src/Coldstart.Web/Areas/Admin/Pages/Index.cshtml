@@ -12,6 +12,10 @@
 <main class="wrap app-zone">
   <h1>Company admins</h1>
   @if (Model.StatusMessage is not null) { <p class="form-status">@Model.StatusMessage</p> }
+  @if (Model.CopyLink is { } cl)
+  {
+    <div class="form-status">Set-password link for @cl.Email:<br><input class="copy-link" type="text" readonly value="@cl.Url" onclick="this.select()" style="width:100%;"></div>
+  }
 
   <form method="post" asp-page-handler="Invite" class="admin-invite">
     <div asp-validation-summary="All" class="field-error"></div>
@@ -34,7 +38,14 @@
           <td>@r.Email</td>
           <td>@r.Role</td>
           <td>@r.Status@(r.Status == "Pending" && r.DaysLeft is not null ? $" · {r.DaysLeft}d" : "")</td>
-          <td><!-- actions added in Tasks 6 & 7 --></td>
+          <td class="admin-actions">
+            @if (r.Status == "Pending")
+            {
+              <form method="post" asp-page-handler="Resend"><input type="hidden" name="email" value="@r.Email"><button class="btn btn-ghost btn-sm" type="submit">Resend</button></form>
+              <form method="post" asp-page-handler="CopyLink"><input type="hidden" name="email" value="@r.Email"><button class="btn btn-ghost btn-sm" type="submit">Copy link</button></form>
+              <form method="post" asp-page-handler="Revoke" onsubmit="return confirm('Revoke the invite for @r.Email?');"><input type="hidden" name="email" value="@r.Email"><button class="btn btn-ghost btn-sm" type="submit">Revoke</button></form>
+            }
+          </td>
         </tr>
       }
       </tbody>
