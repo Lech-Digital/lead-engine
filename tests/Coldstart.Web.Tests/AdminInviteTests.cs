@@ -40,7 +40,7 @@ public class AdminInviteTests(ColdstartWebFactory factory) : IClassFixture<Colds
         factory.Email.Sent.Clear();
 
         // Act
-        await TestAuth.PostFormAsync(client, "/admin", new()
+        await TestAuth.PostFormAsync(client, "/admin?handler=Invite", new()
         {
             ["Input.Company"] = "Acme Co", ["Input.Email"] = invitee,
         });
@@ -73,7 +73,7 @@ public class AdminInviteTests(ColdstartWebFactory factory) : IClassFixture<Colds
         factory.Email.Sent.Clear();
 
         // Act
-        var html = await TestAuth.PostFormReadAsync(client, "/admin", new()
+        var html = await TestAuth.PostFormReadAsync(client, "/admin?handler=Invite", new()
         {
             ["Input.Company"] = "Dup Co", ["Input.Email"] = existing,
         });

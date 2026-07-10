@@ -13,28 +13,31 @@
   <h1>Company admins</h1>
   @if (Model.StatusMessage is not null) { <p class="form-status">@Model.StatusMessage</p> }
 
-  <form method="post" class="admin-invite">
+  <form method="post" asp-page-handler="Invite" class="admin-invite">
     <div asp-validation-summary="All" class="field-error"></div>
     <div class="field"><label asp-for="Input.Company">Company name</label><input asp-for="Input.Company" required></div>
     <div class="field"><label asp-for="Input.Email">Admin email</label><input asp-for="Input.Email" type="email" required></div>
     <button class="btn btn-primary" type="submit">Send invite →</button>
   </form>
 
-  <h2 class="app-group-head">Pending</h2>
-  @if (Model.Pending.Count == 0) { <p class="app-group-empty">No pending invites.</p> }
+  <h2 class="app-group-head">Companies &amp; users</h2>
+  @if (Model.Rows.Count == 0) { <p class="app-group-empty">No accounts yet.</p> }
   else
   {
-    <ul class="app-links">
-      @foreach (var r in Model.Pending) { <li><span class="app-link-out">@r.Email · expires in @r.DaysLeft d</span></li> }
-    </ul>
-  }
-
-  <h2 class="app-group-head">Accepted</h2>
-  @if (Model.Accepted.Count == 0) { <p class="app-group-empty">No accepted admins yet.</p> }
-  else
-  {
-    <ul class="app-links">
-      @foreach (var r in Model.Accepted) { <li><span class="app-link-out">@r.Email</span></li> }
-    </ul>
+    <table class="admin-table">
+      <thead><tr><th>Company</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+      @foreach (var r in Model.Rows)
+      {
+        <tr>
+          <td>@r.Company</td>
+          <td>@r.Email</td>
+          <td>@r.Role</td>
+          <td>@r.Status@(r.Status == "Pending" && r.DaysLeft is not null ? $" · {r.DaysLeft}d" : "")</td>
+          <td><!-- actions added in Tasks 6 & 7 --></td>
+        </tr>
+      }
+      </tbody>
+    </table>
   }
 </main>
