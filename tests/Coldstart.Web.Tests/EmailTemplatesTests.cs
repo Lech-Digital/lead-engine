@@ -18,7 +18,7 @@ public class EmailTemplatesTests
         c.Subject.Should().NotBeNullOrWhiteSpace();
         c.TextBody.Should().Contain(Url).And.Contain("Acme Co");
         c.HtmlBody.Should().Contain(Url).And.Contain("Acme Co").And.Contain("getcoldstart.nl");
-        c.HtmlBody.Should().Contain("coldstart");
+        c.HtmlBody.Should().Contain("coldstart<span");
         c.HtmlBody.Should().Contain("#FF6A3D");
         c.HtmlBody.Should().NotContain("<img");
     }
