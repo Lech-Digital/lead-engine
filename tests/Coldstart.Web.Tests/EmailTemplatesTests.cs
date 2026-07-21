@@ -67,4 +67,36 @@ public class EmailTemplatesTests
         content.HtmlBody.Should().Contain("https://getcoldstart.nl/app");
         content.TextBody.Should().Contain("morning");
     }
+
+    [Fact]
+    public void MorningBriefing_ListsLeadsAndLinksToTheApp()
+    {
+        // Arrange
+        var leads = new[] { new EmailTemplates.BriefingLead("Acme Co", "A thought on your new funding"),
+                            new EmailTemplates.BriefingLead("Beta BV", "Your first sales hire") };
+
+        // Act
+        var content = EmailTemplates.MorningBriefing(2, leads, "https://getcoldstart.nl/app");
+
+        // Assert
+        content.Subject.Should().Contain("2 new leads");
+        content.TextBody.Should().Contain("Acme Co").And.Contain("Beta BV");
+        content.HtmlBody.Should().Contain("Acme Co").And.Contain("A thought on your new funding");
+        content.HtmlBody.Should().Contain("https://getcoldstart.nl/app");
+        content.HtmlBody.Should().NotContain("<img");
+    }
+
+    [Fact]
+    public void MorningBriefing_HtmlEncodesLeadFields()
+    {
+        // Arrange
+        var leads = new[] { new EmailTemplates.BriefingLead("A & B <Ltd>", "Re: <script>") };
+
+        // Act
+        var content = EmailTemplates.MorningBriefing(1, leads, "https://getcoldstart.nl/app");
+
+        // Assert
+        content.HtmlBody.Should().Contain("A &amp; B &lt;Ltd&gt;");
+        content.HtmlBody.Should().NotContain("<script>");
+    }
 }

@@ -10,6 +10,8 @@ internal static class EmailTemplates
 {
     private const string Site = "https://getcoldstart.nl";
 
+    internal sealed record BriefingLead(string Company, string Subject);
+
     internal static EmailContent Invitation(string company, string setPasswordUrl) => new(
         Subject: "You're invited to Coldstart",
         TextBody:
@@ -54,6 +56,30 @@ internal static class EmailTemplates
             ctaText: "Open your briefing",
             ctaUrl: appUrl,
             footnote: "Questions? Just reply to this email."));
+
+    internal static EmailContent MorningBriefing(int count, IReadOnlyList<BriefingLead> leads, string appUrl)
+    {
+        var word = count == 1 ? "lead" : "leads";
+        var textRows = string.Join("\n", leads.Select(l => $"  • {l.Company} — {l.Subject}"));
+        var htmlRows = string.Join("", leads.Select(l =>
+            $"<tr><td style=\"padding:10px 0;border-bottom:1px solid #E7E2D7;\">" +
+            $"<span style=\"font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-weight:700;font-size:15px;color:#16192B;\">{Enc(l.Company)}</span><br>" +
+            $"<span style=\"font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;color:#5D5A50;\">{Enc(l.Subject)}</span>" +
+            "</td></tr>"));
+        return new(
+            Subject: $"Your morning briefing — {count} new {word} waiting",
+            TextBody:
+                $"Good morning. The engine found {count} new {word} for you overnight:\n\n{textRows}\n\n" +
+                $"Each comes with a drafted opening email. Review and approve them here:\n\n{appUrl}\n\n" +
+                "Nothing is sent without your approval.",
+            HtmlBody: Shell(
+                heading: $"Good morning — {count} new {word}",
+                introHtml: "The engine found these for you overnight, each with a drafted opening email:" +
+                           "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin:14px 0 4px;\">" + htmlRows + "</table>",
+                ctaText: "Open your briefing",
+                ctaUrl: appUrl,
+                footnote: "You're receiving this because leads were found for your Coldstart account overnight. Nothing is sent without your approval."));
+    }
 
     private static string Enc(string s) => WebUtility.HtmlEncode(s);
 
