@@ -1,8 +1,10 @@
 using System.Net;
+using System.Text;
 using System.Text.RegularExpressions;
 using Coldstart.Web;
 using Coldstart.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.DependencyInjection;
 using FluentAssertions;
 using Xunit;
@@ -102,5 +104,62 @@ public class PasswordResetTests(ColdstartWebFactory factory) : IClassFixture<Col
         // Assert — SuperAdmins land on /admin
         response.StatusCode.Should().Be(HttpStatusCode.Redirect);
         response.Headers.Location!.OriginalString.Should().Be("/admin");
+    }
+
+    [Fact]
+    public async Task CompleteInvite_SendsWelcomeEmail()
+    {
+        // Arrange — invited user (EmailConfirmed=false) with a valid reset code, minted the
+        // same way the admin-invite handler does (CreateAsync with a password, no confirmation).
+        var client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        var email = $"invite-{Guid.NewGuid():N}@test.com";
+        string code;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var user = new ApplicationUser { UserName = email, Email = email, EmailConfirmed = false };
+            await users.CreateAsync(user, "TempP4ssw0rd!");
+            var token = await users.GeneratePasswordResetTokenAsync(user);
+            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+        }
+        factory.Email.Sent.Clear();
+
+        // Act — POST the ResetPassword form with a valid code + new password.
+        await TestAuth.PostFormAsync(client, "/Identity/Account/ResetPassword", new()
+        {
+            ["Input.Email"] = email,
+            ["Input.Code"] = code,
+            ["Input.Password"] = "BrandNewP4ss!",
+            ["Input.ConfirmPassword"] = "BrandNewP4ss!",
+        });
+
+        // Assert
+        factory.Email.Sent.Should().Contain(m => m.Subject.Contains("Welcome"));
+    }
+
+    [Fact]
+    public async Task NormalPasswordReset_DoesNotSendWelcomeEmail()
+    {
+        // Arrange — user with EmailConfirmed=true resets their password.
+        var client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        var email = $"reset3-{Guid.NewGuid():N}@test.com";
+        await TestAuth.CreateUserAsync(factory, email, "OldPassw0rd!");
+        factory.Email.Sent.Clear();
+        await TestAuth.PostFormAsync(client, "/Identity/Account/ForgotPassword", new() { ["Input.Email"] = email });
+        var link = Regex.Match(factory.Email.Sent.Single().TextBody, @"/Identity/Account/ResetPassword\?\S+").Value;
+        var code = Regex.Match(link, @"code=([^&\s]+)").Groups[1].Value;
+        factory.Email.Sent.Clear();
+
+        // Act — same POST as above.
+        await TestAuth.PostFormAsync(client, "/Identity/Account/ResetPassword", new()
+        {
+            ["Input.Email"] = email,
+            ["Input.Code"] = code,
+            ["Input.Password"] = "BrandNewP4ss!",
+            ["Input.ConfirmPassword"] = "BrandNewP4ss!",
+        });
+
+        // Assert
+        factory.Email.Sent.Should().NotContain(m => m.Subject.Contains("Welcome"));
     }
 }

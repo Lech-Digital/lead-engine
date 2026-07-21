@@ -54,4 +54,17 @@ public class EmailTemplatesTests
         content.TextBody.Should().Contain("finds companies that need what you sell");
         content.HtmlBody.Should().Contain("finds companies that need what you sell");
     }
+
+    [Fact]
+    public void Welcome_ExplainsNextSteps_AndLinksToTheApp()
+    {
+        // Arrange + Act
+        var content = EmailTemplates.Welcome("https://getcoldstart.nl/app");
+
+        // Assert
+        content.Subject.Should().Contain("Welcome");
+        content.TextBody.Should().Contain("https://getcoldstart.nl/app");
+        content.HtmlBody.Should().Contain("https://getcoldstart.nl/app");
+        content.TextBody.Should().Contain("morning");
+    }
 }

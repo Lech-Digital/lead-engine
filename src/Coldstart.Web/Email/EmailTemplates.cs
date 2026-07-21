@@ -38,6 +38,23 @@ internal static class EmailTemplates
             ctaUrl: setPasswordUrl,
             footnote: "This link expires in 7 days. If you didn't ask for this, you can ignore this email."));
 
+    internal static EmailContent Welcome(string appUrl) => new(
+        Subject: "Welcome to Coldstart — your mornings just changed",
+        TextBody:
+            "Your Coldstart account is ready.\n\n" +
+            "Here's what happens next: we configure the engine to your niche, and it starts hunting overnight. " +
+            "Each morning, any leads it finds — already checked against what you sell, with a drafted opening email — will be waiting in your briefing.\n\n" +
+            $"Your briefing lives here:\n\n{appUrl}\n\n" +
+            "You review, approve or skip, and get on with your day. Nothing is ever sent without you.",
+        HtmlBody: Shell(
+            heading: "Welcome to Coldstart",
+            introHtml: "Your account is ready. Here's what happens next: we configure the engine to your niche, and it starts hunting overnight. " +
+                       "Each morning, any leads it finds — already checked against what you sell, with a drafted opening email — will be waiting in your briefing. " +
+                       "You review, approve or skip, and get on with your day. Nothing is ever sent without you.",
+            ctaText: "Open your briefing",
+            ctaUrl: appUrl,
+            footnote: "Questions? Just reply to this email."));
+
     private static string Enc(string s) => WebUtility.HtmlEncode(s);
 
     private static string Shell(string heading, string introHtml, string ctaText, string ctaUrl, string footnote) => $$"""

@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text;
+using Coldstart.Application.Ports;
 using Coldstart.Infrastructure.Identity;
+using Coldstart.Web.Email;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -10,7 +12,8 @@ namespace Coldstart.Web.Areas.Identity.Pages.Account;
 
 public sealed class ResetPasswordModel(
     UserManager<ApplicationUser> users,
-    SignInManager<ApplicationUser> signIn) : PageModel
+    SignInManager<ApplicationUser> signIn,
+    IEmailSender email) : PageModel
 {
     [BindProperty]
     public InputModel Input { get; set; } = new();
@@ -49,7 +52,20 @@ public sealed class ResetPasswordModel(
             return Page();
         }
 
-        if (!user.EmailConfirmed) { user.EmailConfirmed = true; await users.UpdateAsync(user); }
+        if (!user.EmailConfirmed)
+        {
+            user.EmailConfirmed = true;
+            await users.UpdateAsync(user);
+            // Invite completion — first successful password set. Welcome them; best-effort,
+            // a mail failure must not block the sign-in below.
+            try
+            {
+                var appUrl = $"{Request.Scheme}://{Request.Host}/app";
+                var welcome = EmailTemplates.Welcome(appUrl);
+                await email.SendAsync(user.Email!, welcome.Subject, welcome.TextBody, welcome.HtmlBody, ct);
+            }
+            catch { /* welcome email is best-effort */ }
+        }
         await signIn.SignInAsync(user, isPersistent: false);
         return LocalRedirect(await RoleRedirect.PathForAsync(users, user, ct));
     }
