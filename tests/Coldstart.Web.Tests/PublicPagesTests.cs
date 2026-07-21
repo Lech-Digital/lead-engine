@@ -12,13 +12,29 @@ public class PublicPagesTests(ColdstartWebFactory factory) : IClassFixture<Colds
         var client = factory.CreateClient();
 
         // Act
-        var response = await client.GetAsync("/");
-        var html = await response.Content.ReadAsStringAsync();
+        var html = await client.GetStringAsync("/");
 
         // Assert
-        response.EnsureSuccessStatusCode();
-        html.Should().Contain("Coldstart");
-        html.Should().Contain("Send me an email");
+        html.Should().Contain("coldstart");                        // wordmark
+        html.Should().Contain("Get 3 sample leads");               // primary CTA
+        html.Should().Contain("Wake up to your next client");      // hero promise
+    }
+
+    [Fact]
+    public async Task GetLanding_TellsTheMorningStory_AndPricing()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+
+        // Act
+        var html = await client.GetStringAsync("/");
+
+        // Assert
+        html.Should().Contain("While you sleep");                  // night act
+        html.Should().Contain("06:58");                            // timestamped story
+        html.Should().Contain("€750");                             // transparent pricing
+        html.Should().Contain("€350");                             // setup fee
+        html.Should().Contain("doing the part AI is actually good at");   // AI section (static markup is emitted verbatim — avoid asserting on apostrophes)
     }
 
     [Fact]

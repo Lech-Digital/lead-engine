@@ -1,253 +1,139 @@
 @page
 @model IndexModel
 @{
-    ViewData["Title"] = "Coldstart — qualified leads, drafted, in your inbox every morning";
+    ViewData["Title"] = "Coldstart — wake up to your next client, already found";
     Layout = "_Layout";
 }
 
-<div class="rainbow" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+<main class="lp">
 
-<div class="statusbar" id="statusbar">
-  <div class="inner">
-    <span class="live"><span class="pdot"></span>COLDSTART · LIVE — scanning signals<span class="caret"></span></span>
-    <span class="count"><span id="sbCount">2,481</span> signals today</span>
-    <span class="sb-actions">
+<!-- Act 0 · Hero (daylight) -->
+<header class="lp-hero">
+  <div class="wrap">
+    <nav class="lp-nav">
+      <a class="wordmark" href="/" aria-label="Coldstart home">coldstart<i>*</i></a>
       @if (User.Identity?.IsAuthenticated == true)
       {
-          <a class="sb-cta sb-cta-ghost" href="/app">Customer zone →</a>
+          <a class="lp-login hero-login" href="/app">Customer zone →</a>
       }
       else
       {
-          <a class="sb-cta sb-cta-ghost" href="/Identity/Account/Login">Log in</a>
+          <a class="lp-login hero-login" href="/Identity/Account/Login">Log in</a>
       }
-      <a class="sb-cta" data-compose href="mailto:andrzej.lech.andrzej@@gmail.com?subject=Coldstart%20%E2%80%94%20interested">Send me an email</a>
-    </span>
-  </div>
-</div>
-
-<main>
-<header class="hero">
-  <div class="wrap">
-    <div class="hero-grid">
-      <div>
-        <a class="brand" href="/" aria-label="Coldstart home"><img src="/logo.svg" alt="Coldstart" width="150" height="40" style="display:block;height:40px;width:auto;"></a>
-        <h1>Qualified leads — with the first email <span class="hl">already written</span> — in your inbox every morning.</h1>
-        <p class="lede">We watch the public web for companies showing a buying signal <em>right now</em> — hiring sprees, fresh funding, tools they're outgrowing — qualify them strictly, and draft the opening email. You approve, and it sends.</p>
-        <div class="cta-row">
-          <a class="btn btn-primary" data-compose href="mailto:andrzej.lech.andrzej@@gmail.com?subject=Coldstart%20%E2%80%94%20interested&body=Hi%2C%20my%20niche%20is%20___.%20Can%20you%20send%20a%20few%20sample%20leads%3F">Send me an email →</a>
-          <a class="btn btn-ghost" href="#proof">See real leads ↓</a>
-          @if (User.Identity?.IsAuthenticated == true)
-          {
-              <a class="btn btn-ghost hero-login" href="/app">Customer zone →</a>
-          }
-          else
-          {
-              <a class="btn btn-ghost hero-login" href="/Identity/Account/Login">Log in →</a>
-          }
-        </div>
-        <p class="urgency"><span class="bolt">⚡</span> Buying signals go stale in weeks. We get you in front of them first — not fortieth.</p>
-      </div>
-
-      <div class="device" id="demo" aria-hidden="true">
-        <div class="device-bar">
-          <span class="dots"><i></i><i></i><i></i></span>
-          <span class="title">incoming leads</span>
-          <span class="blive"><span class="pdot"></span>LIVE</span>
-        </div>
-        <div class="device-screen" id="demoScreen">
-          <!-- JS fills this; static fallback below for no-JS -->
-          <div class="msg in">
-            <div class="msg-head"><span class="avatar" style="background:#E07A3E">G</span><span class="who">Coldstart</span><span class="chip">Slack</span><span class="time">now</span></div>
-            <div class="fresh">fresh · just now</div>
-            <div class="verdict">● NEW QUALIFIED LEAD · GitLab</div>
-            <div class="subj">Subj: Optimizing HR Systems for GitLab</div>
-            <div class="type">Hiring a Staff HRIS Analyst — investing in how they scale hiring.</div>
-            <div class="acts"><span class="mini ok">Approve ✓</span><span class="mini no">Skip</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="stats">
-      <div class="stat" data-reveal><span class="n">77&nbsp;<span class="arrow">→</span>&nbsp;3</span><span class="k">signals scanned, narrowed to 3 leads worth your time — in one run</span></div>
-      <div class="stat" data-reveal><span class="n">$0.00</span><span class="k">spent on AI for unqualified noise — scoring is free, AI only runs on pre-screened leads</span></div>
-      <div class="stat" data-reveal><span class="n">3–4</span><span class="k">sentence opening email written per lead, referencing their specific situation</span></div>
-      <div class="stat" data-reveal><span class="n">100%</span><span class="k">human-approved — nothing is ever sent without your explicit OK</span></div>
+    </nav>
+    <h1>Wake up to your next client, already found — with the first email already written.</h1>
+    <p class="lp-lede">For companies that sell to other businesses. We watch the market overnight, pick the few companies that need you right now, and draft your opening email. You read it over coffee and hit approve.</p>
+    <div class="lp-cta-row">
+      <a class="btn btn-primary" href="#get-leads">Get 3 sample leads — free</a>
+      <a class="lp-quiet" href="#enemy">See one morning ↓</a>
     </div>
   </div>
 </header>
 
-<section>
-  <div class="wrap">
-    <div class="section-head" data-reveal>
-      <p class="eyebrow">How it works</p>
-      <h2>Five steps run before anything reaches you.</h2>
-      <p>The order is deliberate: the cheap, deterministic work happens first, so money is only ever spent on leads that already look real.</p>
-    </div>
-    <div class="steps">
-      <div class="step" data-reveal><div class="num">01</div><h3>Scan signals</h3><p>Job boards, funding announcements, and forums — only sources that publish openly. No scraping, no risk.</p></div>
-      <div class="step" data-reveal><div class="num">02</div><h3>Score for free</h3><p>A deterministic gate ranks each item for niche fit and buying intent. Costs nothing.</p></div>
-      <div class="step" data-reveal><div class="num">03</div><h3>AI qualifies</h3><p>Only top-scoring leads reach the model. It's strict — competitors, job seekers, and noise are rejected.</p></div>
-      <div class="step" data-reveal><div class="num">04</div><h3>Draft written</h3><p>For each survivor, a specific opening email plus a link to find the real decision-maker.</p></div>
-      <div class="step" data-reveal><div class="num">05</div><h3>You approve</h3><p>Leads land in a queue. You approve with the recipient's address — then it sends. Always your call.</p></div>
-    </div>
+<!-- Act 1 · The enemy (daylight) -->
+<section class="lp-act" id="enemy">
+  <div class="wrap wrap-narrow" data-reveal>
+    <h2>You already know what bad outreach looks like.<br>It's in your inbox right now.</h2>
+    <blockquote class="lp-spam">
+      <p>"I hope this email finds you well. I came across your company and was impressed…"</p>
+      <footer>— sent to 5,000 people from a bought list. Answered by none.</footer>
+    </blockquote>
+    <p>You delete these every day. So does everyone you'd ever want as a client. That's why "finding new clients" feels dirty — and why it keeps sliding to the bottom of your list while somewhere out there, right now, a company needs exactly what you sell.</p>
   </div>
 </section>
 
-<section class="band" id="proof">
-  <div class="wrap">
-    <div class="section-head" data-reveal>
-      <p class="eyebrow">Live run · sample niche: applicant-tracking software</p>
-      <h2>Three real leads from one unedited run.<span class="caret"></span></h2>
-      <p>These are verbatim outputs for a sample client (a recruiting-software company). For your business we configure the niche and the offer — the drafts speak in your voice, about your product.</p>
-    </div>
-    <div class="leads">
-      <article class="lead" data-reveal>
-        <div class="lead-top"><span class="lead-co">GitLab</span><span class="lead-meta">score 0.75 · job-board</span></div>
-        <div class="tags"><span class="tag tag-signal">Signal detected</span><span class="tag tag-qual">Qualified · YES</span></div>
-        <p class="signal-line"><span class="lbl">Why now:</span> Hiring a <b>Staff HRIS Analyst, People Technology</b> — actively investing in how they scale hiring.</p>
-        <blockquote class="draft">
-          <span class="subj">Subj: Optimizing HR Systems for GitLab</span>
-          As you own the HRIS product roadmap and drive system evolution to reduce friction and enable scale across People operations, you likely face challenges in streamlining your hiring process. Our AI-screened candidate shortlists can help you cut time-to-hire by 40%, freeing you to focus on higher-level strategic decisions. Can you spare 10 minutes to discuss how this might support your team's goals?
-        </blockquote>
-      </article>
-      <article class="lead" data-reveal>
-        <div class="lead-top"><span class="lead-co">Stripe</span><span class="lead-meta">score 0.70 · job-board</span></div>
-        <div class="tags"><span class="tag tag-signal">Signal detected</span><span class="tag tag-qual">Qualified · YES</span></div>
-        <p class="signal-line"><span class="lbl">Why now:</span> Hiring a <b>Talent &amp; Development Facilitator</b> — growing the team and onboarding function.</p>
-        <blockquote class="draft">
-          <span class="subj">Subj: Optimizing Talent Acquisition at Stripe</span>
-          As Stripe continues to grow and "increase the GDP of the internet," its talent acquisition process is critical to finding the right candidates quickly. AI-screened candidate shortlists can reduce time-to-hire and let the Employee Onboarding &amp; Engagement team focus on outstanding learning experiences. Can you spare 10 minutes to discuss how we can support Stripe's hiring efforts?
-        </blockquote>
-      </article>
-      <article class="lead" data-reveal>
-        <div class="lead-top"><span class="lead-co">Patronus AI</span><span class="lead-meta">score 0.50 · funding</span></div>
-        <div class="tags"><span class="tag tag-signal">Signal detected</span><span class="tag tag-qual">Qualified · YES</span></div>
-        <p class="signal-line"><span class="lbl">Why now:</span> Just raised <b>$50M</b> amid "nearly insatiable demand" — about to scale headcount fast.</p>
-        <blockquote class="draft">
-          <span class="subj">Subj: Scaling Headcount with AI Efficiency</span>
-          Patronus AI's nearly insatiable demand is a strong indicator the company is about to scale headcount, which can strain HR teams. AI-screened candidate shortlists can cut time-to-hire by 40%, letting HR focus on more strategic tasks. As you invest in new tooling, how are you planning to optimize hiring to keep up with demand?
-        </blockquote>
-      </article>
-    </div>
-    <p class="band-note" data-reveal><b>What you don't see is the point.</b> The same run produced a competitor that <em>builds</em> hiring software and a dozen anonymous forum opinions — all rejected before they reached this list. You get the three worth pursuing, not the seventy to wade through.</p>
+<!-- Act 2 · The belief (daylight) -->
+<section class="lp-act lp-act-belief">
+  <div class="wrap wrap-narrow" data-reveal>
+    <h2>There is a right way to do this.</h2>
+    <ul class="lp-beliefs">
+      <li><strong>Write to a few companies, not thousands.</strong> Three good conversations beat three thousand deletions.</li>
+      <li><strong>Write the morning something happens to them.</strong> New funding, a first sales hire, a tool they've outgrown — the moment their need is real and their inbox isn't full of pitches yet.</li>
+      <li><strong>Write about them, not about you.</strong> The first sentence should prove you actually read their news.</li>
+      <li><strong>Say no to almost everyone.</strong> Out of 77 companies we looked at one recent morning, we rejected 74.</li>
+    </ul>
   </div>
 </section>
 
-<section>
-  <div class="wrap">
-    <div class="section-head" data-reveal>
-      <p class="eyebrow">Speed is the whole game</p>
-      <h2>A buying signal has a short shelf life.</h2>
-      <p>The morning a company posts a senior hire or closes a round, the clock starts — they begin choosing tools. Reach them while that window is open and you're the first credible option, not the fortieth identical pitch weeks later.</p>
-    </div>
-    <div class="win" data-reveal>
-      <div class="win-bar"><span class="fill"></span></div>
-      <div class="win-pts">
-        <div class="win-pt you"><div class="d"><i style="background:var(--teal)"></i>Day 0–2 · you</div><div class="t">We surface the signal the morning it appears — your email lands first, while interest is hottest.</div></div>
-        <div class="win-pt"><div class="d"><i style="background:var(--gold)"></i>Week 1–2</div><div class="t">They're actively evaluating. Still reachable — but the inbox is filling up.</div></div>
-        <div class="win-pt late"><div class="d"><i style="background:var(--rose)"></i>Week 3–4</div><div class="t">Scraped lists catch up. Now you're one of dozens of look-alike emails.</div></div>
-        <div class="win-pt gone"><div class="d"><i style="background:var(--rose-d)"></i>After</div><div class="t">A vendor's chosen. The window's closed until the next signal.</div></div>
+<!-- Act 3 · While you sleep (night) -->
+<section class="lp-night" id="morning">
+  <div class="wrap wrap-narrow">
+    <p class="lp-night-label ts" data-reveal>WHILE YOU SLEEP</p>
+    <div class="lp-timeline">
+      <div class="lp-moment" data-reveal>
+        <p class="lp-time ts">06:58</p>
+        <p>Patronus AI announces a $50M round amid "nearly insatiable demand." Their news is minutes old.</p>
       </div>
-      <p class="win-cap">Lead-response research is blunt about this: reach a fresh, in-market buyer within the hour and you're several times more likely to win the conversation than someone who shows up days later. The drafts are written and waiting — so you can actually move that fast.</p>
-    </div>
-  </div>
-</section>
-
-<section>
-  <div class="wrap">
-    <div class="section-head" data-reveal>
-      <p class="eyebrow">Why it isn't just another scraper</p>
-      <h2>Built to protect your reputation, not just fill a spreadsheet.</h2>
-    </div>
-    <div class="why-grid">
-      <div class="why" data-reveal><h3>Qualify first, write second</h3><p>The model decides "would this company actually buy?" before a single word of outreach is written. A "no" costs you nothing and is never sent.</p></div>
-      <div class="why" data-reveal><h3>Specific, never generic</h3><p>Every draft opens on a real detail from that company's situation — the role they posted, the round they raised. No "I hope this finds you well."</p></div>
-      <div class="why" data-reveal><h3>No invented contacts</h3><p>We never guess email addresses. Each lead comes with research links to the real decision-maker; you confirm the address before anything sends.</p></div>
-      <div class="why" data-reveal><h3>Public sources only</h3><p>Official job-board and funding feeds — data that's meant to be read by machines. Nothing that breaks, gets you blocked, or creates legal risk.</p></div>
-    </div>
-  </div>
-</section>
-
-<section>
-  <div class="wrap">
-    <div class="offer" data-reveal>
-      <div class="scarcity">
-        <span>⚡ <b>Limited onboarding</b> — we take on only a handful of new niches each month.</span>
-        <span><b>No lock-in</b> — cancel anytime.</span>
+      <div class="lp-moment" data-reveal>
+        <p class="lp-time ts">06:59</p>
+        <p>We check them against what <em>you</em> sell. Most companies fail this check — a competitor, a job seeker, plain noise — and are rejected. This one fits.</p>
       </div>
-      <div class="offer-grid">
-        <div>
-          <p class="eyebrow">The offer</p>
-          <h2>Your niche, monitored daily. Qualified leads, drafted and waiting.</h2>
-          <ul class="checklist">
-            <li>We configure the engine to your exact niche and offer</li>
-            <li>Fresh buying-signal leads delivered to your Slack or inbox every morning</li>
-            <li>Each one qualified, with a ready-to-send opening email</li>
-            <li>You approve and send — we handle everything upstream</li>
-            <li>You own every lead and draft — export them anytime</li>
-          </ul>
-        </div>
-        <div class="offer-cta">
-          <p class="kicker">Simple, all-in pricing</p>
-          <div class="price-tag"><span class="amt">€750</span><span class="per">/ month · ex. VAT</span></div>
-          <p class="price-sub">Everything above included · billed monthly · cancel anytime</p>
-          <p class="price-setup">＋ <b>€350</b> one-time onboarding &amp; setup · ex. VAT</p>
-          <a class="btn btn-primary" data-compose href="mailto:andrzej.lech.andrzej@@gmail.com?subject=Coldstart%20%E2%80%94%20sample%20leads&body=Hi%2C%20my%20niche%20is%20___%20and%20I%20sell%20___.%20Can%20you%20send%20a%20few%20sample%20leads%3F">Get my sample leads →</a>
-          <p class="price-free">Start free — we'll send real sample leads for your niche before you pay a cent.</p>
+      <div class="lp-moment" data-reveal>
+        <p class="lp-time ts">07:04</p>
+        <p>Your opening email is drafted — four sentences, starting from <em>their</em> news, in your voice:</p>
+        <div class="lp-draft">
+          <p class="lp-draft-subj">Subject: Scaling headcount with AI efficiency</p>
+          <p>Patronus AI's nearly insatiable demand is a strong indicator the company is about to scale headcount, which can strain HR teams. AI-screened candidate shortlists can cut time-to-hire by 40%, letting HR focus on more strategic tasks. As you invest in new tooling, how are you planning to optimize hiring to keep up with demand?</p>
+          <footer class="ts">real draft · unedited · written for a sample client selling recruiting software</footer>
         </div>
       </div>
     </div>
   </div>
 </section>
-</main>
 
-<footer>
-  <div class="wrap">
-    <div class="rule"></div>
-    <p class="mono">COLDSTART · automated buying-signal prospecting · all figures and leads on this page are from real, unedited runs</p>
+<!-- Act 4 · Sunrise reveal (dawn gradient) -->
+<section class="lp-sunrise">
+  <div class="wrap" data-reveal>
+    <p class="lp-time ts">07:30</p>
+    <h2>It's in your inbox.</h2>
+    <p class="lp-sunrise-sub">All of this already runs, every morning. It's called Coldstart.</p>
   </div>
-</footer>
+</section>
 
-<div class="overlay" id="composer" role="dialog" aria-modal="true" aria-labelledby="c-title" aria-hidden="true">
-  <div class="modal">
-    <div class="modal-head">
-      <div>
-        <h3 id="c-title">Sample leads for your niche</h3>
-        <p>A few quick details and I'll write the email for you — you just hit send.</p>
-      </div>
-      <button class="modal-x" id="c-x" type="button" aria-label="Close">×</button>
+<!-- Act 5 · How it works & the AI (daylight) -->
+<section class="lp-act">
+  <div class="wrap wrap-narrow" data-reveal>
+    <h2>Yes, it's AI — doing the part AI is actually good at.</h2>
+    <p>Overnight, the engine reads thousands of public pages — job posts, funding news, company announcements. Nothing private, nothing scraped from behind a login. A strict filter throws out everything that doesn't genuinely fit what you sell. Only then does AI write: a short email built on that company's real, hours-old news. It never invents facts and it never guesses email addresses — each lead comes with links to find the real decision-maker.</p>
+    <p><strong>And the part AI must never do stays yours:</strong> nothing is ever sent without you reading and approving it. Every email that goes out is one you chose to send.</p>
+    <p class="lp-punch">That's the whole trick — and it's why this costs €750 a month instead of a €4,000-a-month salary.</p>
+  </div>
+</section>
+
+<!-- Act 6 · Transparent pricing (daylight) -->
+<section class="lp-act lp-pricing-act">
+  <div class="wrap wrap-narrow" data-reveal>
+    <h2>What it costs. All of it.</h2>
+    <div class="lp-pricing">
+      <div class="lp-price"><span class="lp-amt">€750</span><span class="lp-per">per month · ex VAT</span></div>
+      <p class="lp-setup">+ €350 one-time setup · ex VAT — we configure the engine to your exact niche and offer, by hand.</p>
+      <ul class="lp-included">
+        <li>Fresh leads found for you every morning</li>
+        <li>Each one checked against what you sell — most get rejected before you see them</li>
+        <li>A ready-to-send opening email drafted for every lead</li>
+        <li>You approve and send — nothing goes out without you</li>
+        <li>You own every lead and every draft — export anytime</li>
+      </ul>
+      <p class="lp-terms-line">Billed monthly. Cancel anytime — no notice period, no lock-in. We take on only a handful of new niches each month.</p>
     </div>
-    <form class="modal-body" id="c-form" method="post" asp-page="/Contact">
-      <input type="text" name="Website" id="c-website" class="hp" tabindex="-1" autocomplete="off">
-      <div class="field">
-        <label for="c-name">Your name</label>
-        <input id="c-name" name="Name" type="text" autocomplete="off" placeholder="e.g. Sam Rivera" required>
-      </div>
-      <div class="field">
-        <label for="c-email">Your email</label>
-        <input id="c-email" name="Email" type="email" autocomplete="off" placeholder="e.g. sam@acme.com" required>
-      </div>
-      <div class="field">
-        <label for="c-niche">Your niche</label>
-        <input id="c-niche" name="Niche" type="text" autocomplete="off" placeholder="e.g. B2B SaaS for dental clinics">
-      </div>
-      <div class="field">
-        <label for="c-sell">What you sell</label>
-        <input id="c-sell" name="WhatYouSell" type="text" autocomplete="off" placeholder="e.g. scheduling software">
-      </div>
-      <div class="preview" aria-live="polite">
-        <div class="to">To: andrzej.lech.andrzej@@gmail.com</div>
-        <div class="subj" id="c-subj">Coldstart — sample leads</div>
-        <div class="bd">Hi Andrzej,<br><br>I'm <mark class="empty" id="c-pv-name">your name</mark> — I sell <mark class="empty" id="c-pv-sell">what you sell</mark> to <mark class="empty" id="c-pv-niche">your niche</mark>, and I'd like to see the kind of leads Coldstart would find for us.<br><br>Could you send a few sample leads for my niche?<br><br>Thanks!<br><mark class="empty" id="c-pv-name2">your name</mark></div>
-      </div>
-      <p class="hint" id="c-hint">Fill in your name and email — or open your email app to send the draft yourself.</p>
-      <p class="form-status" id="c-status" role="status" aria-live="polite"></p>
-      <div class="modal-actions">
-        <button class="btn btn-primary" id="c-submit" type="submit">Send my details →</button>
-        <a class="btn btn-ghost" id="c-open" href="mailto:andrzej.lech.andrzej@@gmail.com?subject=Coldstart%20%E2%80%94%20sample%20leads">Open in your email app →</a>
-        <button class="btn btn-ghost" id="c-copy" type="button">Copy draft</button>
-      </div>
+  </div>
+</section>
+
+<!-- Act 7 · Closing CTA — sample leads form -->
+<section class="lp-act lp-form-act" id="get-leads">
+  <div class="wrap wrap-narrow" data-reveal>
+    <h2>See your own morning first — free.</h2>
+    <p>Tell us what you sell. We'll run the engine for your niche and send you 3 real leads — with drafts — before you pay anything.</p>
+    <form class="lp-form" id="sample-form" method="post" asp-page="/Contact">
+      <input type="text" name="Website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <div class="field"><label for="f-name">Your name</label><input id="f-name" name="Name" type="text" required></div>
+      <div class="field"><label for="f-email">Your email</label><input id="f-email" name="Email" type="email" required></div>
+      <div class="field"><label for="f-niche">Who your customers are</label><input id="f-niche" name="Niche" type="text" placeholder="e.g. dental clinics in the Benelux"></div>
+      <div class="field"><label for="f-sell">What you sell them</label><input id="f-sell" name="WhatYouSell" type="text" placeholder="e.g. scheduling software"></div>
+      <p class="lp-form-status" id="form-status" role="status" aria-live="polite"></p>
+      <button class="btn btn-primary" type="submit">Send me 3 sample leads →</button>
     </form>
   </div>
-</div>
+</section>
+
+</main>
