@@ -15,6 +15,10 @@ internal sealed class SmtpEmailSender(IOptions<SmtpOptions> options) : IEmailSen
         var msg = BuildMessage(_o, to, subject, textBody, htmlBody);
 
         using var client = new SmtpClient();
+        // CRL/OCSP endpoints are often unreachable from dev machines (macOS + .NET report
+        // "incomplete certificate revocation check"), which MailKit's default policy treats
+        // as fatal and every send dies on connect. Chain and hostname are still validated.
+        client.CheckCertificateRevocation = false;
         await client.ConnectAsync(_o.Host, _o.Port, SecureSocketOptions.SslOnConnect, ct);
         await client.AuthenticateAsync(_o.Username, _o.Password, ct);
         await client.SendAsync(msg, ct);

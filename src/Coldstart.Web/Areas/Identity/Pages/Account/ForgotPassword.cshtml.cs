@@ -10,7 +10,10 @@ using Microsoft.AspNetCore.WebUtilities;
 
 namespace Coldstart.Web.Areas.Identity.Pages.Account;
 
-public sealed class ForgotPasswordModel(UserManager<ApplicationUser> users, IEmailSender email) : PageModel
+public sealed class ForgotPasswordModel(
+    UserManager<ApplicationUser> users,
+    IEmailSender email,
+    ILogger<ForgotPasswordModel> logger) : PageModel
 {
     [BindProperty]
     public InputModel Input { get; set; } = new();
@@ -31,7 +34,16 @@ public sealed class ForgotPasswordModel(UserManager<ApplicationUser> users, IEma
             var link = Url.Page("/Account/ResetPassword", pageHandler: null,
                 values: new { area = "Identity", code, email = Input.Email }, protocol: Request.Scheme)!;
             var content = EmailTemplates.PasswordReset(link);
-            await email.SendAsync(Input.Email, content.Subject, content.TextBody, content.HtmlBody, ct);
+            try
+            {
+                await email.SendAsync(Input.Email, content.Subject, content.TextBody, content.HtmlBody, ct);
+            }
+            catch (Exception ex)
+            {
+                // The page must stay neutral (no account enumeration) and never 500 on a
+                // mail outage — but a reset email that silently vanishes must be loggable.
+                logger.LogError(ex, "Password-reset email to {Email} failed to send.", Input.Email);
+            }
         }
 
         Sent = true;   // neutral result regardless of whether the account exists
