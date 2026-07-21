@@ -14,3 +14,6 @@ src/Coldstart.Web/appsettings.Development.json
 
 # Deploy secrets
 deploy/.env.prod
+
+# Local tool/session artifacts
+.superpowers/
