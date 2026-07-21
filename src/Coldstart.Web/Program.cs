@@ -15,6 +15,7 @@ builder.Services.AddInfrastructure(
         ?? throw new InvalidOperationException("Missing ConnectionStrings:Coldstart"));
 
 builder.Services.Configure<Coldstart.Infrastructure.Email.SmtpOptions>(builder.Configuration.GetSection("Smtp"));
+builder.Services.Configure<Coldstart.Infrastructure.Mailbox.MailboxOptions>(builder.Configuration.GetSection("Mailbox"));
 
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>(o => { o.SignIn.RequireConfirmedAccount = false; })
