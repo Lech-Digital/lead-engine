@@ -66,4 +66,52 @@ public class PublicPagesTests(ColdstartWebFactory factory) : IClassFixture<Colds
         html.Should().Contain("Privacy");
         html.Should().Contain("Schiedam");
     }
+
+    [Fact]
+    public async Task GetTerms_ReturnsOk_WithDraftBanner()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+
+        // Act
+        var html = await client.GetStringAsync("/terms");
+
+        // Assert
+        html.Should().Contain("Terms");
+        html.Should().Contain("pending review");
+        html.Should().Contain("Netherlands");
+    }
+
+    [Fact]
+    public async Task GetPrivacy_CoversGdprEssentials()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+
+        // Act
+        var html = await client.GetStringAsync("/privacy");
+
+        // Assert
+        html.Should().Contain("Autoriteit Persoonsgegevens");
+        html.Should().Contain("Resend");
+        html.Should().Contain("Hetzner");
+        html.Should().Contain("Schiedam");
+    }
+
+    [Fact]
+    public async Task Footer_AppearsOnPublicPages_WithRegistryPlaceholders()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+
+        // Act
+        var landing = await client.GetStringAsync("/");
+        var privacy = await client.GetStringAsync("/privacy");
+
+        // Assert
+        landing.Should().Contain("KvK");
+        privacy.Should().Contain("KvK");
+        landing.Should().Contain("/terms");
+        landing.Should().Contain("/privacy");
+    }
 }
