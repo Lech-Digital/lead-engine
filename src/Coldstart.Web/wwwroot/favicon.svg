@@ -1,5 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Coldstart">
-  <rect x="7" y="10" width="50" height="48" rx="12" fill="#A04E1E"/>
-  <rect x="7" y="6" width="50" height="48" rx="12" fill="#E07A3E"/>
-  <text x="32" y="40" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="30" font-weight="800" text-anchor="middle" fill="#FBF4E6">C</text>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#16192B"/><text x="32" y="47" font-size="46" text-anchor="middle" fill="#FF6A3D" font-family="Helvetica, Arial, sans-serif" font-weight="700">*</text></svg>
