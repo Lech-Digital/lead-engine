@@ -22,6 +22,8 @@ internal sealed class GroqLeadEnricher : ILeadEnricher
     private readonly HttpClient _http;
     private readonly LlmOptions _o;
     private readonly Func<TimeSpan, CancellationToken, Task> _delay;
+    // Assumes sequential EnrichAsync calls within a scoped instance (the harvest loop is
+    // sequential; not thread-safe by design).
     private bool _sentBefore;
 
     public GroqLeadEnricher(HttpClient http, IOptions<LlmOptions> options)
