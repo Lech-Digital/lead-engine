@@ -96,6 +96,7 @@ public class EmailTemplatesTests
         var content = EmailTemplates.MorningBriefing(1, leads, "https://getcoldstart.nl/app");
 
         // Assert
+        content.Subject.Should().Contain("1 new lead waiting");
         content.HtmlBody.Should().Contain("A &amp; B &lt;Ltd&gt;");
         content.HtmlBody.Should().NotContain("<script>");
     }
