@@ -9,7 +9,7 @@ Two independent readers could not tell from the current site what Coldstart sell
 
 ## Audience & message
 
-- **Buyer:** founders/owners of small B2B companies (agencies, consultancies, SaaS, services) with no sales team and no sales vocabulary. Jargon-free copy throughout: no "pipeline", "outbound", "SDR", "buying signals" without immediate plain-language grounding.
+- **Buyer:** founders/owners of small/medium B2B companies (agencies, consultancies, SaaS, services) with no sales team and no sales vocabulary. Jargon-free copy throughout: no "pipeline", "outbound", "SDR", "buying signals" without immediate plain-language grounding.
 - **The one takeaway a visitor must leave with:** *"They find companies that need what I sell, the morning it becomes true, and write the first email for me. I only approve. It's a done-for-you service, €750/month."*
 
 ## Concept: "The Morning Engine"
@@ -67,6 +67,14 @@ Identity applied (daylight surfaces, ink text, sunrise accent, mono timestamps),
 4. **Card layout reworked:** the drafted email (subject + first lines) is the card's hero; company, source, mono timestamp, and "why now" (MatchedSignals) are supporting context; Approve/Skip actions on the card. Drag-and-drop and existing move endpoints unchanged.
 5. Empty states rewritten to say what happens next, not just "no leads".
 
+## Footer & legal pages
+
+1. **Site-wide footer** (new, in `_Layout.cshtml`, so it appears on landing, legal, and app pages): `coldstart*` wordmark, "Coldstart · Schiedam, the Netherlands", KvK and VAT numbers as visible placeholders (`KvK: — · VAT: —`) until Andrzej provides the real values, links to Terms and Privacy, contact email. Quiet ink-on-daylight styling.
+2. **Terms & Conditions page** (new, `/terms`): standard NL/EU B2B service terms — service description, monthly billing ex VAT, cancel anytime/no lock-in, customer owns leads and drafts, liability limitation, GDPR/data-processing reference, Dutch governing law. Written as a clearly-marked draft pending legal review (same approach as the existing Privacy page); not presented as legal advice.
+3. **Privacy page** (upgrade existing `Pages/Privacy.cshtml`): expand the current starter to a GDPR-standard policy for a Dutch company — data categories, legal bases, named processors (Resend for email, Hetzner for hosting), retention, data-subject rights including the right to complain to the Autoriteit Persoonsgegevens, cookie note. Keeps its draft-pending-review banner and KvK/VAT placeholders.
+
+Both legal pages get a restrained "document" layout in the Morning Engine identity (no keynote acts, no night sections).
+
 ## Emails (`Coldstart.Web/Email/EmailTemplates.cs`)
 
 One shared shell — table-based, inline CSS, **no hosted images** (deliverability rule kept): `daylight` body, text wordmark `coldstart*`, ink headings, one sunrise CTA button, thin dawn-gradient strip (table-cell technique, replacing the 5-color rainbow bar), plain-text alternative for every template.
@@ -82,6 +90,7 @@ One shared shell — table-based, inline CSS, **no hosted images** (deliverabili
 
 ## Out of scope
 
+- Legal review of Terms/Privacy content — both pages ship draft-marked; Andrzej arranges review separately.
 - Admin area (`Areas/Admin`) — untouched except whatever it inherits from shared layout/CSS variables.
 - Identity pages (login/register/forgot) — inherit the new tokens via shared CSS but get no structural redesign.
 - The harvester/pipeline, pricing values, and the invite-only registration flow — unchanged.
