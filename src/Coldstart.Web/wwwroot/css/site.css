@@ -127,7 +127,7 @@
   .field input[disabled], .field textarea[disabled] { opacity: 0.65; cursor: not-allowed; }
   .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
   .form-status { font-size: 0.84rem; font-weight: 700; color: #3c7a70; margin: 0; min-height: 1em; }
-  .form-status.error { color: #b3432b; }
+  .form-status.error { color: #B3402A; }
 
   /* auth pages: email/password form + optional external-provider buttons */
   .auth-page { max-width: 420px; padding-top: 64px; padding-bottom: 64px; }
@@ -146,7 +146,7 @@
   .auth-card h1 { font-size: 1.5rem; letter-spacing: -0.02em; margin: 0 0 4px; text-align: center; }
   .auth-sub { text-align: center; color: var(--body-muted); font-size: 0.92rem; margin: 0 0 22px; }
   .auth-card form { display: flex; flex-direction: column; gap: 16px; }
-  .auth-card .field span { color: #b3432b; font-size: 0.78rem; }
+  .auth-card .field span { color: #B3402A; font-size: 0.78rem; }
   .auth-card .btn-primary { width: 100%; justify-content: center; margin-top: 4px; }
   .auth-remember { flex-direction: row; align-items: center; }
   .auth-remember label { display: inline-flex; align-items: center; gap: 9px; cursor: pointer; text-transform: none; letter-spacing: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-weight: 500; font-size: 0.9rem; color: var(--body-muted); }
@@ -256,7 +256,7 @@
   .app-link-out { display: inline-flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 0.73rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink); text-decoration: none; background: #fff; border: 1px solid var(--line-soft); border-radius: 8px; padding: 7px 12px; transition: transform .08s ease, box-shadow .08s ease, color .08s ease; }
   .app-link-out:hover, .app-link-out:focus-visible { color: var(--sunrise-deep); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(22,25,43,0.08); }
   .app-link-out::after { content: "↗"; color: var(--sunrise); font-size: 0.85em; }
-  .field-error { color: #b3432b; font-size: 0.86rem; font-weight: 600; }
+  .field-error { color: #B3402A; font-size: 0.86rem; font-weight: 600; }
   .field-error:empty { display: none; }
 
   /* ===== Footer + legal ===== */
