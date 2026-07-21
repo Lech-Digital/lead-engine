@@ -7,13 +7,15 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Logging;
 
 namespace Coldstart.Web.Areas.Identity.Pages.Account;
 
 public sealed class ResetPasswordModel(
     UserManager<ApplicationUser> users,
     SignInManager<ApplicationUser> signIn,
-    IEmailSender email) : PageModel
+    IEmailSender email,
+    ILogger<ResetPasswordModel> logger) : PageModel
 {
     [BindProperty]
     public InputModel Input { get; set; } = new();
@@ -64,7 +66,7 @@ public sealed class ResetPasswordModel(
                 var welcome = EmailTemplates.Welcome(appUrl);
                 await email.SendAsync(user.Email!, welcome.Subject, welcome.TextBody, welcome.HtmlBody, ct);
             }
-            catch { /* welcome email is best-effort */ }
+            catch (Exception ex) { logger.LogWarning(ex, "Welcome email to {Email} failed; invite completion continues.", user.Email); }
         }
         await signIn.SignInAsync(user, isPersistent: false);
         return LocalRedirect(await RoleRedirect.PathForAsync(users, user, ct));
