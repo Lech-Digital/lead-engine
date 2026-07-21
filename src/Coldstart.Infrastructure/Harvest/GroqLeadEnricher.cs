@@ -22,6 +22,7 @@ internal sealed class GroqLeadEnricher : ILeadEnricher
     private readonly HttpClient _http;
     private readonly LlmOptions _o;
     private readonly Func<TimeSpan, CancellationToken, Task> _delay;
+    private bool _sentBefore;
 
     public GroqLeadEnricher(HttpClient http, IOptions<LlmOptions> options)
         : this(http, options, Task.Delay) { }
@@ -37,6 +38,11 @@ internal sealed class GroqLeadEnricher : ILeadEnricher
     public async Task<EnrichmentResult?> EnrichAsync(RawItem item, NicheOptions niche, SignalResult signal, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(_o.ApiKey)) return null;
+        // Pace the batch: pause before every call after the first so a sequential run
+        // stays under the provider rate limit instead of relying on 429 retries.
+        if (_sentBefore && _o.RequestDelaySeconds > 0)
+            await _delay(TimeSpan.FromSeconds(_o.RequestDelaySeconds), ct);
+        _sentBefore = true;
         var prompt = BuildPrompt(item, niche, signal);
         var body = new
         {

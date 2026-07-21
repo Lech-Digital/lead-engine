@@ -79,6 +79,46 @@ public class GroqLeadEnricherTests
     }
 
     [Fact]
+    public async Task EnrichAsync_WhenCalledBackToBack_PacesRequestsWithConfiguredDelay()
+    {
+        // Arrange
+        var handler = new SequenceHandler(() => Ok(ValidBody));
+        var delays = new List<TimeSpan>();
+        var opts = Options.Create(new LlmOptions { ApiKey = "test-key", RequestDelaySeconds = 2 });
+        var sut = new GroqLeadEnricher(new HttpClient(handler), opts,
+            (d, _) => { delays.Add(d); return Task.CompletedTask; });
+
+        // Act
+        await sut.EnrichAsync(Item, Niche, Signal, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, CancellationToken.None);
+
+        // Assert — no delay before the first request, the pacing delay before each subsequent one
+        handler.Calls.Should().Be(3);
+        delays.Should().HaveCount(2);
+        delays.Should().AllBeEquivalentTo(TimeSpan.FromSeconds(2));
+    }
+
+    [Fact]
+    public async Task EnrichAsync_WhenPacingDisabled_DoesNotDelay()
+    {
+        // Arrange
+        var handler = new SequenceHandler(() => Ok(ValidBody));
+        var delays = new List<TimeSpan>();
+        var opts = Options.Create(new LlmOptions { ApiKey = "test-key", RequestDelaySeconds = 0 });
+        var sut = new GroqLeadEnricher(new HttpClient(handler), opts,
+            (d, _) => { delays.Add(d); return Task.CompletedTask; });
+
+        // Act
+        await sut.EnrichAsync(Item, Niche, Signal, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, CancellationToken.None);
+
+        // Assert
+        handler.Calls.Should().Be(2);
+        delays.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task EnrichAsync_WhenRetryAfterHeaderPresent_HonorsItForTheBackoff()
     {
         // Arrange
