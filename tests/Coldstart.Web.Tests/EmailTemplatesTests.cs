@@ -18,7 +18,9 @@ public class EmailTemplatesTests
         c.Subject.Should().NotBeNullOrWhiteSpace();
         c.TextBody.Should().Contain(Url).And.Contain("Acme Co");
         c.HtmlBody.Should().Contain(Url).And.Contain("Acme Co").And.Contain("getcoldstart.nl");
-        c.HtmlBody.Should().Contain("Cold").And.Contain("start"); // wordmark
+        c.HtmlBody.Should().Contain("coldstart");
+        c.HtmlBody.Should().Contain("#FF6A3D");
+        c.HtmlBody.Should().NotContain("<img");
     }
 
     [Fact]
@@ -40,5 +42,16 @@ public class EmailTemplatesTests
 
         // Assert
         c.HtmlBody.Should().Contain("A &amp; B &lt;Ltd&gt;").And.NotContain("<Ltd>");
+    }
+
+    [Fact]
+    public void Invitation_ExplainsWhatColdstartIs()
+    {
+        // Arrange + Act
+        var content = EmailTemplates.Invitation("Acme Co", "https://example.com/set");
+
+        // Assert — first-touchpoint explanation appears in both bodies
+        content.TextBody.Should().Contain("finds companies that need what you sell");
+        content.HtmlBody.Should().Contain("finds companies that need what you sell");
     }
 }
