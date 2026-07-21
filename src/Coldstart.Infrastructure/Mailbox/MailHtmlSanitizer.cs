@@ -15,6 +15,15 @@ internal static class MailHtmlSanitizer
         sanitizer.AllowedSchemes.Add("cid");          // inline images
         sanitizer.AllowedSchemes.Remove("data");
 
+        // Defense-in-depth: don't rely solely on library defaults for these.
+        // SVG <image href="..."> is a remote-image vector the IMG-only check
+        // below can't see; srcset/sizes let a browser fetch a remote image
+        // even when src is a safe cid: reference.
+        sanitizer.AllowedTags.Remove("svg");
+        sanitizer.AllowedTags.Remove("image");
+        sanitizer.AllowedAttributes.Remove("srcset");
+        sanitizer.AllowedAttributes.Remove("sizes");
+
         sanitizer.PostProcessNode += (_, e) =>
         {
             if (e.Node is not AngleSharp.Dom.IElement el) return;

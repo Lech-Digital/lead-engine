@@ -92,6 +92,35 @@ public class MailHtmlSanitizerTests
     }
 
     [Fact]
+    public void Sanitize_WhenSvgImageIsRemote_RemovesIt()
+    {
+        // Arrange
+        var html = """<p>text</p><svg><image href="https://tracker.example/pixel.png"/></svg>""";
+
+        // Act
+        var result = MailHtmlSanitizer.Sanitize(html);
+
+        // Assert
+        result.Html.Should().NotContain("tracker.example");
+        result.Html.Should().Contain("text");
+    }
+
+    [Fact]
+    public void Sanitize_WhenImgCarriesRemoteSrcset_StripsTheSrcset()
+    {
+        // Arrange
+        var html = """<img src="cid:logo" srcset="https://tracker.example/pixel.png 800w">""";
+
+        // Act
+        var result = MailHtmlSanitizer.Sanitize(html);
+
+        // Assert
+        result.Html.Should().Contain("cid:logo");
+        result.Html.Should().NotContain("tracker.example");
+        result.Html.Should().NotContain("srcset");
+    }
+
+    [Fact]
     public void Sanitize_PlainFormatting_SurvivesUntouched()
     {
         // Arrange
