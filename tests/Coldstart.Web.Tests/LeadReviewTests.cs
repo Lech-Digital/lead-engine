@@ -26,9 +26,9 @@ public class LeadReviewTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Assert
         html.Should().Contain("Pending Co");
         html.Should().Contain("app-tabs");
-        html.Should().Contain("data-tab=\"new\" href=\"/app?tab=new\">New <span class=\"app-tab-count\">1</span>");
-        html.Should().Contain("data-tab=\"accepted\" href=\"/app?tab=accepted\">Accepted <span class=\"app-tab-count\">0</span>");
-        html.Should().Contain("data-tab=\"discarded\" href=\"/app?tab=discarded\">Discarded <span class=\"app-tab-count\">0</span>");
+        html.Should().Contain("data-tab=\"new\" href=\"/app?tab=new\">To review <span class=\"app-tab-count\">1</span>");
+        html.Should().Contain("data-tab=\"accepted\" href=\"/app?tab=accepted\">Approved <span class=\"app-tab-count\">0</span>");
+        html.Should().Contain("data-tab=\"discarded\" href=\"/app?tab=discarded\">Skipped <span class=\"app-tab-count\">0</span>");
     }
 
     [Fact]
@@ -47,11 +47,11 @@ public class LeadReviewTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Assert
         html.Should().Contain("Shelved Co");
         html.Should().Contain("Autoskip Co");
-        html.Should().Contain("Auto-skipped");
+        html.Should().Contain("Skipped automatically");
         // Tab-count spans come straight from the New/Accepted/Discarded partition logic, so these
         // prove both leads were routed into the Discarded buckets (Shelved + Rejected), not New/Accepted.
-        html.Should().Contain("data-tab=\"discarded\" href=\"/app?tab=discarded\">Discarded <span class=\"app-tab-count\">2</span>");
-        html.Should().Contain("data-tab=\"new\" href=\"/app?tab=new\">New <span class=\"app-tab-count\">0</span>");
+        html.Should().Contain("data-tab=\"discarded\" href=\"/app?tab=discarded\">Skipped <span class=\"app-tab-count\">2</span>");
+        html.Should().Contain("data-tab=\"new\" href=\"/app?tab=new\">To review <span class=\"app-tab-count\">0</span>");
     }
 
     [Fact]
@@ -70,9 +70,9 @@ public class LeadReviewTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Assert
         // Tab-count spans come straight from the New/Accepted/Discarded partition logic, so these
         // prove both leads were routed into the Accepted bucket (Approved + Sent), not New/Discarded.
-        html.Should().Contain("data-tab=\"accepted\" href=\"/app?tab=accepted\">Accepted <span class=\"app-tab-count\">2</span>");
-        html.Should().Contain("data-tab=\"new\" href=\"/app?tab=new\">New <span class=\"app-tab-count\">0</span>");
-        html.Should().Contain("data-tab=\"discarded\" href=\"/app?tab=discarded\">Discarded <span class=\"app-tab-count\">0</span>");
+        html.Should().Contain("data-tab=\"accepted\" href=\"/app?tab=accepted\">Approved <span class=\"app-tab-count\">2</span>");
+        html.Should().Contain("data-tab=\"new\" href=\"/app?tab=new\">To review <span class=\"app-tab-count\">0</span>");
+        html.Should().Contain("data-tab=\"discarded\" href=\"/app?tab=discarded\">Skipped <span class=\"app-tab-count\">0</span>");
         html.Should().Contain("Ready Co");
         html.Should().Contain("Gone Co");
         // Only Sent cards are non-draggable; Approved (Ready) cards are draggable.
@@ -104,8 +104,8 @@ public class LeadReviewTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Tab-count spans come straight from the New/Accepted/Discarded partition logic, so these
         // prove the lead actually moved into Discarded (not just that "Move Co" appears somewhere
         // on the page, since Index.cshtml renders all three panels on every request).
-        discarded.Should().Contain("data-tab=\"discarded\" href=\"/app?tab=discarded\">Discarded <span class=\"app-tab-count\">1</span>");
-        discarded.Should().Contain("data-tab=\"new\" href=\"/app?tab=new\">New <span class=\"app-tab-count\">0</span>");
+        discarded.Should().Contain("data-tab=\"discarded\" href=\"/app?tab=discarded\">Skipped <span class=\"app-tab-count\">1</span>");
+        discarded.Should().Contain("data-tab=\"new\" href=\"/app?tab=new\">To review <span class=\"app-tab-count\">0</span>");
     }
 
     [Fact]
@@ -131,8 +131,8 @@ public class LeadReviewTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         accepted.Should().Contain("Accept Co");
         // Tab-count spans prove the lead actually moved into Accepted (not just that "Accept Co"
         // appears somewhere on the page, since Index.cshtml renders all three panels on every request).
-        accepted.Should().Contain("data-tab=\"accepted\" href=\"/app?tab=accepted\">Accepted <span class=\"app-tab-count\">1</span>");
-        accepted.Should().Contain("data-tab=\"new\" href=\"/app?tab=new\">New <span class=\"app-tab-count\">0</span>");
+        accepted.Should().Contain("data-tab=\"accepted\" href=\"/app?tab=accepted\">Approved <span class=\"app-tab-count\">1</span>");
+        accepted.Should().Contain("data-tab=\"new\" href=\"/app?tab=new\">To review <span class=\"app-tab-count\">0</span>");
     }
 
     // Returns the created lead's id (PendingReview).

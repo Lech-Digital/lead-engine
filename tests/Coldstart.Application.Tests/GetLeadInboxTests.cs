@@ -18,7 +18,7 @@ public class GetLeadInboxTests
         customers.AllAsync(Arg.Any<CancellationToken>())
             .Returns(new[] { customer });
         var summary = new LeadSummary(Guid.NewGuid(), "Patronus AI", "Yes", "Approved", "anand@patronus.ai", "High",
-            "A thought after the $50M", "Body", "funding", 0.7);
+            "A thought after the $50M", "Body", "funding", 0.7, DateTimeOffset.UtcNow);
         var listLeads = Substitute.For<IListLeads>();
         listLeads.ForCustomerAsync(customer.Id, Arg.Any<CancellationToken>())
             .Returns(new[] { summary });

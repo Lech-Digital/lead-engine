@@ -42,7 +42,24 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         var html = await client.GetStringAsync("/app");
 
         // Assert
-        html.Should().Contain("No leads yet");
+        html.Should().Contain("Nothing to review yet");
+    }
+
+    [Fact]
+    public async Task App_ShowsBriefingHeader_WithOvernightCount()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var email = $"zone-brief-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await AddLeadForUserAsync(email, "Patronus AI", "fp-zone-brief-1");
+
+        // Act
+        var html = await client.GetStringAsync("/app");
+
+        // Assert
+        html.Should().Contain("Good morning");
+        html.Should().Contain("found overnight");
     }
 
     [Fact]

@@ -1,9 +1,14 @@
 @page "/app"
 @model Coldstart.Web.Areas.App.Pages.IndexModel
-@{ ViewData["Title"] = "Your leads"; Layout = "/Pages/Shared/_Layout.cshtml"; }
+@{
+    ViewData["Title"] = "Your morning briefing";
+    Layout = "/Pages/Shared/_Layout.cshtml";
+    var overnight = Model.New.Count;
+    var latest = Model.New.Count > 0 ? Model.New.Max(l => l.CreatedAt) : (DateTimeOffset?)null;
+}
 
 <header class="app-bar">
-  <a class="brand" href="/"><img src="/logo.svg" alt="Coldstart" style="height:30px;width:auto;display:block;"></a>
+  <a class="wordmark" href="/">coldstart<i>*</i></a>
   <nav class="app-nav">
     <a href="/app/profile">Company profile</a>
     <form method="post" asp-page="/Account/Logout" asp-area="Identity"><button class="btn btn-ghost" type="submit">Log out</button></form>
@@ -12,6 +17,25 @@
 
 <main class="wrap app-zone">
   @Html.AntiForgeryToken()
+
+  <section class="app-briefing">
+    @if (overnight > 0)
+    {
+      <h1>Good morning — @overnight new @(overnight == 1 ? "lead" : "leads") found overnight</h1>
+      @if (latest is not null) { <p class="app-briefing-ts ts">latest found @latest.Value.ToString("HH:mm") UTC</p> }
+    }
+    else
+    {
+      <h1>Good morning — no new leads this morning</h1>
+      <p class="app-briefing-ts">The engine runs again tonight.</p>
+    }
+  </section>
+
+  <aside class="app-explainer" id="app-explainer" hidden>
+    <p><strong>How this works:</strong> we find leads overnight → you review and approve → the email goes out. Nothing is ever sent without you.</p>
+    <button type="button" class="app-explainer-x" id="app-explainer-dismiss" aria-label="Dismiss">Got it</button>
+  </aside>
+
   <section class="app-profile">
     @if (Model.Profile.IsEmpty)
     {
@@ -40,48 +64,59 @@
   <p class="app-sub">@Model.CustomerName</p>
 
   <nav class="app-tabs" aria-label="Lead tabs">
-    <a class="app-tab @(Model.Tab == "new" ? "is-active" : "")" data-tab="new" href="/app?tab=new">New <span class="app-tab-count">@Model.NewCount</span></a>
-    <a class="app-tab @(Model.Tab == "accepted" ? "is-active" : "")" data-tab="accepted" href="/app?tab=accepted">Accepted <span class="app-tab-count">@Model.AcceptedCount</span></a>
-    <a class="app-tab @(Model.Tab == "discarded" ? "is-active" : "")" data-tab="discarded" href="/app?tab=discarded">Discarded <span class="app-tab-count">@Model.DiscardedCount</span></a>
+    <a class="app-tab @(Model.Tab == "new" ? "is-active" : "")" data-tab="new" href="/app?tab=new">To review <span class="app-tab-count">@Model.NewCount</span></a>
+    <a class="app-tab @(Model.Tab == "accepted" ? "is-active" : "")" data-tab="accepted" href="/app?tab=accepted">Approved <span class="app-tab-count">@Model.AcceptedCount</span></a>
+    <a class="app-tab @(Model.Tab == "discarded" ? "is-active" : "")" data-tab="discarded" href="/app?tab=discarded">Skipped <span class="app-tab-count">@Model.DiscardedCount</span></a>
   </nav>
 
   @{
-    void Card(Coldstart.Application.Leads.LeadSummary lead, bool draggable)
+    void Card(Coldstart.Application.Leads.LeadSummary lead, bool draggable, bool actionable)
     {
       <article class="app-lead" data-lead-id="@lead.Id" draggable="@(draggable ? "true" : "false")">
         <div class="app-lead-top">
           <h3><a href="/app/leads/@lead.Id">@lead.Company</a><span class="go" aria-hidden="true">→</span></h3>
           <span class="fit fit-@lead.Fit.ToLower()">@lead.Fit</span>
         </div>
-        <div class="app-lead-meta"><span class="chip">@lead.Source</span><span class="score">score @lead.Score.ToString("0.00")</span></div>
         <p class="app-lead-subj">@lead.Subject</p>
+        @if (!string.IsNullOrWhiteSpace(lead.Draft) && lead.Draft != "-")
+        {
+          <p class="app-lead-draft">@(lead.Draft.Length > 220 ? lead.Draft[..220] + "…" : lead.Draft)</p>
+        }
+        <div class="app-lead-meta"><span class="chip">@lead.Source</span><span class="ts app-lead-ts">@lead.CreatedAt.ToString("dd MMM · HH:mm")</span></div>
+        @if (actionable)
+        {
+          <div class="app-lead-actions">
+            <button type="button" class="btn btn-primary app-act-approve" data-move="accepted">Approve</button>
+            <button type="button" class="btn btn-ghost app-act-skip" data-move="discarded">Skip</button>
+          </div>
+        }
       </article>
     }
-    void Bucket(string bucket, IReadOnlyList<Coldstart.Application.Leads.LeadSummary> leads, bool draggable, string emptyText)
+    void Bucket(string bucket, IReadOnlyList<Coldstart.Application.Leads.LeadSummary> leads, bool draggable, bool actionable, string emptyText)
     {
       <div class="app-leads" data-bucket="@bucket" data-count="@leads.Count">
-        @foreach (var l in leads) { Card(l, draggable); }
+        @foreach (var l in leads) { Card(l, draggable, actionable); }
         <p class="app-group-empty">@emptyText</p>
       </div>
     }
   }
 
   <section class="app-panel @(Model.Tab == "new" ? "is-active" : "")" data-panel="new">
-    @{ Bucket("new", Model.New, true, "No leads yet — your next harvest will fill this in."); }
+    @{ Bucket("new", Model.New, true, true, "Nothing to review yet — the engine hunts again tonight."); }
   </section>
 
   <section class="app-panel @(Model.Tab == "accepted" ? "is-active" : "")" data-panel="accepted">
-    <h2 class="app-group-head">Ready</h2>
-    @{ Bucket("ready", Model.AcceptedReady, true, "Nothing accepted yet."); }
+    <h2 class="app-group-head">Ready to send</h2>
+    @{ Bucket("ready", Model.AcceptedReady, true, false, "Nothing approved yet — approve a lead and it appears here."); }
     <h2 class="app-group-head">Sent</h2>
-    @{ Bucket("sent", Model.Sent, false, "Nothing sent yet."); }
+    @{ Bucket("sent", Model.Sent, false, false, "Nothing sent yet."); }
   </section>
 
   <section class="app-panel @(Model.Tab == "discarded" ? "is-active" : "")" data-panel="discarded">
-    <h2 class="app-group-head">You discarded</h2>
-    @{ Bucket("shelved", Model.Shelved, true, "You haven't discarded anything."); }
-    <h2 class="app-group-head">Auto-skipped · FIT:NO</h2>
-    @{ Bucket("autoskip", Model.AutoSkipped, true, "No auto-skipped leads."); }
+    <h2 class="app-group-head">You skipped</h2>
+    @{ Bucket("shelved", Model.Shelved, true, false, "You haven't skipped anything."); }
+    <h2 class="app-group-head">Skipped automatically — not a fit</h2>
+    @{ Bucket("autoskip", Model.AutoSkipped, true, false, "Nothing was skipped automatically."); }
   </section>
 
   <dialog id="move-error" class="lead-modal" aria-labelledby="move-error-title">

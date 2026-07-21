@@ -19,7 +19,8 @@ internal sealed class ListLeads(ILeadRepository leads) : IListLeads
                 l.Subject,
                 l.Draft,
                 l.Source,
-                l.Score))
+                l.Score,
+                l.CreatedAt))
             .ToList();
     }
 }

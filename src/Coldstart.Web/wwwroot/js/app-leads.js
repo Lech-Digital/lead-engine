@@ -82,6 +82,22 @@
   var tokenEl = document.querySelector('input[name="__RequestVerificationToken"]');
   var token = tokenEl ? tokenEl.value : '';
 
+  // Extracted from the drop handler — one shared move path.
+  function requestMove(id, target) {
+    var card = document.querySelector('.app-lead[data-lead-id="' + id + '"]');
+    var body = new URLSearchParams();
+    body.set('id', id);
+    body.set('tab', target);
+    fetch('/app?handler=Move', {
+      method: 'POST',
+      headers: { 'RequestVerificationToken': token, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString()
+    }).then(function (r) { return r.json(); }).then(function (res) {
+      if (res.ok) { moveCardTo(card, target); }
+      else { showMoveError(res.message); }
+    }).catch(function () { showMoveError(); });
+  }
+
   document.querySelectorAll('.app-tab').forEach(function (tab) {
     tab.addEventListener('dragover', function (e) { e.preventDefault(); tab.classList.add('drop-hover'); });
     tab.addEventListener('dragleave', function () { tab.classList.remove('drop-hover'); });
@@ -91,19 +107,28 @@
       if (!dragId) return;
       var id = dragId;
       dragId = null;
-      var target = tab.getAttribute('data-tab');
-      var card = document.querySelector('.app-lead[data-lead-id="' + id + '"]');
-      var body = new URLSearchParams();
-      body.set('id', id);
-      body.set('tab', target);
-      fetch('/app?handler=Move', {
-        method: 'POST',
-        headers: { 'RequestVerificationToken': token, 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: body.toString()
-      }).then(function (r) { return r.json(); }).then(function (res) {
-        if (res.ok) { moveCardTo(card, target); }
-        else { showMoveError(res.message); }
-      }).catch(function () { showMoveError(); });
+      requestMove(id, tab.getAttribute('data-tab'));
     });
   });
+
+  // --- Card Approve/Skip buttons — same endpoint as drag-and-drop. ---
+  document.querySelectorAll('.app-lead-actions button[data-move]').forEach(function (btn) {
+    btn.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      var card = btn.closest('.app-lead');
+      if (card) requestMove(card.getAttribute('data-lead-id'), btn.getAttribute('data-move'));
+    });
+  });
+
+  // --- First-visit explainer. ---
+  var explainer = document.getElementById('app-explainer');
+  var explainerDismiss = document.getElementById('app-explainer-dismiss');
+  if (explainer && explainerDismiss) {
+    if (!localStorage.getItem('cs-explainer-dismissed')) explainer.hidden = false;
+    explainerDismiss.addEventListener('click', function () {
+      localStorage.setItem('cs-explainer-dismissed', '1');
+      explainer.hidden = true;
+    });
+  }
 })();

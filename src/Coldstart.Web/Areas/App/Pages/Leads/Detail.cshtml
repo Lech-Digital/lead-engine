@@ -4,7 +4,7 @@
 
 <main class="wrap auth-shell">
   <div class="auth-card app-detail">
-    <p class="auth-alt"><a href="/app">← Back to your leads</a></p>
+    <p class="auth-alt"><a href="/app">← Back to your briefing</a></p>
     <div class="app-lead-top"><h1>@lead.Company</h1><span class="fit fit-@lead.Fit.ToLower()">@lead.Fit</span></div>
     <div class="app-lead-meta"><span class="chip">@lead.Source</span><span class="score">score @lead.Score.ToString("0.00")</span><span class="status">@lead.Status</span></div>
     @if (!string.IsNullOrEmpty(lead.SourceUrl)) { <div class="app-links"><a class="app-link-out" href="@lead.SourceUrl" target="_blank" rel="noopener">View signal source</a></div> }
@@ -20,10 +20,10 @@
       {
         <div class="app-detail-actions">
           <button class="btn btn-ghost" type="submit" asp-page-handler="Save">Save draft</button>
-          <button class="btn btn-primary" type="submit" asp-page-handler="Accept">Accept</button>
+          <button class="btn btn-primary" type="submit" asp-page-handler="Accept">Approve</button>
           <button class="btn btn-ghost" type="submit" asp-page-handler="MarkSent">Mark as sent</button>
-          <button class="btn btn-ghost" type="submit" asp-page-handler="Discard">Discard</button>
-          <button class="btn btn-ghost" type="submit" asp-page-handler="Reopen">Move to New</button>
+          <button class="btn btn-ghost" type="submit" asp-page-handler="Discard">Skip</button>
+          <button class="btn btn-ghost" type="submit" asp-page-handler="Reopen">Move back to review</button>
         </div>
       }
       else { <p class="app-sub">This lead was sent@(lead.SentAt is null ? "" : $" on {lead.SentAt:yyyy-MM-dd}") and is read-only.</p> }
