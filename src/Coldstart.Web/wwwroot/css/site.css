@@ -33,7 +33,6 @@
 }
 .wordmark { font-family: var(--display); font-weight: 800; font-size: 1.25rem; letter-spacing: -0.01em; color: var(--ink); text-decoration: none; }
 .wordmark i { font-style: normal; color: var(--sunrise); }
-.wordmark--night { color: var(--night-text); }
 .ts { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 /* ===== end Morning Engine tokens ===== */
 
@@ -125,7 +124,6 @@
   .field textarea { resize: vertical; }
   .field input:focus-visible, .field textarea:focus-visible { outline: 3px solid var(--sunrise); outline-offset: 1px; border-color: var(--sunrise); }
   .field input[disabled], .field textarea[disabled] { opacity: 0.65; cursor: not-allowed; }
-  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
   .form-status { font-size: 0.84rem; font-weight: 700; color: #3c7a70; margin: 0; min-height: 1em; }
   .form-status.error { color: #B3402A; }
 
@@ -208,6 +206,8 @@
   .chip { background: var(--daylight); border: 1px solid var(--line-soft); border-radius: 6px; padding: 2px 8px; text-transform: uppercase; letter-spacing: 0.06em; }
   .app-lead-subj { margin: 2px 0 0; font-weight: 700; color: var(--ink); }
   .app-lead-draft { font-size: 0.9rem; color: var(--body-muted); line-height: 1.5; margin: 8px 0 10px; }
+  .app-lead-why { font-size: 0.82rem; color: var(--body-subtle); margin: 6px 0 0; }
+  .app-lead-why-label { font-weight: 600; color: var(--body-muted); }
   .app-lead-ts { font-family: var(--mono); font-size: 0.78rem; color: var(--body-subtle); }
   .app-lead-actions { display: flex; gap: 10px; margin-top: 10px; }
   .app-lead-actions .btn { padding: 8px 16px; font-size: 0.85rem; }

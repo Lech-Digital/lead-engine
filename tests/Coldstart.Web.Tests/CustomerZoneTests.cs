@@ -31,6 +31,23 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
     }
 
     [Fact]
+    public async Task App_ShowsMatchedSignals_AsWhyNowContextOnTheLeadCard()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var email = $"zone-why-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await AddLeadForUserAsync(email, "Patronus AI", "fp-zone-why-1"); // seeded with MatchedSignals "raised"
+
+        // Act
+        var html = await client.GetStringAsync("/app");
+
+        // Assert
+        html.Should().Contain("Why now:");
+        html.Should().Contain("raised");
+    }
+
+    [Fact]
     public async Task App_ShowsAnEmptyState_WhenTheCustomerHasNoLeadsYet()
     {
         // Arrange

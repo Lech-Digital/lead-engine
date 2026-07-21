@@ -81,6 +81,40 @@ public class LeadReviewTests(ColdstartWebFactory factory) : IClassFixture<Coldst
     }
 
     [Fact]
+    public async Task Index_NewTabPanel_ShowsActionButtons_ButAcceptedAndDiscardedPanelsDoNot()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var email = $"actions-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await AddLeadForUserAsync(email, "New Co", "fp-" + Guid.NewGuid().ToString("N"), LeadStatus.PendingReview);
+        await AddLeadForUserAsync(email, "Ready Co", "fp-" + Guid.NewGuid().ToString("N"), LeadStatus.Approved);
+        await AddLeadForUserAsync(email, "Shelved Co", "fp-" + Guid.NewGuid().ToString("N"), LeadStatus.Shelved);
+
+        // Act
+        var html = await client.GetStringAsync("/app");
+
+        // Assert
+        var newPanel = ExtractPanel(html, "new");
+        var acceptedPanel = ExtractPanel(html, "accepted");
+        var discardedPanel = ExtractPanel(html, "discarded");
+        newPanel.Should().Contain("data-move=\"accepted\"");
+        newPanel.Should().Contain("data-move=\"discarded\"");
+        acceptedPanel.Should().NotContain("data-move=");
+        discardedPanel.Should().NotContain("data-move=");
+    }
+
+    // Extracts the markup for a single <section data-panel="..."> ... </section> block, since
+    // Index.cshtml renders all three panels on every request regardless of the active tab.
+    private static string ExtractPanel(string html, string panel)
+    {
+        var marker = $"data-panel=\"{panel}\"";
+        var start = html.IndexOf(marker, StringComparison.Ordinal);
+        var end = html.IndexOf("</section>", start, StringComparison.Ordinal);
+        return html[start..end];
+    }
+
+    [Fact]
     public async Task Move_ToDiscarded_ShelvesLeadAndReturnsOk()
     {
         // Arrange

@@ -11,4 +11,5 @@ public sealed record LeadSummary(
     string Draft,
     string Source,
     double Score,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    string MatchedSignals);

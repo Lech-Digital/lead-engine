@@ -22,7 +22,7 @@
     @if (overnight > 0)
     {
       <h1>Good morning — @overnight new @(overnight == 1 ? "lead" : "leads") found overnight</h1>
-      @if (latest is not null) { <p class="app-briefing-ts ts">latest found @latest.Value.ToString("HH:mm") UTC</p> }
+      @if (latest is not null) { <p class="app-briefing-ts ts">latest found @latest.Value.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture) UTC</p> }
     }
     else
     {
@@ -78,11 +78,12 @@
           <span class="fit fit-@lead.Fit.ToLower()">@lead.Fit</span>
         </div>
         <p class="app-lead-subj">@lead.Subject</p>
+        @if (!string.IsNullOrWhiteSpace(lead.MatchedSignals)) { <p class="app-lead-why"><span class="app-lead-why-label">Why now:</span> @lead.MatchedSignals.Replace(",", ", ")</p> }
         @if (!string.IsNullOrWhiteSpace(lead.Draft) && lead.Draft != "-")
         {
           <p class="app-lead-draft">@(lead.Draft.Length > 220 ? lead.Draft[..220] + "…" : lead.Draft)</p>
         }
-        <div class="app-lead-meta"><span class="chip">@lead.Source</span><span class="ts app-lead-ts">@lead.CreatedAt.ToString("dd MMM · HH:mm")</span></div>
+        <div class="app-lead-meta"><span class="chip">@lead.Source</span><span class="ts app-lead-ts">@lead.CreatedAt.ToString("dd MMM · HH:mm", System.Globalization.CultureInfo.InvariantCulture)</span></div>
         @if (actionable)
         {
           <div class="app-lead-actions">
