@@ -55,7 +55,6 @@
     --screen-2: #46406F;
     --screen-tx:#D6D1F4;
     --screen-mu:#B2ABDA;
-    --mono: "SF Mono", ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace;
     --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --measure: 62ch;
     --maxw: 1080px;
@@ -301,7 +300,6 @@
   .preview mark.empty { background: transparent; color: var(--ink-soft); font-weight: 400; font-style: italic; }
   .modal-actions { display: flex; gap: 10px; flex-wrap: wrap; }
   .modal-actions .btn { padding: 12px 18px; font-size: 0.9rem; }
-  .btn[disabled] { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: 0 5px 0 #7a3c16; }
   .modal .hint { font-size: 0.78rem; color: var(--ink-soft); margin: 0; }
   .modal .hint.copied { color: #3c7a70; font-weight: 700; }
   .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
