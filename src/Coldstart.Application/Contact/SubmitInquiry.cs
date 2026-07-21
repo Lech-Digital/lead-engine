@@ -5,7 +5,7 @@ namespace Coldstart.Application.Contact;
 
 internal sealed class SubmitInquiry(IInquiryRepository inquiries, IEmailSender email) : ISubmitInquiry
 {
-    private const string NotifyTo = "andrzej.lech.andrzej@gmail.com";
+    private const string NotifyTo = "adzius.lech@gmail.com";
 
     public async Task SubmitAsync(SubmitInquiryRequest request, CancellationToken ct)
     {

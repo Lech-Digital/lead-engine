@@ -101,7 +101,7 @@ def test_gmail_sender_logs_in_and_sends_via_smtp_ssl(monkeypatch):
         password="app-pw-1234",
         from_name="Andrzej Lech",
     )
-    ok = sender.send("andrzej.lech.andrzej@gmail.com", "Scaling your team", "Hi there.")
+    ok = sender.send("adzius.lech@gmail.com", "Scaling your team", "Hi there.")
 
     assert ok is True
     smtp = captured["smtp"]
@@ -110,7 +110,7 @@ def test_gmail_sender_logs_in_and_sends_via_smtp_ssl(monkeypatch):
     assert smtp.logged_in == ("adzius.lech@gmail.com", "app-pw-1234")
     msg = smtp.messages[0]
     assert msg["From"] == "Andrzej Lech <adzius.lech@gmail.com>"
-    assert msg["To"] == "andrzej.lech.andrzej@gmail.com"
+    assert msg["To"] == "adzius.lech@gmail.com"
     assert msg["Subject"] == "Scaling your team"
     assert msg.get_content().strip() == "Hi there."
 

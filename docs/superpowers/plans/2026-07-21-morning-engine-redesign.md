@@ -636,7 +636,7 @@ Expected: 3 new tests FAIL (`/terms` 404, no footer, privacy missing GDPR marker
       <nav class="site-footer-nav" aria-label="Legal">
         <a href="/terms">Terms &amp; conditions</a>
         <a href="/privacy">Privacy</a>
-        <a href="mailto:andrzej.lech.andrzej@gmail.com">Contact</a>
+        <a href="mailto:adzius.lech@gmail.com">Contact</a>
       </nav>
     </div>
     <p class="site-footer-note">© @DateTime.UtcNow.Year Coldstart. All leads and drafts shown on this site come from real, unedited runs.</p>
@@ -687,7 +687,7 @@ Footer CSS (append to `site.css`):
     <p class="legal-banner">Draft — pending review, not legal advice. These terms are a starting point while Coldstart finalizes its legal details.</p>
 
     <h2>1. Who we are</h2>
-    <p>Coldstart ("we") is a business-to-business service based in Schiedam, the Netherlands. KvK: —. VAT: —. Contact: andrzej.lech.andrzej@gmail.com.</p>
+    <p>Coldstart ("we") is a business-to-business service based in Schiedam, the Netherlands. KvK: —. VAT: —. Contact: adzius.lech@gmail.com.</p>
 
     <h2>2. The service</h2>
     <p>Coldstart is a done-for-you lead service: we monitor publicly available sources, select companies that plausibly need what you sell, and draft opening emails for you. You review every draft; nothing is sent without your explicit approval. We provide leads and drafts — we do not guarantee replies, meetings, or revenue.</p>
@@ -731,7 +731,7 @@ Footer CSS (append to `site.css`):
     <p class="legal-banner">Draft — pending review, not legal advice. This is a starter policy while Coldstart finalizes its legal details.</p>
 
     <h2>Who we are</h2>
-    <p>Coldstart is based in Schiedam, the Netherlands, and is the controller for the data described here. KvK: —. VAT: —. Contact: andrzej.lech.andrzej@gmail.com.</p>
+    <p>Coldstart is based in Schiedam, the Netherlands, and is the controller for the data described here. KvK: —. VAT: —. Contact: adzius.lech@gmail.com.</p>
 
     <h2>What we collect, and why</h2>
     <ul>
@@ -754,7 +754,7 @@ Footer CSS (append to `site.css`):
     <p>We use only functional cookies: the session cookie that keeps you signed in and the security (anti-forgery) cookie. No tracking, no analytics cookies, no third-party advertising.</p>
 
     <h2>Your rights</h2>
-    <p>You can ask us for access to, correction of, deletion of, or a copy (portability) of your data, and you can object to processing based on legitimate interest. Email andrzej.lech.andrzej@gmail.com and we'll respond within one month. You also have the right to complain to the Dutch supervisory authority, the <strong>Autoriteit Persoonsgegevens</strong> (autoriteitpersoonsgegevens.nl).</p>
+    <p>You can ask us for access to, correction of, deletion of, or a copy (portability) of your data, and you can object to processing based on legitimate interest. Email adzius.lech@gmail.com and we'll respond within one month. You also have the right to complain to the Dutch supervisory authority, the <strong>Autoriteit Persoonsgegevens</strong> (autoriteitpersoonsgegevens.nl).</p>
   </div>
 </main>
 ```

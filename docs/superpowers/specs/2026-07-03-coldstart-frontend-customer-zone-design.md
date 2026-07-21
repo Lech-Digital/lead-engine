@@ -62,7 +62,7 @@ Starter policy draft: what's collected (contact-form inquiries: name/email/niche
 ### 4. Contact capture
 - **Modal** (ported markup + `contact.js`): fields `name, email, niche, whatYouSell, message?` + a hidden honeypot (`website`) that must stay empty. Live preview retained; `mailto:` link kept as a no-JS/failure fallback.
 - **Handler** (`Pages/Index` POST or a dedicated `Pages/Contact` handler): server-side validation (required name/email, valid `EmailAddress`, honeypot empty); calls `ISubmitInquiry`.
-- **`SubmitInquiry`**: persists an `Inquiry` via `IInquiryRepository`, then sends a notification through `IEmailSender` (from `adzius.lech@gmail.com` → `andrzej.lech.andrzej@gmail.com`, both configurable). Email failure is logged but does not fail the request (the inquiry is already stored) — returns success to the visitor.
+- **`SubmitInquiry`**: persists an `Inquiry` via `IInquiryRepository`, then sends a notification through `IEmailSender` (from `adzius.lech@gmail.com` → `adzius.lech@gmail.com`, both configurable). Email failure is logged but does not fail the request (the inquiry is already stored) — returns success to the visitor.
 - **`Inquiry` (Domain):** `Id (InquiryId)`, `Name`, `Email (EmailAddress)`, `Niche`, `WhatYouSell`, `Message?`, `CreatedAt`. Factory `Inquiry.Create(...)`; validates required fields.
 
 ### 5. Email sender
@@ -103,5 +103,5 @@ Framework per standards (xUnit + NSubstitute + FluentAssertions 7.*; strict AAA;
 ## Open items / assumptions
 - **Google OAuth credentials** (client id + secret) must be provided by the user (user-secrets) for the Google flow to work live; code + email/password ship without them.
 - **Gmail app password** already exists (used by the Python sender); the .NET `SmtpEmailSender` reuses the same account/app-password via config.
-- Notification recipient defaults to `andrzej.lech.andrzej@gmail.com`; sender `adzius.lech@gmail.com`. Both configurable.
+- Notification recipient defaults to `adzius.lech@gmail.com`; sender `adzius.lech@gmail.com`. Both configurable.
 - Privacy page content is a starter draft; the user finalizes wording and KvK/VAT numbers.

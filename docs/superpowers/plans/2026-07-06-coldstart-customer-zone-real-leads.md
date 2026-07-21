@@ -279,7 +279,7 @@ Also update the Infrastructure `HarvestEndToEndTests` if it asserted the custome
 
 - [ ] **Step 4: Set the Harvester's target to your account email**
 
-In `src/Coldstart.Harvester/appsettings.json`, add to the `Niche` object: `"TargetCustomerName": "andrzej.lech.andrzej@gmail.com"` (the operator's login email, so harvested leads land in the account that logs in). Document in the Harvester README section that this must match the login email.
+In `src/Coldstart.Harvester/appsettings.json`, add to the `Niche` object: `"TargetCustomerName": "adzius.lech@gmail.com"` (the operator's login email, so harvested leads land in the account that logs in). Document in the Harvester README section that this must match the login email.
 
 - [ ] **Step 5: Run, build, commit**
 

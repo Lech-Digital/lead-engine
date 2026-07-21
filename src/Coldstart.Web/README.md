@@ -75,7 +75,7 @@ survivors, and saves the fits under the customer named by
 with.** The Customer Zone resolves its data by the logged-in account's
 customer, so harvested leads only show up in the inbox if the harvester was
 configured to target that same customer. `appsettings.json` ships it set to
-the operator's login email (`andrzej.lech.andrzej@gmail.com`); update it if
+the operator's login email (`adzius.lech@gmail.com`); update it if
 the login account changes. The default in `NicheOptions` is `"Coldstart"`
 (used by tests and if the setting is omitted).
 

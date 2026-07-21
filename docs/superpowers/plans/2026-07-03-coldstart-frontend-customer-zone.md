@@ -172,7 +172,7 @@ Expected: FAIL — `/privacy` 404.
 
 - [ ] **Step 3: Create the privacy page**
 
-`Pages/Privacy.cshtml` (`@page`, `Layout="_Layout"`, `ViewData["Title"]="Privacy"`). Content = a starter policy inside the brand container, with these sections: intro + a visible "Draft — pending review, not legal advice" note; **Who we are** (Coldstart, Schiedam, Netherlands; KvK: _[to be added]_, VAT: _[to be added]_); **What we collect** (contact-form inquiries: name, email, niche, what-you-sell, optional message; account email; authentication cookies); **Why** (respond to inquiries; provide the service); **Retention** (kept until you ask us to delete); **Your rights** (access/deletion by emailing us); **Contact** (andrzej.lech.andrzej@gmail.com). `Pages/Privacy.cshtml.cs`: empty `PrivacyModel : PageModel`.
+`Pages/Privacy.cshtml` (`@page`, `Layout="_Layout"`, `ViewData["Title"]="Privacy"`). Content = a starter policy inside the brand container, with these sections: intro + a visible "Draft — pending review, not legal advice" note; **Who we are** (Coldstart, Schiedam, Netherlands; KvK: _[to be added]_, VAT: _[to be added]_); **What we collect** (contact-form inquiries: name, email, niche, what-you-sell, optional message; account email; authentication cookies); **Why** (respond to inquiries; provide the service); **Retention** (kept until you ask us to delete); **Your rights** (access/deletion by emailing us); **Contact** (adzius.lech@gmail.com). `Pages/Privacy.cshtml.cs`: empty `PrivacyModel : PageModel`.
 
 - [ ] **Step 4: Run to verify it passes**
 
@@ -425,7 +425,7 @@ namespace Coldstart.Application.Contact;
 
 internal sealed class SubmitInquiry(IInquiryRepository inquiries, IEmailSender email) : ISubmitInquiry
 {
-    private const string NotifyTo = "andrzej.lech.andrzej@gmail.com";
+    private const string NotifyTo = "adzius.lech@gmail.com";
 
     public async Task SubmitAsync(SubmitInquiryRequest request, CancellationToken ct)
     {

@@ -120,7 +120,7 @@ Lead (aggregate root)
 - `LeadRepository` / `CustomerRepository` implement the Application ports; async all the way
   with `CancellationToken` threaded through (CS-DATA-03).
 - **Migrations** checked into Infrastructure. A `DbSeeder` inserts one demo customer
-  (Coldstart, andrzej.lech.andrzej@gmail.com as the future recipient) and a handful of leads
+  (Coldstart, adzius.lech@gmail.com as the future recipient) and a handful of leads
   mirroring the shape of the real ones, so the Razor page has data on first run.
 
 ## Data flow (proof of life)

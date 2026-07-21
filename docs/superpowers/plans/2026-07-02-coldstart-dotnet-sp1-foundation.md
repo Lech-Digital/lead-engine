@@ -1430,7 +1430,7 @@ git commit -m "feat(web): Razor Leads page + composition root + smoke test"
 - Hexagonal 4-project solution → Task 1. ✓
 - Domain model (Customer/Lead, VOs, behaviour, DomainException) → Tasks 2–4. ✓
 - EF Core + Postgres behind ports, VO/enum mapping, async+CancellationToken → Task 6. ✓
-- Migrations + seed (demo customer incl. andrzej.lech.andrzej@gmail.com context) → Task 7. ✓ *(note: seeder uses the Coldstart demo customer; the customer's own recipient address is a later-SP concern and not required for the SP1 page)*
+- Migrations + seed (demo customer incl. adzius.lech@gmail.com context) → Task 7. ✓ *(note: seeder uses the Coldstart demo customer; the customer's own recipient address is a later-SP concern and not required for the SP1 page)*
 - Razor page listing seeded leads (Web→App→Infra→Postgres) → Task 8. ✓
 - Tests: domain unit, application use case, repository integration (Testcontainers), web smoke → Tasks 2–8. ✓
 - Standards (records for VOs, private setters/factories, ports in Application, DI only in Web, internal + InternalsVisibleTo, IReadOnlyList not IQueryable) → applied throughout. ✓
