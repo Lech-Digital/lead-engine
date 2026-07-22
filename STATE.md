@@ -1,6 +1,25 @@
 # Lead Engine — Session State (resume here)
 
-_Last updated: 2026-06-29_
+_Last updated: 2026-07-22_
+
+## NEXT UP (2026-07-22): Coldstart as distribution engine for the new products
+Add two new niches under the owner's admin account **adzius.lech@gmail.com** (SuperAdmin in
+the .NET app; seed exists), so Coldstart fills the funnel for the two sibling products designed
+on 2026-07-22:
+
+1. **DBA Shield niche** (`~/Code/private/dba-shield`) — target: Dutch staffing agencies,
+   detacheerders, and consultancies engaging ZZP'ers. Pitch: Wet DBA / schijnzelfstandigheid
+   audit shield, €499/mo (Belastingdienst enforcement resumed 2026-01-01). Buying signals:
+   ZZP/freelance vacancies, detachering keywords, interim postings.
+2. **TenderJet niche** (`~/Code/private/tenderjet`) — target: bid-heavy B2B companies
+   (construction, IT services, facilities, healthcare suppliers) responding to public tenders.
+   Pitch: RAG-drafted 80%-complete tender responses, €599/mo. Buying signals: bid manager /
+   tender specialist vacancies, aanbesteding keywords.
+
+How: either as two clients via the Python multi-client flow (`leadengine new "<name>"` +
+per-client config/disqualifiers/buyer titles) or as niche config bound to the admin Customer
+in the .NET app (`NicheOptions`) — decide next session. Both products' specs live in their
+repos (`STATE.md` in each is the resume point).
 
 ## What this is
 Automated AI Lead Engine: harvests public buying signals → scores cheaply → dedups →
