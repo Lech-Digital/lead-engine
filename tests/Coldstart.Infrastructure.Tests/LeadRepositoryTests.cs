@@ -129,4 +129,26 @@ public class LeadRepositoryTests(PostgresFixture fixture) : IClassFixture<Postgr
         // Assert
         loaded.Should().BeNull();
     }
+
+    [Fact]
+    public async Task GetAsync_AfterAddingNotes_RoundTripsThem()
+    {
+        // Arrange
+        await using var db = fixture.NewDbContext();
+        var customer = Customer.Create("Acme Co");
+        await new CustomerRepository(db).AddAsync(customer, CancellationToken.None);
+        var lead = Lead.Create(customer.Id, "Acme Co", Fit.Yes, "S", "D", DateTimeOffset.UtcNow);
+        lead.AddNote("first note", DateTimeOffset.UtcNow);
+        lead.AddNote("second note", DateTimeOffset.UtcNow);
+        var repo = new LeadRepository(db);
+        await repo.AddAsync(lead, CancellationToken.None);
+
+        // Act — fresh context to force a real DB read
+        await using var readDb = fixture.NewDbContext();
+        var reloaded = await new LeadRepository(readDb).GetAsync(lead.Id, CancellationToken.None);
+
+        // Assert
+        reloaded!.Notes.Should().HaveCount(2);
+        reloaded.Notes.Select(n => n.Text).Should().Contain(["first note", "second note"]);
+    }
 }

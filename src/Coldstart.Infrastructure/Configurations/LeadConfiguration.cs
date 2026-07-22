@@ -1,5 +1,6 @@
 using Coldstart.Domain;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Coldstart.Infrastructure.Configurations;
@@ -35,5 +36,17 @@ internal sealed class LeadConfiguration : IEntityTypeConfiguration<Lead>
         builder.HasIndex(l => l.Fingerprint)
             .IsUnique()
             .HasFilter("\"Fingerprint\" <> ''");   // seeded/mock leads have '' — don't collide
+
+        builder.OwnsMany(l => l.Notes, n =>
+        {
+            n.ToTable("lead_notes");
+            n.WithOwner().HasForeignKey("LeadId");
+            n.HasKey("Id");
+            n.Property(x => x.Id).ValueGeneratedNever();
+            n.Property(x => x.Text).IsRequired();
+            n.Property(x => x.CreatedAt);
+            n.Property(x => x.UpdatedAt);
+        });
+        builder.Navigation(l => l.Notes).UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }
