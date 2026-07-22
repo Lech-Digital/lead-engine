@@ -40,6 +40,15 @@ internal sealed class LeadWorkflow(ILeadRepository leads) : ILeadWorkflow
             return LeadActionResult.Ok;
         });
 
+    public Task<LeadActionResult> AddNoteAsync(Guid customerId, Guid leadId, Guid noteId, string text, CancellationToken ct) =>
+        MutateAsync(customerId, leadId, ct, lead => { lead.AddNote(noteId, text, DateTimeOffset.UtcNow); return LeadActionResult.Ok; });
+
+    public Task<LeadActionResult> UpdateNoteAsync(Guid customerId, Guid leadId, Guid noteId, string text, CancellationToken ct) =>
+        MutateAsync(customerId, leadId, ct, lead => { lead.UpdateNote(noteId, text, DateTimeOffset.UtcNow); return LeadActionResult.Ok; });
+
+    public Task<LeadActionResult> RemoveNoteAsync(Guid customerId, Guid leadId, Guid noteId, CancellationToken ct) =>
+        MutateAsync(customerId, leadId, ct, lead => { lead.RemoveNote(noteId); return LeadActionResult.Ok; });
+
     // Empty/whitespace recipient is allowed (optional); a non-empty invalid one is rejected.
     private static LeadActionResult ApplyRecipient(Lead lead, string? recipient)
     {

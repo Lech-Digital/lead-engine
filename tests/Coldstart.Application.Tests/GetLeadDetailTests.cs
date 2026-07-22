@@ -31,6 +31,28 @@ public class GetLeadDetailTests
         detail!.Company.Should().Be("Acme");
         detail.Subject.Should().Be("subj");
         detail.ContactLinks.Should().NotBeEmpty();
+        detail.MatchedSignals.Should().Be("outbound");
+        detail.EmailConfidence.Should().Be(EmailConfidence.None.ToString());
+        detail.Notes.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ForLeadAsync_WithNotes_MapsThemToNoteViews()
+    {
+        // Arrange
+        var customerId = Guid.NewGuid();
+        var lead = LeadFor(new CustomerId(customerId));
+        var noteId = lead.AddNote("call back Friday", DateTimeOffset.UtcNow);
+        var repo = Substitute.For<ILeadRepository>();
+        repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns(lead);
+        var sut = new GetLeadDetail(repo);
+
+        // Act
+        var detail = await sut.ForLeadAsync(customerId, lead.Id.Value, CancellationToken.None);
+
+        // Assert
+        detail!.Notes.Should().ContainSingle(n =>
+            n.Id == noteId && n.Text == "call back Friday" && n.UpdatedAt == null);
     }
 
     [Fact]

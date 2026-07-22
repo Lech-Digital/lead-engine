@@ -123,4 +123,139 @@ public class LeadWorkflowTests
         // Assert
         result.Status.Should().Be(LeadActionStatus.NotFound);
     }
+
+    [Fact]
+    public async Task AddNoteAsync_ForOwnedLead_PersistsNote()
+    {
+        // Arrange
+        var customerId = Guid.NewGuid();
+        var lead = LeadFor(new CustomerId(customerId));
+        var repo = Substitute.For<ILeadRepository>();
+        repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns(lead);
+        var sut = new LeadWorkflow(repo);
+
+        // Act
+        var noteId = Guid.NewGuid();
+        var result = await sut.AddNoteAsync(customerId, lead.Id.Value, noteId, "ring them Tuesday", CancellationToken.None);
+
+        // Assert
+        result.IsOk.Should().BeTrue();
+        (await repo.GetAsync(new LeadId(lead.Id.Value), CancellationToken.None))!.Notes
+            .Should().ContainSingle(n => n.Id == noteId && n.Text == "ring them Tuesday");
+        await repo.Received(1).UpdateAsync(lead, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task AddNoteAsync_WithBlankText_ReturnsInvalid()
+    {
+        // Arrange
+        var customerId = Guid.NewGuid();
+        var lead = LeadFor(new CustomerId(customerId));
+        var repo = Substitute.For<ILeadRepository>();
+        repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns(lead);
+        var sut = new LeadWorkflow(repo);
+
+        // Act
+        var result = await sut.AddNoteAsync(customerId, lead.Id.Value, Guid.NewGuid(), "   ", CancellationToken.None);
+
+        // Assert
+        result.Status.Should().Be(LeadActionStatus.Invalid);
+        await repo.DidNotReceive().UpdateAsync(Arg.Any<Lead>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task AddNoteAsync_ForAnotherCustomersLead_ReturnsNotFound()
+    {
+        // Arrange
+        var customerId = Guid.NewGuid();
+        var lead = LeadFor(new CustomerId(customerId));
+        var repo = Substitute.For<ILeadRepository>();
+        repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns(lead);
+        var sut = new LeadWorkflow(repo);
+
+        // Act
+        var result = await sut.AddNoteAsync(Guid.NewGuid(), lead.Id.Value, Guid.NewGuid(), "x", CancellationToken.None);
+
+        // Assert
+        result.Status.Should().Be(LeadActionStatus.NotFound);
+        await repo.DidNotReceive().UpdateAsync(Arg.Any<Lead>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task UpdateNoteAsync_ForOwnedLead_UpdatesNoteText()
+    {
+        // Arrange
+        var customerId = Guid.NewGuid();
+        var lead = LeadFor(new CustomerId(customerId));
+        var noteId = lead.AddNote("original", DateTimeOffset.UtcNow);
+        var repo = Substitute.For<ILeadRepository>();
+        repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns(lead);
+        var sut = new LeadWorkflow(repo);
+
+        // Act
+        var result = await sut.UpdateNoteAsync(customerId, lead.Id.Value, noteId, "revised", CancellationToken.None);
+
+        // Assert
+        result.IsOk.Should().BeTrue();
+        lead.Notes.Should().ContainSingle(n => n.Id == noteId && n.Text == "revised" && n.UpdatedAt != null);
+        await repo.Received(1).UpdateAsync(lead, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task UpdateNoteAsync_WithBlankText_ReturnsInvalid()
+    {
+        // Arrange
+        var customerId = Guid.NewGuid();
+        var lead = LeadFor(new CustomerId(customerId));
+        var noteId = lead.AddNote("original", DateTimeOffset.UtcNow);
+        var repo = Substitute.For<ILeadRepository>();
+        repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns(lead);
+        var sut = new LeadWorkflow(repo);
+
+        // Act
+        var result = await sut.UpdateNoteAsync(customerId, lead.Id.Value, noteId, "   ", CancellationToken.None);
+
+        // Assert
+        result.Status.Should().Be(LeadActionStatus.Invalid);
+        await repo.DidNotReceive().UpdateAsync(Arg.Any<Lead>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RemoveNoteAsync_RemovesTheNote()
+    {
+        // Arrange
+        var customerId = Guid.NewGuid();
+        var lead = LeadFor(new CustomerId(customerId));
+        var repo = Substitute.For<ILeadRepository>();
+        repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns(lead);
+        var sut = new LeadWorkflow(repo);
+        var noteId = Guid.NewGuid();
+        await sut.AddNoteAsync(customerId, lead.Id.Value, noteId, "temp", CancellationToken.None);
+
+        // Act
+        var result = await sut.RemoveNoteAsync(customerId, lead.Id.Value, noteId, CancellationToken.None);
+
+        // Assert
+        result.IsOk.Should().BeTrue();
+        (await repo.GetAsync(new LeadId(lead.Id.Value), CancellationToken.None))!.Notes.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task RemoveNoteAsync_ForAnotherCustomersLead_ReturnsNotFound()
+    {
+        // Arrange
+        var customerId = Guid.NewGuid();
+        var lead = LeadFor(new CustomerId(customerId));
+        var noteId = lead.AddNote("temp", DateTimeOffset.UtcNow);
+        var repo = Substitute.For<ILeadRepository>();
+        repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns(lead);
+        var sut = new LeadWorkflow(repo);
+
+        // Act
+        var result = await sut.RemoveNoteAsync(Guid.NewGuid(), lead.Id.Value, noteId, CancellationToken.None);
+
+        // Assert
+        result.Status.Should().Be(LeadActionStatus.NotFound);
+        lead.Notes.Should().ContainSingle(n => n.Id == noteId);
+    }
 }

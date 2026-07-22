@@ -12,4 +12,7 @@ public sealed record LeadDetail(
     string SourceUrl,
     double Score,
     DateTimeOffset? SentAt,
-    IReadOnlyList<ContactLink> ContactLinks);
+    IReadOnlyList<ContactLink> ContactLinks,
+    string MatchedSignals,
+    string EmailConfidence,
+    IReadOnlyList<LeadNoteView> Notes);
