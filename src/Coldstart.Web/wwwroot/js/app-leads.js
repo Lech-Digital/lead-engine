@@ -120,15 +120,4 @@
       if (card) requestMove(card.getAttribute('data-lead-id'), btn.getAttribute('data-move'));
     });
   });
-
-  // --- First-visit explainer. ---
-  var explainer = document.getElementById('app-explainer');
-  var explainerDismiss = document.getElementById('app-explainer-dismiss');
-  if (explainer && explainerDismiss) {
-    if (!localStorage.getItem('cs-explainer-dismissed')) explainer.hidden = false;
-    explainerDismiss.addEventListener('click', function () {
-      localStorage.setItem('cs-explainer-dismissed', '1');
-      explainer.hidden = true;
-    });
-  }
 })();

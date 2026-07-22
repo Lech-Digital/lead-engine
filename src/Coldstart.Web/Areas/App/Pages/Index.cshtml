@@ -31,10 +31,16 @@
     }
   </section>
 
-  <aside class="app-explainer" id="app-explainer" hidden>
-    <p><strong>How this works:</strong> we find leads overnight → you review and approve → the email goes out. Nothing is ever sent without you.</p>
-    <button type="button" class="app-explainer-x" id="app-explainer-dismiss" aria-label="Dismiss">Got it</button>
-  </aside>
+  @if (Model.ActiveHint is { } hint)
+  {
+    <aside class="app-explainer" id="app-explainer">
+      <p>@Html.Raw(hint.Body)</p>
+      <form method="post" asp-page-handler="DismissHint">
+        <input type="hidden" name="key" value="@hint.Key">
+        <button type="submit" class="app-explainer-x" aria-label="Dismiss">Got it</button>
+      </form>
+    </aside>
+  }
 
   <section class="app-profile">
     @if (Model.Profile.IsEmpty)

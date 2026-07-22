@@ -1,4 +1,5 @@
 using Coldstart.Application.Customers;
+using Coldstart.Application.Hints;
 using Coldstart.Application.Leads;
 using Coldstart.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;
@@ -21,6 +22,8 @@ public sealed class IndexModel(UserManager<ApplicationUser> users, IGetLeadInbox
     public IReadOnlyList<LeadSummary> Shelved { get; private set; } = [];
     public IReadOnlyList<LeadSummary> AutoSkipped { get; private set; } = [];
 
+    public Hint? ActiveHint { get; private set; }
+
     public int NewCount => New.Count;
     public int AcceptedCount => AcceptedReady.Count + Sent.Count;
     public int DiscardedCount => Shelved.Count + AutoSkipped.Count;
@@ -31,6 +34,15 @@ public sealed class IndexModel(UserManager<ApplicationUser> users, IGetLeadInbox
 
         var user = await users.GetUserAsync(User);
         if (user?.CustomerId is null) return;
+
+        // Resolve today's onboarding hint (only for a signed-in user with a provisioned customer).
+        var decision = HintPicker.Pick(ReadHintState(user), DateOnly.FromDateTime(DateTime.UtcNow));
+        ActiveHint = decision.ToShow;
+        if (decision.NextState.ShownOn != user.HintShownOn)   // a hint was promoted today → persist the stamp
+        {
+            user.HintShownOn = decision.NextState.ShownOn;
+            await users.UpdateAsync(user);
+        }
 
         var result = await inbox.ForCustomerAsync(user.CustomerId.Value, ct);
         CustomerName = result.CustomerName;
@@ -58,4 +70,28 @@ public sealed class IndexModel(UserManager<ApplicationUser> users, IGetLeadInbox
         };
         return new JsonResult(new { ok = result.IsOk, status = result.Status.ToString(), message = result.Message });
     }
+
+    public async Task<IActionResult> OnPostDismissHintAsync(string key, CancellationToken ct)
+    {
+        var user = await users.GetUserAsync(User);
+        if (user is not null && !string.IsNullOrWhiteSpace(key))
+        {
+            var next = HintPicker.Dismiss(ReadHintState(user), key, DateOnly.FromDateTime(DateTime.UtcNow));
+            user.HintsSeenCsv = WriteSeen(next.SeenKeys);
+            user.HintShownOn = next.ShownOn;
+            user.HintDismissedOn = next.DismissedOn;
+            await users.UpdateAsync(user);
+        }
+        return RedirectToPage("/Index", new { area = "App" });
+    }
+
+    private static HintState ReadHintState(ApplicationUser user) => new(
+        SeenKeys: string.IsNullOrWhiteSpace(user.HintsSeenCsv)
+            ? []
+            : user.HintsSeenCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
+        ShownOn: user.HintShownOn,
+        DismissedOn: user.HintDismissedOn);
+
+    private static string? WriteSeen(IReadOnlyCollection<string> keys) =>
+        keys.Count == 0 ? null : string.Join(',', keys);
 }
