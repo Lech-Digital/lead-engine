@@ -297,3 +297,19 @@
 .mail-attachments { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; }
 @media (max-width: 640px) { .mail-row { grid-template-columns: 1fr auto; } .mail-from { display: none; } }
 /* ===== end admin mailbox ===== */
+
+/* ===== Admin console: invite form + companies/users table ===== */
+.admin-invite { display: flex; flex-direction: column; gap: 16px; max-width: 440px; margin: 18px 0 8px; }
+.admin-table { width: 100%; border-collapse: collapse; border: 1px solid var(--line-soft); border-radius: 12px; background: #fff; overflow: hidden; }
+.admin-table th, .admin-table td { padding: 11px 14px; text-align: left; vertical-align: middle; }
+.admin-table thead th { font-family: var(--mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink); background: var(--daylight); border-bottom: 1px solid var(--line-soft); }
+.admin-table tbody tr { border-bottom: 1px solid var(--line-soft); }
+.admin-table tbody tr:last-child { border-bottom: none; }
+.admin-table tbody tr:hover { background: var(--daylight); }
+.admin-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.btn-sm { padding: 6px 12px; font-size: 0.85rem; }
+.copy-link { font-family: var(--mono); font-size: 0.85rem; width: 100%; padding: 11px 13px; border: 1px solid var(--line-soft); border-radius: 8px; background: var(--daylight); color: var(--ink); }
+@media (max-width: 640px) {
+  .admin-table { display: block; overflow-x: auto; white-space: nowrap; border-radius: 10px; }
+}
+/* ===== end admin console ===== */
