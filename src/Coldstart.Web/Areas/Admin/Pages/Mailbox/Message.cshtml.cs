@@ -43,6 +43,7 @@ public sealed class MessageModel(IMailbox mailbox, ILogger<MessageModel> logger)
 
     public async Task<IActionResult> OnGetAttachmentAsync(uint uid, int index, CancellationToken ct)
     {
+        if (index < 0) return NotFound();
         var att = await mailbox.GetAttachmentAsync(uid, index, ct);
         if (att is null) return NotFound();
         return File(att.Content, att.ContentType, att.FileName);   // always Content-Disposition: attachment

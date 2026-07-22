@@ -181,4 +181,41 @@ public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<Cold
         response.StatusCode.Should().Be(HttpStatusCode.Redirect);
         response.Headers.Location!.ToString().Should().Contain("/admin/mailbox");
     }
+
+    [Fact]
+    public async Task Message_AttachmentDownload_NegativeIndex_Returns404()
+    {
+        // Arrange — SuperAdmin session, message with one attachment
+        var client = factory.CreateClient();
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        factory.Mailbox.Messages.Clear();
+        factory.Mailbox.Messages.Add(Msg(11, "With attachment",
+            atts: [new MailAttachmentInfo(0, "report.pdf", "application/pdf", 3)]));
+
+        // Act
+        var response = await client.GetAsync("/admin/mailbox/11?handler=Attachment&index=-1");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Message_WhenMailboxUnreachable_ShowsFriendlyErrorNot500()
+    {
+        // Arrange — SuperAdmin session, mailbox flagged unreachable
+        var client = factory.CreateClient();
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        factory.Mailbox.Messages.Clear();
+        factory.Mailbox.Unreachable = true;
+        try
+        {
+            // Act
+            var response = await client.GetAsync("/admin/mailbox/1");
+
+            // Assert
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            (await response.Content.ReadAsStringAsync()).Should().Contain("Mailbox unreachable");
+        }
+        finally { factory.Mailbox.Unreachable = false; }
+    }
 }
