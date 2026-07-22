@@ -11,6 +11,14 @@
     var skipped = status is "Shelved" or "Rejected";
     var hasRecipient = !string.IsNullOrWhiteSpace(lead.RecipientEmail);
 }
+@functions {
+    // Only http(s) URLs are safe to render as a href — everything else (javascript:, data:, etc.)
+    // is rendered as plain text instead of a link. Inputs here are harvester/attacker-influenceable.
+    private static bool IsSafeHttpUrl(string? url) =>
+        !string.IsNullOrWhiteSpace(url) &&
+        (url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+         url.StartsWith("https://", StringComparison.OrdinalIgnoreCase));
+}
 
 <header class="app-bar">
   <a class="wordmark" href="/">coldstart<i>*</i></a>
@@ -36,11 +44,11 @@
       <section class="panel">
         <h4>The email</h4>
         <form method="post">
-          <div class="field"><label asp-for="Input.Recipient">Recipient</label>
+          <div class="field"><label for="lead-recipient">Recipient</label>
             <input asp-for="Input.Recipient" id="lead-recipient" type="email" placeholder="name@company.com — set before sending" disabled="@sent"></div>
-          <div class="field"><label asp-for="Input.Subject">Subject</label>
+          <div class="field"><label for="lead-subject">Subject</label>
             <input asp-for="Input.Subject" id="lead-subject" disabled="@sent"></div>
-          <div class="field"><label asp-for="Input.Draft">Body</label>
+          <div class="field"><label for="lead-body">Body</label>
             <textarea asp-for="Input.Draft" id="lead-body" rows="8" disabled="@sent"></textarea></div>
 
           @if (!sent)
@@ -48,7 +56,7 @@
             <div class="ld-actions">
               <button class="btn btn-ghost" type="submit" asp-page-handler="Save">Save draft</button>
               @if (pending || skipped) { <button class="btn btn-primary" type="submit" asp-page-handler="Accept">Approve →</button> }
-              @if (approved) { <button class="btn btn-ghost" type="submit" asp-page-handler="Reopen">Move back to review</button> }
+              @if (approved || skipped) { <button class="btn btn-ghost" type="submit" asp-page-handler="Reopen">Move back to review</button> }
               @if (!skipped) { <button class="btn btn-ghost" type="submit" asp-page-handler="Discard">Skip</button> }
             </div>
           }
@@ -86,7 +94,7 @@
         }
         <dl class="ld-facts">
           <div><dt>Signals</dt><dd class="ts">@lead.MatchedSignals</dd></div>
-          <div><dt>Source</dt><dd>@lead.Source @if (!string.IsNullOrEmpty(lead.SourceUrl)) { <a class="lnk" href="@lead.SourceUrl" target="_blank" rel="noopener">→</a> }</dd></div>
+          <div><dt>Source</dt><dd>@lead.Source @if (IsSafeHttpUrl(lead.SourceUrl)) { <a class="lnk" href="@lead.SourceUrl" target="_blank" rel="noopener">→</a> }</dd></div>
           <div><dt>Score</dt><dd>@lead.Score.ToString("0.00") · @lead.EmailConfidence.ToLower()</dd></div>
         </dl>
       </section>
@@ -95,7 +103,7 @@
       {
         <section class="panel">
           <h4>Find the decision-maker</h4>
-          <ul class="ld-links">@foreach (var link in lead.ContactLinks) { <li><a class="lnk" href="@link.Url" target="_blank" rel="noopener">@link.Label</a></li> }</ul>
+          <ul class="ld-links">@foreach (var link in lead.ContactLinks) { <li>@if (IsSafeHttpUrl(link.Url)) { <a class="lnk" href="@link.Url" target="_blank" rel="noopener">@link.Label</a> } else { @link.Label }</li> }</ul>
         </section>
       }
 

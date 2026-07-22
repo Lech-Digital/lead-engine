@@ -76,6 +76,7 @@ public sealed class DetailModel(UserManager<ApplicationUser> users, IGetLeadDeta
         {
             // Re-render the page with the message and the loaded lead.
             if (await LoadAsync(id, ct) is null) return RedirectToPage("/Index", new { area = "App" });
+            RestoreEmailFieldsIfEmpty();
             ModelState.AddModelError(string.Empty, result.Message ?? "That action isn't allowed.");
             return Page();
         }
@@ -91,9 +92,22 @@ public sealed class DetailModel(UserManager<ApplicationUser> users, IGetLeadDeta
         if (result.Status == LeadActionStatus.Invalid)
         {
             if (await LoadAsync(id, ct) is null) return RedirectToPage("/Index", new { area = "App" });
+            RestoreEmailFieldsIfEmpty();
             ModelState.AddModelError(string.Empty, result.Message ?? "That note couldn't be saved.");
             return Page();
         }
         return RedirectToPage("/Leads/Detail", new { area = "App", id });
+    }
+
+    // The note forms and the split MarkSent form only post their own fields, so on an Invalid
+    // re-render Input.Subject/Draft/Recipient would otherwise arrive empty and blank the email
+    // panel (and a subsequent Save would persist the blanks). Restore from the loaded Lead only
+    // when the posted value is empty, so forms that DO post these fields (Save/Accept) keep the
+    // user's edits.
+    private void RestoreEmailFieldsIfEmpty()
+    {
+        if (string.IsNullOrEmpty(Input.Subject)) Input.Subject = Lead.Subject;
+        if (string.IsNullOrEmpty(Input.Draft)) Input.Draft = Lead.Draft;
+        if (string.IsNullOrWhiteSpace(Input.Recipient)) Input.Recipient = Lead.RecipientEmail;
     }
 }

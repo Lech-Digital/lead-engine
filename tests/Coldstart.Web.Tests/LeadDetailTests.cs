@@ -149,6 +149,99 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         html.Should().NotContain("call back Friday");
     }
 
+    [Fact]
+    public async Task AddNote_WithInvalidNote_DoesNotBlankTheEmailFields()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var email = $"note-invalid-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        var id = await AddLeadWithDraftAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"),
+            "Distinct-Subject-Marker", "Distinct-Draft-Marker");
+        var form = await AntiforgeryForm(client, $"/app/leads/{id}", new() { ["Input.NoteText"] = "" });
+
+        // Act
+        var post = await client.PostAsync($"/app/leads/{id}?handler=AddNote", new FormUrlEncodedContent(form));
+        var html = await post.Content.ReadAsStringAsync();
+
+        // Assert
+        post.StatusCode.Should().Be(HttpStatusCode.OK);
+        html.Should().Contain("Distinct-Subject-Marker");
+        html.Should().Contain("Distinct-Draft-Marker");
+    }
+
+    [Fact]
+    public async Task Detail_ForShelvedLead_ShowsReopenHandler()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var email = $"detail-shelved-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        var id = await AddShelvedLeadAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"));
+
+        // Act
+        var html = await client.GetStringAsync($"/app/leads/{id}");
+
+        // Assert
+        html.Should().Contain("handler=Reopen");
+    }
+
+    [Fact]
+    public async Task Detail_WithJavascriptSchemeSourceUrl_SuppressesTheLink()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var email = $"detail-jsurl-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        var id = await AddLeadWithSourceUrlAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"), "javascript:alert(1)");
+
+        // Act
+        var html = await client.GetStringAsync($"/app/leads/{id}");
+
+        // Assert
+        html.Should().NotContain("href=\"javascript:");
+    }
+
+    private async Task<Guid> AddLeadWithDraftAsync(string email, string company, string fingerprint, string subject, string draft)
+    {
+        using var scope = factory.Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var db = scope.ServiceProvider.GetRequiredService<ColdstartDbContext>();
+        var user = await users.FindByEmailAsync(email);
+        var lead = Lead.CreateHarvested(new CustomerId(user!.CustomerId!.Value), company, Fit.Yes,
+            subject, draft, "hackernews", "https://x/1", fingerprint, 0.7, "outbound", DateTimeOffset.UtcNow);
+        db.Leads.Add(lead);
+        await db.SaveChangesAsync();
+        return lead.Id.Value;
+    }
+
+    private async Task<Guid> AddShelvedLeadAsync(string email, string company, string fingerprint)
+    {
+        using var scope = factory.Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var db = scope.ServiceProvider.GetRequiredService<ColdstartDbContext>();
+        var user = await users.FindByEmailAsync(email);
+        var lead = Lead.CreateHarvested(new CustomerId(user!.CustomerId!.Value), company, Fit.Yes,
+            "subj", "body", "hackernews", "https://x/1", fingerprint, 0.7, "outbound", DateTimeOffset.UtcNow);
+        lead.Discard();
+        db.Leads.Add(lead);
+        await db.SaveChangesAsync();
+        return lead.Id.Value;
+    }
+
+    private async Task<Guid> AddLeadWithSourceUrlAsync(string email, string company, string fingerprint, string sourceUrl)
+    {
+        using var scope = factory.Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var db = scope.ServiceProvider.GetRequiredService<ColdstartDbContext>();
+        var user = await users.FindByEmailAsync(email);
+        var lead = Lead.CreateHarvested(new CustomerId(user!.CustomerId!.Value), company, Fit.Yes,
+            "subj", "body", "hackernews", sourceUrl, fingerprint, 0.7, "outbound", DateTimeOffset.UtcNow);
+        db.Leads.Add(lead);
+        await db.SaveChangesAsync();
+        return lead.Id.Value;
+    }
+
     private static Guid ExtractNoteId(string html)
     {
         var marker = html.IndexOf("Input.NoteId", StringComparison.Ordinal);
