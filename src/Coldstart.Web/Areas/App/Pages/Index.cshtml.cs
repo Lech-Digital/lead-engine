@@ -74,7 +74,7 @@ public sealed class IndexModel(UserManager<ApplicationUser> users, IGetLeadInbox
     public async Task<IActionResult> OnPostDismissHintAsync(string key, CancellationToken ct)
     {
         var user = await users.GetUserAsync(User);
-        if (user is not null && !string.IsNullOrWhiteSpace(key))
+        if (user is not null && OnboardingHints.All.Any(h => h.Key == key) && !ReadHintState(user).SeenKeys.Contains(key))
         {
             var next = HintPicker.Dismiss(ReadHintState(user), key, DateOnly.FromDateTime(DateTime.UtcNow));
             user.HintsSeenCsv = WriteSeen(next.SeenKeys);
