@@ -33,11 +33,11 @@
   // --- Counts + empty states, recomputed from the DOM after a move. ---
   function refreshGrid(grid) {
     if (!grid) return;
-    grid.setAttribute('data-count', grid.querySelectorAll('.app-lead').length);
+    grid.setAttribute('data-count', grid.querySelectorAll('.lead-row').length);
   }
   function refreshCounts() {
     TABS.forEach(function (name) {
-      var count = panelEl(name) ? panelEl(name).querySelectorAll('.app-lead').length : 0;
+      var count = panelEl(name) ? panelEl(name).querySelectorAll('.lead-row').length : 0;
       var badge = tabEl(name) ? tabEl(name).querySelector('.app-tab-count') : null;
       if (badge) badge.textContent = count;
     });
@@ -70,7 +70,7 @@
   // --- Drag to move. ---
   var dragId = null;
 
-  document.querySelectorAll('.app-lead[draggable="true"]').forEach(function (card) {
+  document.querySelectorAll('.lead-row[draggable="true"]').forEach(function (card) {
     card.addEventListener('dragstart', function (e) {
       dragId = card.getAttribute('data-lead-id');
       card.classList.add('dragging');
@@ -84,7 +84,7 @@
 
   // Extracted from the drop handler — one shared move path.
   function requestMove(id, target) {
-    var card = document.querySelector('.app-lead[data-lead-id="' + id + '"]');
+    var card = document.querySelector('.lead-row[data-lead-id="' + id + '"]');
     var body = new URLSearchParams();
     body.set('id', id);
     body.set('tab', target);
@@ -112,11 +112,11 @@
   });
 
   // --- Card Approve/Skip buttons — same endpoint as drag-and-drop. ---
-  document.querySelectorAll('.app-lead-actions button[data-move]').forEach(function (btn) {
+  document.querySelectorAll('.lead-row-actions button[data-move]').forEach(function (btn) {
     btn.addEventListener('click', function (ev) {
       ev.preventDefault();
       ev.stopPropagation();
-      var card = btn.closest('.app-lead');
+      var card = btn.closest('.lead-row');
       if (card) requestMove(card.getAttribute('data-lead-id'), btn.getAttribute('data-move'));
     });
   });

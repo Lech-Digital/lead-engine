@@ -78,23 +78,23 @@
   @{
     void Card(Coldstart.Application.Leads.LeadSummary lead, bool draggable, bool actionable)
     {
-      <article class="app-lead" data-lead-id="@lead.Id" draggable="@(draggable ? "true" : "false")">
-        <div class="app-lead-top">
-          <h3><a href="/app/leads/@lead.Id">@lead.Company</a><span class="go" aria-hidden="true">→</span></h3>
-          <span class="fit fit-@lead.Fit.ToLower()">@lead.Fit</span>
-        </div>
-        <p class="app-lead-subj">@lead.Subject</p>
-        @if (!string.IsNullOrWhiteSpace(lead.MatchedSignals)) { <p class="app-lead-why"><span class="app-lead-why-label">Why now:</span> @lead.MatchedSignals.Replace(",", ", ")</p> }
-        @if (!string.IsNullOrWhiteSpace(lead.Draft) && lead.Draft != "-")
-        {
-          <p class="app-lead-draft">@(lead.Draft.Length > 220 ? lead.Draft[..220] + "…" : lead.Draft)</p>
-        }
-        <div class="app-lead-meta"><span class="chip">@lead.Source</span><span class="ts app-lead-ts">@lead.CreatedAt.ToString("dd MMM · HH:mm", System.Globalization.CultureInfo.InvariantCulture)</span></div>
+      <article class="lead-row" data-lead-id="@lead.Id" draggable="@(draggable ? "true" : "false")">
+        <a class="lead-row-main" href="/app/leads/@lead.Id">
+          <div class="lead-row-head">
+            <span class="lead-row-co">@lead.Company</span>
+            <span class="fit fit-@lead.Fit.ToLower()">@lead.Fit</span>
+            <span class="ts lead-row-ts">@lead.CreatedAt.ToString("dd MMM · HH:mm", System.Globalization.CultureInfo.InvariantCulture)</span>
+          </div>
+          <div class="lead-row-sub">
+            @if (!string.IsNullOrWhiteSpace(lead.MatchedSignals)) { <span class="lead-row-why">⚡ @lead.MatchedSignals.Split(',')[0].Trim()</span><span class="lead-row-dot">·</span> }
+            <span class="lead-row-subj">@lead.Subject</span>
+          </div>
+        </a>
         @if (actionable)
         {
-          <div class="app-lead-actions">
-            <button type="button" class="btn btn-primary app-act-approve" data-move="accepted">Approve</button>
-            <button type="button" class="btn btn-ghost app-act-skip" data-move="discarded">Skip</button>
+          <div class="lead-row-actions">
+            <button type="button" class="btn btn-ghost btn-sm app-act-skip" data-move="discarded">Skip</button>
+            <button type="button" class="btn btn-primary btn-sm app-act-approve" data-move="accepted">Approve</button>
           </div>
         }
       </article>

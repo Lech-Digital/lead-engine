@@ -32,6 +32,28 @@ public class LeadReviewTests(ColdstartWebFactory factory) : IClassFixture<Coldst
     }
 
     [Fact]
+    public async Task Index_NewTab_RendersCompactRow_WithWhyNowAndSubject()
+    {
+        // Arrange — AddLeadForUserAsync seeds via Lead.CreateHarvested with matchedSignals "outbound"
+        // and subject "subj", so the compact row's why-now + subject markup can be asserted directly.
+        var client = factory.CreateClient();
+        var email = $"row-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await AddLeadForUserAsync(email, "Pending Co", "fp-" + Guid.NewGuid().ToString("N"), LeadStatus.PendingReview);
+
+        // Act
+        var html = await client.GetStringAsync("/app?tab=new");
+
+        // Assert — compact row shows company, subject, and the why-now signal
+        html.Should().Contain("lead-row");
+        html.Should().Contain("Pending Co");
+        html.Should().Contain("data-lead-id");
+        html.Should().Contain("lead-row-why");
+        html.Should().Contain("outbound");
+        html.Should().Contain("subj");
+    }
+
+    [Fact]
     public async Task Index_DiscardedTab_ShowsShelvedAndAutoSkippedGroups()
     {
         // Arrange
