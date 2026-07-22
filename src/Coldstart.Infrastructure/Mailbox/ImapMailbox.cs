@@ -15,12 +15,21 @@ internal sealed class ImapMailbox(IOptions<MailboxOptions> options) : IMailbox
     private async Task<ImapClient> OpenAsync(CancellationToken ct)
     {
         var client = new ImapClient();
-        // Same rationale as SmtpEmailSender: unreachable CRL endpoints must not kill the connection.
-        client.CheckCertificateRevocation = false;
-        await client.ConnectAsync(_o.Host, _o.ImapPort,
-            _o.ImapUseSsl ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.None, ct);
-        await client.AuthenticateAsync(_o.Username, _o.Password, ct);
-        return client;
+        try
+        {
+            // Same rationale as SmtpEmailSender: unreachable CRL endpoints must not kill the connection.
+            client.CheckCertificateRevocation = false;
+            await client.ConnectAsync(_o.Host, _o.ImapPort,
+                _o.ImapUseSsl ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.None, ct);
+            await client.AuthenticateAsync(_o.Username, _o.Password, ct);
+            return client;
+        }
+        catch
+        {
+            // Connect/auth failed before ownership transferred to the caller's using block.
+            client.Dispose();
+            throw;
+        }
     }
 
     public async Task<MailboxPage> ListAsync(int page, int pageSize, CancellationToken ct)
