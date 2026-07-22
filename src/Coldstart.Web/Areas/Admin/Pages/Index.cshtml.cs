@@ -73,7 +73,7 @@ public sealed class IndexModel(
 
     public async Task<IActionResult> OnPostResendAsync(string email, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(email)) { StatusMessage = "No account specified."; await LoadAsync(ct); return Page(); }
+        if (string.IsNullOrWhiteSpace(email)) { StatusMessage = "No account specified."; return await RenderAsync(ct); }
 
         var user = await users.FindByEmailAsync(email);
         if (user is { EmailConfirmed: false } && await IsCompanyAdminAsync(user))
@@ -83,13 +83,12 @@ public sealed class IndexModel(
             StatusMessage = $"Invitation re-sent to {email}.";
         }
         else StatusMessage = "Nothing to resend for that account.";
-        await LoadAsync(ct);
-        return Page();
+        return await RenderAsync(ct);
     }
 
     public async Task<IActionResult> OnPostRevokeAsync(string email, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(email)) { StatusMessage = "No account specified."; await LoadAsync(ct); return Page(); }
+        if (string.IsNullOrWhiteSpace(email)) { StatusMessage = "No account specified."; return await RenderAsync(ct); }
 
         var user = await users.FindByEmailAsync(email);
         if (user is { EmailConfirmed: false } && await IsCompanyAdminAsync(user))
@@ -107,19 +106,17 @@ public sealed class IndexModel(
             }
         }
         else StatusMessage = "Only pending invites can be revoked.";
-        await LoadAsync(ct);
-        return Page();
+        return await RenderAsync(ct);
     }
 
     public async Task<IActionResult> OnPostCopyLinkAsync(string email, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(email)) { StatusMessage = "No account specified."; await LoadAsync(ct); return Page(); }
+        if (string.IsNullOrWhiteSpace(email)) { StatusMessage = "No account specified."; return await RenderAsync(ct); }
 
         var user = await users.FindByEmailAsync(email);
         if (user is { EmailConfirmed: false } && await IsCompanyAdminAsync(user))
             CopyLink = (email, await BuildSetPasswordLinkAsync(user));
-        await LoadAsync(ct);
-        return Page();
+        return await RenderAsync(ct);
     }
 
     public async Task<IActionResult> OnPostBlockAsync(string id, CancellationToken ct)
@@ -132,8 +129,7 @@ public sealed class IndexModel(
             await users.UpdateSecurityStampAsync(user);   // invalidate any live cookie
             StatusMessage = $"{user.Email} is blocked.";
         }
-        await LoadAsync(ct);
-        return Page();
+        return await RenderAsync(ct);
     }
 
     public async Task<IActionResult> OnPostUnblockAsync(string id, CancellationToken ct)
@@ -144,8 +140,7 @@ public sealed class IndexModel(
             await users.SetLockoutEndDateAsync(user, null);
             StatusMessage = $"{user.Email} is active again.";
         }
-        await LoadAsync(ct);
-        return Page();
+        return await RenderAsync(ct);
     }
 
     public async Task<IActionResult> OnPostRemoveAsync(string id, CancellationToken ct)
@@ -165,6 +160,21 @@ public sealed class IndexModel(
                 StatusMessage = "Account removed.";
             }
         }
+        return await RenderAsync(ct);
+    }
+
+    // Row-action handlers (Resend/Revoke/CopyLink/Block/Unblock/Remove) only post a bare
+    // "email"/"id" hidden field. Razor Pages' empty-prefix model-binding fallback then partially
+    // binds that value onto the page's [BindProperty] Input model (e.g. "email" -> Input.Email),
+    // leaving Input.Company's [Required] validation unsatisfied. Left uncleared, ModelState still
+    // carries that spurious error into the re-rendered page, and the Invite form's
+    // asp-validation-summary="All" displays it — making a successful row action look like a
+    // failure. Clear ModelState and the Input model before rendering so only this handler's own
+    // outcome (StatusMessage) is shown.
+    private async Task<IActionResult> RenderAsync(CancellationToken ct)
+    {
+        ModelState.Clear();
+        Input = new InputModel();
         await LoadAsync(ct);
         return Page();
     }

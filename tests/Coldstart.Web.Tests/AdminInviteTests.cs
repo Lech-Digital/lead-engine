@@ -82,4 +82,60 @@ public class AdminInviteTests(ColdstartWebFactory factory) : IClassFixture<Colds
         html.Should().Contain("already has an account");
         factory.Email.Sent.Should().BeEmpty();
     }
+
+    [Fact]
+    public async Task Resend_ForPendingInvite_SendsSecondEmailAndReportsSuccess()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var admin = $"boss3-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, admin, "Passw0rd!", ColdstartRoles.SuperAdmin);
+        var invitee = $"pending-{Guid.NewGuid():N}@test.com";
+        await TestAuth.PostFormAsync(client, "/admin?handler=Invite", new()
+        {
+            ["Input.Company"] = "Resend Co", ["Input.Email"] = invitee,
+        });
+        factory.Email.Sent.Clear();
+
+        // Act
+        var html = await TestAuth.PostFormReadAsync(client, "/admin?handler=Resend", new()
+        {
+            ["email"] = invitee,
+        });
+
+        // Assert
+        html.Should().Contain($"Invitation re-sent to {invitee}");
+        factory.Email.Sent.Should().ContainSingle(m => m.To == invitee);
+        // Regression: Resend must not leak spurious "Input" model-binding validation errors
+        // (the [BindProperty] Input model is not part of this handler's own form).
+        html.Should().NotContain("validation-summary-errors");
+    }
+
+    [Fact]
+    public async Task Revoke_ForPendingInvite_RemovesUserAndReportsSuccess()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var admin = $"boss4-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, admin, "Passw0rd!", ColdstartRoles.SuperAdmin);
+        var invitee = $"revoke-{Guid.NewGuid():N}@test.com";
+        await TestAuth.PostFormAsync(client, "/admin?handler=Invite", new()
+        {
+            ["Input.Company"] = "Revoke Co", ["Input.Email"] = invitee,
+        });
+
+        // Act
+        var html = await TestAuth.PostFormReadAsync(client, "/admin?handler=Revoke", new()
+        {
+            ["email"] = invitee,
+        });
+
+        // Assert
+        html.Should().Contain($"Invitation to {invitee} revoked");
+        using var scope = factory.Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        (await users.FindByEmailAsync(invitee)).Should().BeNull();
+        // Regression: same spurious-validation-error leak as Resend (see above).
+        html.Should().NotContain("validation-summary-errors");
+    }
 }
