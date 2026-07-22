@@ -12,6 +12,7 @@ public sealed class ComposeModel(IMailbox mailbox, ILogger<ComposeModel> logger)
 {
     [BindProperty] public InputModel Input { get; set; } = new();
     public string? SendError { get; private set; }
+    public bool PrefillFailed { get; private set; }
 
     public async Task OnGetAsync(uint? replyTo, CancellationToken ct)
     {
@@ -19,7 +20,11 @@ public sealed class ComposeModel(IMailbox mailbox, ILogger<ComposeModel> logger)
         try
         {
             var original = await mailbox.GetAsync(replyTo.Value, ct);
-            if (original is null) return;
+            if (original is null)
+            {
+                PrefillFailed = true;
+                return;
+            }
             Input = new InputModel
             {
                 To = original.FromAddress,
@@ -38,6 +43,7 @@ public sealed class ComposeModel(IMailbox mailbox, ILogger<ComposeModel> logger)
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogWarning(ex, "Mailbox unreachable while preparing reply to {Uid}.", replyTo);
+            PrefillFailed = true;
         }
     }
 

@@ -380,6 +380,44 @@ public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<Cold
     }
 
     [Fact]
+    public async Task Compose_ReplyTo_UnknownUid_ShowsPrefillFailedNotice()
+    {
+        // Arrange — no message with this uid exists, so GetAsync returns null
+        var client = factory.CreateClient();
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        factory.Mailbox.Messages.Clear();
+
+        // Act
+        var response = await client.GetAsync("/admin/mailbox/compose?replyTo=404");
+
+        // Assert — page still renders (200), but with a notice instead of silently
+        // showing an empty compose form as if the user had chosen to start fresh.
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("Couldn't load the original message");
+    }
+
+    [Fact]
+    public async Task Compose_ReplyTo_WhenMailboxUnreachable_ShowsPrefillFailedNotice()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        factory.Mailbox.Unreachable = true;
+        try
+        {
+            // Act
+            var response = await client.GetAsync("/admin/mailbox/compose?replyTo=1");
+
+            // Assert
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            var body = await response.Content.ReadAsStringAsync();
+            body.Should().Contain("Couldn't load the original message");
+        }
+        finally { factory.Mailbox.Unreachable = false; }
+    }
+
+    [Fact]
     public async Task Compose_WhenSendFails_ShowsErrorPreservesValuesAndSendsNothing()
     {
         // Arrange — grab the antiforgery token before flagging the mailbox unreachable, since a

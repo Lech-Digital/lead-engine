@@ -12,6 +12,7 @@
   <section class="app-briefing"><h1>New message</h1><p class="app-briefing-ts">from info@getcoldstart.nl</p></section>
 
   @if (Model.SendError is not null) { <p class="mail-error">@Model.SendError</p> }
+  @if (Model.PrefillFailed) { <p class="mail-note">Couldn't load the original message — you can still compose a new one.</p> }
   <div asp-validation-summary="All" class="field-error"></div>
 
   <form method="post" class="lp-form">
