@@ -62,4 +62,27 @@ public class OnboardingHintsTests(ColdstartWebFactory factory) : IClassFixture<C
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         (await response.Content.ReadAsStringAsync()).Should().NotContain("handler=DismissHint");
     }
+
+    [Fact]
+    public async Task ShowHintsAgain_AfterDismissingAll_RestoresFirstHintOnApp()
+    {
+        // Arrange — signed-in client that has dismissed the first hint already
+        var client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        var email = $"hint-showhints-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        var dismissToken = await TestAuth.AntiforgeryAsync(client, "/app");
+        await client.PostAsync("/app?handler=DismissHint", new FormUrlEncodedContent(
+            new Dictionary<string, string> { ["__RequestVerificationToken"] = dismissToken!, ["key"] = OnboardingHints.All[0].Key }));
+
+        // Act — click "Show hints again" on the profile page
+        var resetToken = await TestAuth.AntiforgeryAsync(client, "/app/profile");
+        var reset = await client.PostAsync("/app/profile?handler=ShowHints", new FormUrlEncodedContent(
+            new Dictionary<string, string> { ["__RequestVerificationToken"] = resetToken! }));
+        var appHtml = await client.GetStringAsync("/app");
+
+        // Assert
+        reset.StatusCode.Should().BeOneOf(HttpStatusCode.Redirect, HttpStatusCode.Found);
+        var decoded = WebUtility.HtmlDecode(appHtml);
+        decoded.Should().Contain(OnboardingHints.All[0].Body);
+    }
 }

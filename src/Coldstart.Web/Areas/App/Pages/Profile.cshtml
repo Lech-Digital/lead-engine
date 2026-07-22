@@ -16,6 +16,14 @@
       <div class="field"><label asp-for="Input.ContactEmail">Contact email</label><input asp-for="Input.ContactEmail" type="email"></div>
       <button class="btn btn-primary" type="submit">Save →</button>
     </form>
+    @if (Model.StatusMessage is not null) { <p class="form-status">@Model.StatusMessage</p> }
+    <section class="app-hints-reset">
+      <h2 class="app-group-head">Onboarding hints</h2>
+      <p>Want the getting-started tips again? They'll reappear one per day.</p>
+      <form method="post" asp-page-handler="ShowHints">
+        <button type="submit" class="btn btn-ghost">Show hints again</button>
+      </form>
+    </section>
     <p class="auth-alt"><a href="/app">← Back to your leads</a></p>
   </div>
 </main>

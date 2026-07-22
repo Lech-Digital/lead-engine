@@ -1,4 +1,5 @@
 using Coldstart.Application.Customers;
+using Coldstart.Application.Hints;
 using Coldstart.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -10,6 +11,8 @@ namespace Coldstart.Web.Areas.App.Pages;
 [Authorize]
 public sealed class ProfileModel(UserManager<ApplicationUser> users, IGetCompanyProfile getProfile, IUpdateCompanyProfile updateProfile) : PageModel
 {
+    [TempData] public string? StatusMessage { get; set; }
+
     [BindProperty] public ProfileInput Input { get; set; } = new();
 
     public sealed class ProfileInput
@@ -39,5 +42,20 @@ public sealed class ProfileModel(UserManager<ApplicationUser> users, IGetCompany
         await updateProfile.UpdateAsync(user.CustomerId.Value,
             new CompanyProfileInput(Input.CompanyName, Input.Address, Input.VatNumber, Input.KvkNumber, Input.Niche, Input.Website, Input.ContactEmail), ct);
         return RedirectToPage("Index");
+    }
+
+    public async Task<IActionResult> OnPostShowHintsAsync(CancellationToken ct)
+    {
+        var user = await users.GetUserAsync(User);
+        if (user is not null)
+        {
+            var reset = HintPicker.Reset();
+            user.HintsSeenCsv = reset.SeenKeys.Count == 0 ? null : string.Join(',', reset.SeenKeys);
+            user.HintShownOn = reset.ShownOn;
+            user.HintDismissedOn = reset.DismissedOn;
+            await users.UpdateAsync(user);
+        }
+        StatusMessage = "Onboarding hints will show again.";
+        return RedirectToPage();
     }
 }
