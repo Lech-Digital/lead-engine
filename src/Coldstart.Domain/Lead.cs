@@ -19,6 +19,9 @@ public sealed class Lead
     public double Score { get; private set; }
     public string MatchedSignals { get; private set; } = "";
 
+    private readonly List<LeadNote> _notes = [];
+    public IReadOnlyList<LeadNote> Notes => _notes;
+
     private Lead() { } // EF materialization
 
     private Lead(LeadId id, CustomerId customerId, string company, Fit fit,
@@ -102,4 +105,23 @@ public sealed class Lead
         Status = LeadStatus.Sent;
         SentAt = when;
     }
+
+    public Guid AddNote(string text, DateTimeOffset when) => AddNote(Guid.NewGuid(), text, when);
+
+    public Guid AddNote(Guid id, string text, DateTimeOffset when)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            throw new DomainException("Note text is required.");
+        _notes.Add(new LeadNote(id, text.Trim(), when));
+        return id;
+    }
+
+    public void UpdateNote(Guid noteId, string text, DateTimeOffset when)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            throw new DomainException("Note text is required.");
+        _notes.FirstOrDefault(n => n.Id == noteId)?.Update(text.Trim(), when);
+    }
+
+    public void RemoveNote(Guid noteId) => _notes.RemoveAll(n => n.Id == noteId);
 }
