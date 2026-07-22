@@ -34,7 +34,11 @@
 namespace Coldstart.Application.Hints;
 
 public sealed record Hint(string Key, string Body);
-public sealed record HintState(IReadOnlyCollection<string> SeenKeys, DateOnly? ShownOn);
+// THREE fields: SeenKeys (dismissed keys), ShownOn (day the current hint was promoted),
+// DismissedOn (day a hint was last dismissed). All three are needed to satisfy the cadence
+// rules simultaneously — two fields cannot distinguish "today's hint still pending" from
+// "already dismissed today, nothing new until tomorrow".
+public sealed record HintState(IReadOnlyCollection<string> SeenKeys, DateOnly? ShownOn, DateOnly? DismissedOn);
 public sealed record HintDecision(Hint? ToShow, HintState NextState);
 
 public static class OnboardingHints { public static IReadOnlyList<Hint> All { get; } }
@@ -42,7 +46,7 @@ public static class OnboardingHints { public static IReadOnlyList<Hint> All { ge
 public static class HintPicker
 {
     public static HintDecision Pick(HintState state, DateOnly today);
-    public static HintState Dismiss(HintState state, string key);
+    public static HintState Dismiss(HintState state, string key, DateOnly today);   // today stamps DismissedOn
     public static HintState Reset();
 }
 ```
@@ -62,7 +66,7 @@ public class HintPickerTests
 {
     private static readonly DateOnly Day1 = new(2026, 7, 22);
     private static readonly DateOnly Day2 = new(2026, 7, 23);
-    private static HintState Empty => new([], null);
+    private static HintState Empty => new([], null, null);
     private static string FirstKey => OnboardingHints.All[0].Key;
     private static string SecondKey => OnboardingHints.All[1].Key;
 
@@ -97,7 +101,7 @@ public class HintPickerTests
     public void Pick_SameDayBeforeDismiss_KeepsShowingSameHint_WithoutAdvancing()
     {
         // Arrange — first hint was shown today, not yet dismissed
-        var state = new HintState([], Day1);
+        var state = new HintState([], Day1, null);
 
         // Act
         var decision = HintPicker.Pick(state, Day1);
@@ -108,10 +112,25 @@ public class HintPickerTests
     }
 
     [Fact]
+    public void Pick_SecondHintSameDayBeforeDismiss_KeepsShowing_DespiteEarlierSeenKeys()
+    {
+        // Arrange — hint #1 dismissed on a PRIOR day; hint #2 was promoted today and not yet
+        // dismissed. SeenKeys is non-empty from the old dismissal — this is the case a two-field
+        // model got wrong (it treated any non-empty SeenKeys as "dismissed today").
+        var state = new HintState([FirstKey], ShownOn: Day2, DismissedOn: Day1);
+
+        // Act
+        var decision = HintPicker.Pick(state, Day2);
+
+        // Assert — hint #2 must stay visible on same-day reloads until it too is dismissed
+        decision.ToShow!.Key.Should().Be(SecondKey);
+    }
+
+    [Fact]
     public void Pick_SameDayAfterDismiss_ShowsNothingMoreToday()
     {
         // Arrange — first hint shown AND dismissed today
-        var state = new HintState([FirstKey], Day1);
+        var state = new HintState([FirstKey], ShownOn: Day1, DismissedOn: Day1);
 
         // Act
         var decision = HintPicker.Pick(state, Day1);
@@ -123,8 +142,8 @@ public class HintPickerTests
     [Fact]
     public void Pick_NextDayAfterDismiss_ShowsSecondHint()
     {
-        // Arrange — first dismissed, last shown was yesterday
-        var state = new HintState([FirstKey], Day1);
+        // Arrange — first dismissed yesterday, nothing shown/dismissed today yet
+        var state = new HintState([FirstKey], ShownOn: Day1, DismissedOn: Day1);
 
         // Act
         var decision = HintPicker.Pick(state, Day2);
@@ -138,7 +157,7 @@ public class HintPickerTests
     public void Pick_WhenAllSeen_ShowsNothing()
     {
         // Arrange
-        var state = new HintState(OnboardingHints.All.Select(h => h.Key).ToList(), Day1);
+        var state = new HintState(OnboardingHints.All.Select(h => h.Key).ToList(), Day1, Day1);
 
         // Act
         var decision = HintPicker.Pick(state, Day2);
@@ -151,7 +170,7 @@ public class HintPickerTests
     public void Pick_IgnoresUnknownOrStaleSeenKeys()
     {
         // Arrange — a stale key no longer in the catalogue must not break selection
-        var state = new HintState(["removed-old-key"], null);
+        var state = new HintState(["removed-old-key"], null, null);
 
         // Act
         var decision = HintPicker.Pick(state, Day1);
@@ -161,31 +180,30 @@ public class HintPickerTests
     }
 
     [Fact]
-    public void Dismiss_AddsKeyToSeen_PreservingShownOn()
+    public void Dismiss_AddsKeyToSeen_AndStampsDismissedOn()
     {
         // Arrange
-        var state = new HintState([], Day1);
+        var state = new HintState([], Day1, null);
 
         // Act
-        var next = HintPicker.Dismiss(state, FirstKey);
+        var next = HintPicker.Dismiss(state, FirstKey, Day1);
 
         // Assert
         next.SeenKeys.Should().Contain(FirstKey);
         next.ShownOn.Should().Be(Day1);
+        next.DismissedOn.Should().Be(Day1);
     }
 
     [Fact]
-    public void Reset_ClearsSeenAndShownOn()
+    public void Reset_ClearsAllState()
     {
-        // Arrange
-        var state = new HintState([FirstKey, SecondKey], Day2);
-
         // Act
         var next = HintPicker.Reset();
 
         // Assert
         next.SeenKeys.Should().BeEmpty();
         next.ShownOn.Should().BeNull();
+        next.DismissedOn.Should().BeNull();
     }
 }
 ```
@@ -222,36 +240,48 @@ public static class OnboardingHints
 ```csharp
 namespace Coldstart.Application.Hints;
 
-public sealed record HintState(IReadOnlyCollection<string> SeenKeys, DateOnly? ShownOn);
+public sealed record HintState(IReadOnlyCollection<string> SeenKeys, DateOnly? ShownOn, DateOnly? DismissedOn);
 public sealed record HintDecision(Hint? ToShow, HintState NextState);
 
 // Pure selection logic — no clock, no I/O. `today` is supplied by the caller.
+// Three cadence rules, all satisfied only with the DismissedOn field:
+//   (a) at most one hint newly promoted per calendar day,
+//   (b) a promoted hint stays visible on same-day reloads until dismissed,
+//   (c) dismissing today's hint does NOT surface the next until tomorrow.
 public static class HintPicker
 {
     public static HintDecision Pick(HintState state, DateOnly today)
     {
-        var seen = state.SeenKeys;
-        var next = OnboardingHints.All.FirstOrDefault(h => !seen.Contains(h.Key));
+        var next = OnboardingHints.All.FirstOrDefault(h => !state.SeenKeys.Contains(h.Key));
         if (next is null)
-            return new HintDecision(null, state);                       // onboarding complete
+            return new HintDecision(null, state);                        // onboarding complete
 
-        // Already showing today's (undismissed) hint — keep it, don't advance.
-        if (state.ShownOn == today)
+        var shownToday = state.ShownOn == today;
+        var dismissedToday = state.DismissedOn == today;
+
+        // (b) today's promoted hint is still pending — keep showing it, don't advance.
+        if (shownToday && !dismissedToday)
             return new HintDecision(next, state);
 
-        // A new day (or never shown): promote the next hint and stamp today. One per day.
-        return new HintDecision(next, state with { ShownOn = today });
+        // (a) new day and nothing dismissed today yet — promote the next hint and stamp today.
+        if (!shownToday && !dismissedToday)
+            return new HintDecision(next, state with { ShownOn = today });
+
+        // (c) already dismissed today (or promoted-then-dismissed today) — nothing more today.
+        return new HintDecision(null, state);
     }
 
-    public static HintState Dismiss(HintState state, string key)
+    public static HintState Dismiss(HintState state, string key, DateOnly today)
     {
-        if (state.SeenKeys.Contains(key)) return state;
-        return state with { SeenKeys = [.. state.SeenKeys, key] };
+        var seen = state.SeenKeys.Contains(key) ? state.SeenKeys : [.. state.SeenKeys, key];
+        return state with { SeenKeys = seen, DismissedOn = today };
     }
 
-    public static HintState Reset() => new([], null);
+    public static HintState Reset() => new([], null, null);
 }
 ```
+
+Trace of the rules with this code — Day1: `Pick(Empty, Day1)` → `!shownToday && !dismissedToday` → promote hint1, ShownOn=Day1. Same-day reload before dismiss: `shownToday && !dismissedToday` → keep hint1. Same-day dismiss → DismissedOn=Day1; `Pick` now hits the final branch (`dismissedToday`) → null (rule c). Day2 reload: `!shownToday && !dismissedToday` → promote hint2, ShownOn=Day2 (rule a). Day2 reload before dismissing hint2, with SeenKeys={hint1}: `shownToday && !dismissedToday` → keep hint2 (rule b — the case the two-field model broke).
 
 - [ ] **Step 4: Run to verify pass**
 
@@ -277,17 +307,20 @@ git commit -m "feat(hints): onboarding hint content and pure selection logic"
 
 **Interfaces:**
 - Consumes: nothing.
-- Produces: `ApplicationUser.HintsSeenCsv` (`string?`) and `ApplicationUser.HintShownOn` (`DateOnly?`), consumed by Tasks 3–4.
+- Produces: `ApplicationUser.HintsSeenCsv` (`string?`), `ApplicationUser.HintShownOn` (`DateOnly?`), `ApplicationUser.HintDismissedOn` (`DateOnly?`), consumed by Tasks 3–4.
 
-- [ ] **Step 1: Add the two properties**
+- [ ] **Step 1: Add the three properties**
 
 In `src/Coldstart.Infrastructure/Identity/ApplicationUser.cs`, add to the class body:
 
 ```csharp
     // Onboarding-hint state. HintsSeenCsv = comma-separated dismissed hint keys; HintShownOn =
-    // the (UTC) day the current hint was surfaced, enforcing at most one new hint per day.
+    // the (UTC) day the current hint was surfaced; HintDismissedOn = the (UTC) day a hint was
+    // last dismissed. All three enforce "one new hint per day, stays until dismissed, next waits
+    // for tomorrow" — see HintPicker.
     public string? HintsSeenCsv { get; set; }
     public DateOnly? HintShownOn { get; set; }
+    public DateOnly? HintDismissedOn { get; set; }
 ```
 
 - [ ] **Step 2: Generate the migration**
@@ -301,7 +334,7 @@ dotnet ef migrations add AddUserHintState \
   --output-dir Migrations
 ```
 
-Expected: creates `Migrations/<timestamp>_AddUserHintState.cs` + `.Designer.cs` and updates `ColdstartDbContextModelSnapshot.cs`. Open the generated `Up` — it should `AddColumn<string>("HintsSeenCsv", "AspNetUsers", nullable: true)` and `AddColumn<DateOnly>("HintShownOn", "AspNetUsers", type: "date", nullable: true)`. If EF didn't map `DateOnly` to `date` (older provider), that's fine as long as it's a nullable date-typed column; do not hand-edit beyond confirming nullability.
+Expected: creates `Migrations/<timestamp>_AddUserHintState.cs` + `.Designer.cs` and updates `ColdstartDbContextModelSnapshot.cs`. Open the generated `Up` — it should `AddColumn<string>("HintsSeenCsv", "AspNetUsers", nullable: true)` plus two `AddColumn<DateOnly>` for `"HintShownOn"` and `"HintDismissedOn"` (`type: "date"`, nullable). If EF didn't map `DateOnly` to `date` (older provider), that's fine as long as they're nullable date-typed columns; do not hand-edit beyond confirming nullability.
 
 - [ ] **Step 3: Verify the migration builds and applies**
 
@@ -322,7 +355,7 @@ In `src/Coldstart.Web/wwwroot/css/site.css`, immediately after the `.app-explain
 
 ```bash
 git add src/Coldstart.Infrastructure/Identity/ApplicationUser.cs src/Coldstart.Infrastructure/Migrations src/Coldstart.Web/wwwroot/css/site.css
-git commit -m "feat(hints): persist per-user hint state; fix explainer [hidden] override"
+git commit -m "feat(hints): persist per-user hint state (seen/shown/dismissed); fix explainer [hidden] override"
 ```
 
 ---
@@ -452,8 +485,10 @@ Add the dismiss handler and CSV helpers to the class:
         var user = await users.GetUserAsync(User);
         if (user is not null && !string.IsNullOrWhiteSpace(key))
         {
-            var next = HintPicker.Dismiss(ReadHintState(user), key);
+            var next = HintPicker.Dismiss(ReadHintState(user), key, DateOnly.FromDateTime(DateTime.UtcNow));
             user.HintsSeenCsv = WriteSeen(next.SeenKeys);
+            user.HintShownOn = next.ShownOn;
+            user.HintDismissedOn = next.DismissedOn;
             await users.UpdateAsync(user);
         }
         return RedirectToPage("/Index", new { area = "App" });
@@ -463,7 +498,8 @@ Add the dismiss handler and CSV helpers to the class:
         SeenKeys: string.IsNullOrWhiteSpace(user.HintsSeenCsv)
             ? []
             : user.HintsSeenCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
-        ShownOn: user.HintShownOn);
+        ShownOn: user.HintShownOn,
+        DismissedOn: user.HintDismissedOn);
 
     private static string? WriteSeen(IReadOnlyCollection<string> keys) =>
         keys.Count == 0 ? null : string.Join(',', keys);
@@ -561,6 +597,7 @@ In `src/Coldstart.Web/Areas/App/Pages/Profile.cshtml.cs`, add `using Coldstart.A
             var reset = HintPicker.Reset();
             user.HintsSeenCsv = reset.SeenKeys.Count == 0 ? null : string.Join(',', reset.SeenKeys);
             user.HintShownOn = reset.ShownOn;
+            user.HintDismissedOn = reset.DismissedOn;
             await users.UpdateAsync(user);
         }
         StatusMessage = "Onboarding hints will show again.";
