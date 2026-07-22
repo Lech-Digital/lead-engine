@@ -19,6 +19,8 @@ public sealed class DetailModel(UserManager<ApplicationUser> users, IGetLeadDeta
         public string Subject { get; set; } = "";
         public string Draft { get; set; } = "";
         public string? Recipient { get; set; }
+        public string? NoteText { get; set; }
+        public Guid NoteId { get; set; }
     }
 
     public async Task<IActionResult> OnGetAsync(Guid id, CancellationToken ct)
@@ -43,6 +45,15 @@ public sealed class DetailModel(UserManager<ApplicationUser> users, IGetLeadDeta
 
     public Task<IActionResult> OnPostMarkSentAsync(Guid id, CancellationToken ct) =>
         RunAsync(id, ct, cid => workflow.MarkSentAsync(cid, id, ct));
+
+    public Task<IActionResult> OnPostAddNoteAsync(Guid id, CancellationToken ct) =>
+        NoteActionAsync(id, ct, cid => workflow.AddNoteAsync(cid, id, Guid.NewGuid(), Input.NoteText ?? "", ct));
+
+    public Task<IActionResult> OnPostUpdateNoteAsync(Guid id, CancellationToken ct) =>
+        NoteActionAsync(id, ct, cid => workflow.UpdateNoteAsync(cid, id, Input.NoteId, Input.NoteText ?? "", ct));
+
+    public Task<IActionResult> OnPostRemoveNoteAsync(Guid id, CancellationToken ct) =>
+        NoteActionAsync(id, ct, cid => workflow.RemoveNoteAsync(cid, id, Input.NoteId, ct));
 
     private async Task<LeadDetail?> LoadAsync(Guid id, CancellationToken ct)
     {
@@ -69,5 +80,20 @@ public sealed class DetailModel(UserManager<ApplicationUser> users, IGetLeadDeta
             return Page();
         }
         return RedirectToPage("/Index", new { area = "App" });
+    }
+
+    private async Task<IActionResult> NoteActionAsync(Guid id, CancellationToken ct, Func<Guid, Task<LeadActionResult>> action)
+    {
+        var user = await users.GetUserAsync(User);
+        if (user?.CustomerId is null) return RedirectToPage("/Index", new { area = "App" });
+        var result = await action(user.CustomerId.Value);
+        if (result.Status == LeadActionStatus.NotFound) return RedirectToPage("/Index", new { area = "App" });
+        if (result.Status == LeadActionStatus.Invalid)
+        {
+            if (await LoadAsync(id, ct) is null) return RedirectToPage("/Index", new { area = "App" });
+            ModelState.AddModelError(string.Empty, result.Message ?? "That note couldn't be saved.");
+            return Page();
+        }
+        return RedirectToPage("/Leads/Detail", new { area = "App", id });
     }
 }

@@ -99,7 +99,31 @@
         </section>
       }
 
-      <!-- NOTES-PANEL: added in Task 6 -->
+      <section class="panel ld-notes">
+        <h4>Your notes</h4>
+        @if (lead.Notes.Count > 0)
+        {
+          <ul class="ld-note-list">
+            @foreach (var note in lead.Notes)
+            {
+              <li class="ld-note">
+                <p class="ld-note-text">@note.Text</p>
+                <div class="ld-note-meta">
+                  <span class="ts">@((note.UpdatedAt ?? note.CreatedAt).ToString("dd MMM · HH:mm", System.Globalization.CultureInfo.InvariantCulture))</span>
+                  <form method="post" asp-page-handler="RemoveNote" class="ld-note-del">
+                    <input type="hidden" asp-for="Input.NoteId" value="@note.Id">
+                    <button type="submit" class="ld-note-x" aria-label="Delete note">Delete</button>
+                  </form>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+        <form method="post" asp-page-handler="AddNote" class="ld-note-add">
+          <textarea asp-for="Input.NoteText" rows="2" placeholder="Private to you — 'called, follow up next week'…"></textarea>
+          <button type="submit" class="btn btn-ghost btn-sm">Add note</button>
+        </form>
+      </section>
     </div>
   </div>
 </main>

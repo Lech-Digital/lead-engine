@@ -356,3 +356,14 @@
 .lnk:hover { text-decoration: underline; }
 @media (max-width: 900px) { .ld-grid { grid-template-columns: 1fr; } }
 /* ===== end lead detail ===== */
+
+/* ===== Lead notes ===== */
+.ld-notes { background: #FCFAF4; }
+.ld-note-list { list-style: none; padding: 0; margin: 0 0 12px; display: flex; flex-direction: column; gap: 10px; }
+.ld-note { border-bottom: 1px solid var(--line-soft); padding-bottom: 8px; }
+.ld-note-text { margin: 0 0 4px; font-size: 0.88rem; color: var(--ink); white-space: pre-wrap; }
+.ld-note-meta { display: flex; justify-content: space-between; align-items: center; }
+.ld-note-x { background: none; border: none; color: var(--body-subtle); font-size: 0.78rem; cursor: pointer; }
+.ld-note-x:hover { color: #B3402A; }
+.ld-note-add textarea { width: 100%; border: 1px solid var(--line-soft); border-radius: 8px; padding: 9px 11px; font-family: var(--body); font-size: 0.88rem; margin-bottom: 8px; }
+/* ===== end lead notes ===== */

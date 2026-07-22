@@ -107,6 +107,60 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         html.Should().Contain("Send from your own inbox");
     }
 
+    [Fact]
+    public async Task AddNote_PersistsAndRendersOnTheLead()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var email = $"note-add-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        var id = await AddLeadForUserAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"));
+        var form = await AntiforgeryForm(client, $"/app/leads/{id}", new() { ["Input.NoteText"] = "ring them Tuesday" });
+
+        // Act
+        var post = await client.PostAsync($"/app/leads/{id}?handler=AddNote", new FormUrlEncodedContent(form));
+        var html = await client.GetStringAsync($"/app/leads/{id}");
+
+        // Assert
+        post.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Redirect);
+        html.Should().Contain("ring them Tuesday");
+    }
+
+    [Fact]
+    public async Task RemoveNote_RemovesItFromTheLead()
+    {
+        // Arrange — add a note, then discover its id from the rendered delete form's hidden NoteId input
+        var client = factory.CreateClient();
+        var email = $"note-remove-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        var id = await AddLeadForUserAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"));
+        var addForm = await AntiforgeryForm(client, $"/app/leads/{id}", new() { ["Input.NoteText"] = "call back Friday" });
+        await client.PostAsync($"/app/leads/{id}?handler=AddNote", new FormUrlEncodedContent(addForm));
+        var htmlWithNote = await client.GetStringAsync($"/app/leads/{id}");
+        var noteId = ExtractNoteId(htmlWithNote);
+        var removeForm = await AntiforgeryForm(client, $"/app/leads/{id}", new() { ["Input.NoteId"] = noteId.ToString() });
+
+        // Act
+        var post = await client.PostAsync($"/app/leads/{id}?handler=RemoveNote", new FormUrlEncodedContent(removeForm));
+        var html = await client.GetStringAsync($"/app/leads/{id}");
+
+        // Assert
+        post.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Redirect);
+        html.Should().NotContain("call back Friday");
+    }
+
+    private static Guid ExtractNoteId(string html)
+    {
+        var marker = html.IndexOf("Input.NoteId", StringComparison.Ordinal);
+        marker.Should().BeGreaterThanOrEqualTo(0, "the rendered delete form should carry a hidden NoteId input");
+        var tagStart = html.LastIndexOf('<', marker);
+        var tagEnd = html.IndexOf('>', marker);
+        var tag = html[tagStart..tagEnd];
+        var match = System.Text.RegularExpressions.Regex.Match(tag, "value=\"([^\"]+)\"");
+        match.Success.Should().BeTrue("the NoteId input should render a value attribute");
+        return Guid.Parse(match.Groups[1].Value);
+    }
+
     private async Task<Guid> AddApprovedLeadWithRecipientAsync(string email, string company, string fingerprint, string recipient)
     {
         using var scope = factory.Services.CreateScope();
