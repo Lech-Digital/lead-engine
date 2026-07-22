@@ -121,7 +121,7 @@ public class MailHtmlSanitizerTests
     }
 
     [Fact]
-    public void Sanitize_WhenStyleCarriesBackgroundImageUrl_StripsIt()
+    public void Sanitize_WhenStyleCarriesBackgroundImageUrl_StripsItAndFlags()
     {
         // Arrange
         var html = """<p style="background-image:url('https://tracker.example/p.png')">hi</p>""";
@@ -131,10 +131,11 @@ public class MailHtmlSanitizerTests
 
         // Assert
         result.Html.Should().NotContain("tracker.example");
+        result.RemoteImagesRemoved.Should().BeTrue();
     }
 
     [Fact]
-    public void Sanitize_WhenStyleCarriesBackgroundUrl_StripsIt()
+    public void Sanitize_WhenStyleCarriesBackgroundUrl_StripsItAndFlags()
     {
         // Arrange
         var html = """<div style="background:url(https://tracker.example/p.png)">hi</div>""";
@@ -144,6 +145,7 @@ public class MailHtmlSanitizerTests
 
         // Assert
         result.Html.Should().NotContain("tracker.example");
+        result.RemoteImagesRemoved.Should().BeTrue();
     }
 
     [Fact]
@@ -160,7 +162,7 @@ public class MailHtmlSanitizerTests
     }
 
     [Fact]
-    public void Sanitize_WhenInputTypeImageHasRemoteSrc_RemovesTheElement()
+    public void Sanitize_WhenInputTypeImageHasRemoteSrc_RemovesTheElementAndFlags()
     {
         // Arrange
         var html = """<input type="image" src="https://tracker.example/p.png">""";
@@ -171,6 +173,22 @@ public class MailHtmlSanitizerTests
         // Assert
         result.Html.Should().NotContain("tracker.example");
         result.Html.Should().NotContain("<input");
+        result.RemoteImagesRemoved.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Sanitize_WhenTdCarriesRemoteBackgroundAttribute_StripsIt()
+    {
+        // Arrange
+        var html = """<table><tr><td background="https://tracker.example/p.png">hi</td></tr></table>""";
+
+        // Act
+        var result = MailHtmlSanitizer.Sanitize(html);
+
+        // Assert
+        result.Html.Should().NotContain("tracker.example");
+        result.Html.Should().Contain("hi");
+        result.RemoteImagesRemoved.Should().BeTrue();
     }
 
     [Fact]
