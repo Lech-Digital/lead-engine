@@ -123,4 +123,23 @@ public class ImapMailboxTests(GreenMailFixture greenMail) : IClassFixture<GreenM
         detail!.TextBody.Should().Contain("reply text");
         detail.References.Should().Contain("orig-123@example.com");
     }
+
+    [Fact]
+    public async Task SendAsync_WithCrLfSubject_DoesNotInjectHeaders()
+    {
+        // Arrange — a crafted Subject attempting to smuggle an extra Bcc header via raw CRLF
+        var mail = new OutgoingMail(GreenMailFixture.User, "hi\r\nBcc: evil@example.com", "body text");
+        var sut = Sut();
+
+        // Act
+        await sut.SendAsync(mail, CancellationToken.None);
+
+        // Assert — MimeKit's Subject setter encodes/folds the raw header value rather than
+        // splicing it verbatim, so no attacker-controlled Bcc header materializes: the delivered
+        // message's To still contains only the real recipient, never the injected address.
+        var list = await sut.ListAsync(1, 25, CancellationToken.None);
+        var newest = list.Items.OrderByDescending(i => i.Uid).First();
+        var detail = await sut.GetAsync(newest.Uid, CancellationToken.None);
+        detail!.To.Should().NotContain("evil@");
+    }
 }

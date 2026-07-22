@@ -10,9 +10,9 @@ namespace Coldstart.Web.Tests;
 public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<ColdstartWebFactory>
 {
     private static MailMessageDetail Msg(uint uid, string subject, bool seen = false, string? html = null,
-        IReadOnlyList<MailAttachmentInfo>? atts = null, bool remoteImagesRemoved = false) =>
+        IReadOnlyList<MailAttachmentInfo>? atts = null, bool remoteImagesRemoved = false, string? references = null) =>
         new(uid, "Prospect", "prospect@example.com", "info@getcoldstart.nl", subject,
-            DateTimeOffset.UtcNow, seen, html, remoteImagesRemoved, "plain body", $"<msg-{uid}@example.com>", null, atts ?? []);
+            DateTimeOffset.UtcNow, seen, html, remoteImagesRemoved, "plain body", $"<msg-{uid}@example.com>", references, atts ?? []);
 
     // Scrapes the antiforgery token from `basePath` (a plain GET) then posts the empty form to
     // `handlerUrl` — avoids issuing a GET against a `?handler=` URL, which Razor Pages page-handler
@@ -271,7 +271,100 @@ public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Assert
         form.Should().Contain("Re: Question about pricing");
         form.Should().Contain("wrote:");                       // quoted original marker
-        factory.Mailbox.Sent.Should().ContainSingle(s => s.InReplyToMessageId == "<msg-21@example.com>");
+        factory.Mailbox.Sent.Should().ContainSingle(s =>
+            s.InReplyToMessageId == "<msg-21@example.com>" && s.References == "<msg-21@example.com>");
+    }
+
+    [Fact]
+    public async Task Compose_ReplyTo_MessageWithReferences_ThreadsChainAndInReplyTo()
+    {
+        // Arrange — original message already carries a References chain from an earlier thread
+        var client = factory.CreateClient();
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        factory.Mailbox.Messages.Clear();
+        factory.Mailbox.Messages.Add(Msg(30, "Pricing follow-up", references: "<older@example.com>"));
+
+        // Act
+        var form = await client.GetStringAsync("/admin/mailbox/compose?replyTo=30");
+
+        // Assert — References hidden field concatenates old chain + original Message-Id;
+        // InReplyTo hidden field is just the original Message-Id. Hidden inputs are HTML-encoded
+        // by the tag helper, so angle brackets render as &lt;/&gt;.
+        form.Should().Contain("&lt;older@example.com&gt; &lt;msg-30@example.com&gt;");
+        form.Should().Contain("&lt;msg-30@example.com&gt;");
+    }
+
+    [Fact]
+    public async Task Compose_ReplyTo_MessageWithNullReferences_UsesMessageIdAsReferences()
+    {
+        // Arrange — original message has no prior References chain (References = null)
+        var client = factory.CreateClient();
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        factory.Mailbox.Messages.Clear();
+        factory.Mailbox.Messages.Add(Msg(31, "First contact"));   // references defaults to null
+
+        // Act
+        var form = await client.GetStringAsync("/admin/mailbox/compose?replyTo=31");
+
+        // Assert — with no prior chain, the References hidden field falls back to exactly the
+        // original Message-Id (same value the InReplyTo hidden field also carries).
+        form.Should().Contain("&lt;msg-31@example.com&gt;");
+    }
+
+    [Fact]
+    public async Task Compose_WhenSendFails_ShowsErrorPreservesValuesAndSendsNothing()
+    {
+        // Arrange — grab the antiforgery token before flagging the mailbox unreachable, since a
+        // plain GET without replyTo never touches IMailbox but this keeps the ordering defensive.
+        var client = factory.CreateClient();
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        factory.Mailbox.Sent.Clear();
+        var token = await TestAuth.AntiforgeryAsync(client, "/admin/mailbox/compose");
+        factory.Mailbox.Unreachable = true;
+        try
+        {
+            // Act — SendAsync throws a SocketException because the fake mailbox is unreachable
+            var response = await client.PostAsync("/admin/mailbox/compose", new FormUrlEncodedContent(
+                new Dictionary<string, string>
+                {
+                    ["__RequestVerificationToken"] = token!,
+                    ["Input.To"] = "prospect@example.com",
+                    ["Input.Subject"] = "Unique subject for send-failure test",
+                    ["Input.Body"] = "Body text that should be preserved.",
+                }));
+
+            // Assert — page re-rendered (not a 500), error shown, submitted values preserved, nothing sent
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            var body = await response.Content.ReadAsStringAsync();
+            body.Should().Contain("Sending failed").And.Contain("Unique subject for send-failure test");
+            factory.Mailbox.Sent.Should().BeEmpty();
+        }
+        finally { factory.Mailbox.Unreachable = false; }
+    }
+
+    [Fact]
+    public async Task Compose_ToWithCrLf_RejectsAndSendsNothing()
+    {
+        // Arrange — an address attempting to inject an extra header via a raw CRLF
+        var client = factory.CreateClient();
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        factory.Mailbox.Sent.Clear();
+        var token = await TestAuth.AntiforgeryAsync(client, "/admin/mailbox/compose");
+
+        // Act — FormUrlEncodedContent percent-encodes the raw \r\n; the server sees literal CRLF
+        // once the form value is decoded, exactly as an attacker-controlled value would arrive.
+        var response = await client.PostAsync("/admin/mailbox/compose", new FormUrlEncodedContent(
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token!,
+                ["Input.To"] = "victim@example.com\r\nBcc:evil@example.com",
+                ["Input.Subject"] = "Subject line",
+                ["Input.Body"] = "Body text.",
+            }));
+
+        // Assert — page re-rendered with a validation error, nothing sent
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        factory.Mailbox.Sent.Should().BeEmpty();
     }
 
     [Fact]
