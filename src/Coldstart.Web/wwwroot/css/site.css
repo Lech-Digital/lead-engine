@@ -273,3 +273,27 @@
   .legal p, .legal li { color: var(--body-muted); line-height: 1.65; }
   .legal-banner { display: inline-block; background: #FFF3EC; border: 1px solid #F5CDB8; color: #A04E1E; border-radius: 8px; padding: 8px 14px; font-size: 0.88rem; margin: 14px 0 6px; }
   /* ===== end footer + legal ===== */
+
+/* ===== Admin mailbox ===== */
+.mail-actions { display: flex; gap: 10px; margin: 14px 0 18px; }
+.mail-list { display: flex; flex-direction: column; border: 1px solid var(--line-soft); border-radius: 12px; background: #fff; overflow: hidden; }
+.mail-row { display: grid; grid-template-columns: 200px 1fr auto; gap: 14px; padding: 13px 18px; text-decoration: none; color: var(--body-muted); border-bottom: 1px solid var(--line-soft); align-items: baseline; }
+.mail-row:last-child { border-bottom: none; }
+.mail-row:hover { background: var(--daylight); }
+.mail-row-unseen .mail-from, .mail-row-unseen .mail-subj { font-weight: 700; color: var(--ink); }
+.mail-from { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mail-subj { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mail-date { font-size: 0.78rem; color: var(--body-subtle); }
+.mail-empty, .mail-error, .mail-flash, .mail-note { padding: 16px 2px; color: var(--body-subtle); }
+.mail-note { font-size: 0.85rem; padding: 8px 2px; }
+.mail-error { color: #B3402A; }
+.mail-flash { color: #2E7D4F; }
+.mail-html { contain: content; max-width: 100%; overflow-x: auto; background: #fff; border: 1px solid var(--line-soft); border-radius: 10px; padding: 18px 20px; }
+.mail-html img { max-width: 100%; }
+.mail-text { white-space: pre-wrap; font-family: var(--body); background: #fff; border: 1px solid var(--line-soft); border-radius: 10px; padding: 18px 20px; color: var(--body-muted); }
+.mail-head { margin: 6px 0 14px; }
+.mail-head dt { font-size: 0.78rem; color: var(--body-subtle); }
+.mail-head dd { margin: 0 0 6px; color: var(--ink); }
+.mail-attachments { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; }
+@media (max-width: 640px) { .mail-row { grid-template-columns: 1fr auto; } .mail-from { display: none; } }
+/* ===== end admin mailbox ===== */

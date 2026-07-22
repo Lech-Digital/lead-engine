@@ -1,0 +1,52 @@
+@page "/admin/mailbox"
+@model Coldstart.Web.Areas.Admin.Pages.Mailbox.IndexModel
+@{ ViewData["Title"] = "Mailbox — Coldstart admin"; Layout = "/Pages/Shared/_Layout.cshtml"; }
+
+<header class="app-bar">
+  <a class="wordmark" href="/">coldstart<i>*</i></a>
+  <nav class="app-nav">
+    <a href="/admin">Admin</a>
+    <a href="/admin/mailbox" aria-current="page">Mailbox</a>
+    <form method="post" asp-page="/Account/Logout" asp-area="Identity"><button class="btn btn-ghost" type="submit">Log out</button></form>
+  </nav>
+</header>
+
+<main class="wrap app-zone">
+  <section class="app-briefing">
+    <h1>Mailbox</h1>
+    <p class="app-briefing-ts">info@getcoldstart.nl · INBOX</p>
+  </section>
+
+  <div class="mail-actions">
+    <a class="btn btn-primary" href="/admin/mailbox/compose">Compose</a>
+    <a class="btn btn-ghost" href="/admin/mailbox">Refresh</a>
+  </div>
+
+  @if (Model.Unreachable)
+  {
+    <p class="mail-error">Mailbox unreachable right now — check the connection and try again.</p>
+  }
+  else if (Model.Mail is { } mail)
+  {
+    @if (@TempData["MailFlash"] is string flash) { <p class="mail-flash">@flash</p> }
+    <div class="mail-list">
+      @foreach (var m in mail.Items)
+      {
+        <a class="mail-row @(m.Seen ? "" : "mail-row-unseen")" href="/admin/mailbox/@m.Uid">
+          <span class="mail-from">@(string.IsNullOrWhiteSpace(m.FromName) ? m.FromAddress : m.FromName)</span>
+          <span class="mail-subj">@m.Subject @(m.HasAttachments ? "📎" : "")</span>
+          <span class="ts mail-date">@m.Date.ToString("dd MMM · HH:mm", System.Globalization.CultureInfo.InvariantCulture)</span>
+        </a>
+      }
+      @if (mail.Items.Count == 0) { <p class="mail-empty">Inbox empty — nothing to read.</p> }
+    </div>
+    @if (mail.TotalCount > mail.Page * mail.PageSize)
+    {
+      <a class="btn btn-ghost" href="/admin/mailbox?page=@(mail.Page + 1)">Older →</a>
+    }
+    @if (mail.Page > 1)
+    {
+      <a class="btn btn-ghost" href="/admin/mailbox?page=@(mail.Page - 1)">← Newer</a>
+    }
+  }
+</main>

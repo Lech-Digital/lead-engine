@@ -14,6 +14,7 @@ public sealed class ColdstartWebFactory : WebApplicationFactory<Program>, IAsync
         new PostgreSqlBuilder("postgres:17").Build();
 
     public FakeEmailSender Email { get; } = new();
+    public FakeMailbox Mailbox { get; } = new();
 
     public Task InitializeAsync() => _db.StartAsync();
 
@@ -28,6 +29,8 @@ public sealed class ColdstartWebFactory : WebApplicationFactory<Program>, IAsync
         {
             services.RemoveAll<IEmailSender>();
             services.AddSingleton<IEmailSender>(Email);
+            services.RemoveAll<Coldstart.Application.Mailbox.IMailbox>();
+            services.AddSingleton<Coldstart.Application.Mailbox.IMailbox>(Mailbox);
         });
     }
 }
