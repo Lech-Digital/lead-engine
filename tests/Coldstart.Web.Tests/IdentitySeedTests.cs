@@ -39,4 +39,24 @@ public class IdentitySeedTests(ColdstartWebFactory factory) : IClassFixture<Cold
         admin.CustomerId.Should().BeNull();
         (await users.IsInRoleAsync(admin, ColdstartRoles.SuperAdmin)).Should().BeTrue();
     }
+
+    [Fact]
+    public async Task SeedAsync_WhenSuperAdminUserAlreadyExistsWithoutRole_GrantsSuperAdminRole()
+    {
+        // Arrange
+        using var _ = factory.CreateClient();   // forces the host (and startup seeding) to build
+        using var scope = factory.Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var admin = await users.FindByEmailAsync(ColdstartRoles.SuperAdminEmail);
+        admin.Should().NotBeNull("startup seeding should have created the operator account already");
+
+        (await users.RemoveFromRoleAsync(admin!, ColdstartRoles.SuperAdmin)).Succeeded.Should().BeTrue();
+        (await users.IsInRoleAsync(admin!, ColdstartRoles.SuperAdmin)).Should().BeFalse();
+
+        // Act — re-run the seeder against the pre-existing, role-less account.
+        await IdentitySeeder.SeedAsync(scope.ServiceProvider, CancellationToken.None);
+
+        // Assert
+        (await users.IsInRoleAsync(admin!, ColdstartRoles.SuperAdmin)).Should().BeTrue();
+    }
 }

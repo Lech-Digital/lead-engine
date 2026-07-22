@@ -15,9 +15,10 @@ public static class IdentitySeeder
                 await roles.CreateAsync(new IdentityRole(role));
 
         var users = services.GetRequiredService<UserManager<ApplicationUser>>();
-        if (await users.FindByEmailAsync(ColdstartRoles.SuperAdminEmail) is null)
+        var admin = await users.FindByEmailAsync(ColdstartRoles.SuperAdminEmail);
+        if (admin is null)
         {
-            var admin = new ApplicationUser
+            admin = new ApplicationUser
             {
                 UserName = ColdstartRoles.SuperAdminEmail,
                 Email = ColdstartRoles.SuperAdminEmail,
@@ -25,7 +26,8 @@ public static class IdentitySeeder
             };
             // Random, unusable password — the operator sets a real one via the reset flow.
             await users.CreateAsync(admin, "Aa1!" + Convert.ToBase64String(RandomNumberGenerator.GetBytes(24)));
-            await users.AddToRoleAsync(admin, ColdstartRoles.SuperAdmin);
         }
+        if (!await users.IsInRoleAsync(admin, ColdstartRoles.SuperAdmin))
+            await users.AddToRoleAsync(admin, ColdstartRoles.SuperAdmin);
     }
 }
