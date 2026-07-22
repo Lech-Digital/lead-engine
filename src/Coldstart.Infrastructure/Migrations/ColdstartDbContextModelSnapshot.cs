@@ -161,6 +161,15 @@ namespace Coldstart.Infrastructure.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("boolean");
 
+                    b.Property<DateOnly?>("HintDismissedOn")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("HintShownOn")
+                        .HasColumnType("date");
+
+                    b.Property<string>("HintsSeenCsv")
+                        .HasColumnType("text");
+
                     b.Property<DateTimeOffset?>("InvitedAt")
                         .HasColumnType("timestamp with time zone");
 
