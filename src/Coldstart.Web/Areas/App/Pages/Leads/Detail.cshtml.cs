@@ -96,7 +96,8 @@ public sealed class DetailModel(UserManager<ApplicationUser> users, IGetLeadDeta
             ModelState.AddModelError(string.Empty, result.Message ?? "That note couldn't be saved.");
             return Page();
         }
-        return RedirectToPage("/Leads/Detail", new { area = "App", id });
+        // Anchor to the notes panel so the page doesn't jump back to the top after a note action.
+        return RedirectToPage("/Leads/Detail", pageHandler: null, routeValues: new { area = "App", id }, fragment: "notes");
     }
 
     // The note forms and the split MarkSent form only post their own fields, so on an Invalid
