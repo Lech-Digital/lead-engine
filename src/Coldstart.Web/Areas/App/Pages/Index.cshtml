@@ -34,7 +34,7 @@
   @if (Model.ActiveHint is { } hint)
   {
     <aside class="app-explainer" id="app-explainer">
-      <p>@Html.Raw(hint.Body)</p>
+      <p>@hint.Body</p>
       <form method="post" asp-page-handler="DismissHint">
         <input type="hidden" name="key" value="@hint.Key">
         <button type="submit" class="app-explainer-x" aria-label="Dismiss">Got it</button>

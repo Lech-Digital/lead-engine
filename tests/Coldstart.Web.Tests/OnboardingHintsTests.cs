@@ -19,7 +19,8 @@ public class OnboardingHintsTests(ColdstartWebFactory factory) : IClassFixture<C
         var html = await client.GetStringAsync("/app");
 
         // Assert
-        html.Should().Contain(OnboardingHints.All[0].Body);
+        var decoded = WebUtility.HtmlDecode(html);
+        decoded.Should().Contain(OnboardingHints.All[0].Body);
         html.Should().Contain("handler=DismissHint").And.Contain("__RequestVerificationToken");
         html.Should().Contain(OnboardingHints.All[0].Key);   // hint key in the form
     }
@@ -40,8 +41,9 @@ public class OnboardingHintsTests(ColdstartWebFactory factory) : IClassFixture<C
 
         // Assert — PRG redirect, and same-day the strip is gone with no second hint promoted
         post.StatusCode.Should().BeOneOf(HttpStatusCode.Redirect, HttpStatusCode.Found);
-        html.Should().NotContain(OnboardingHints.All[0].Body);
-        html.Should().NotContain(OnboardingHints.All[1].Body);
+        var decoded = WebUtility.HtmlDecode(html);
+        decoded.Should().NotContain(OnboardingHints.All[0].Body);
+        decoded.Should().NotContain(OnboardingHints.All[1].Body);
     }
 
     [Fact]
