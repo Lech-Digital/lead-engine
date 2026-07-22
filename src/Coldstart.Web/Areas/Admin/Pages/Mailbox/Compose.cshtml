@@ -1,0 +1,25 @@
+@page "/admin/mailbox/compose"
+@model Coldstart.Web.Areas.Admin.Pages.Mailbox.ComposeModel
+@{ ViewData["Title"] = "Compose — Coldstart admin"; Layout = "/Pages/Shared/_Layout.cshtml"; }
+
+<header class="app-bar">
+  <a class="wordmark" href="/">coldstart<i>*</i></a>
+  <nav class="app-nav"><a href="/admin">Admin</a><a href="/admin/mailbox">Mailbox</a></nav>
+</header>
+
+<main class="wrap app-zone">
+  <p class="auth-alt"><a href="/admin/mailbox">← Back to inbox</a></p>
+  <section class="app-briefing"><h1>New message</h1><p class="app-briefing-ts">from info@getcoldstart.nl</p></section>
+
+  @if (Model.SendError is not null) { <p class="mail-error">@Model.SendError</p> }
+  <div asp-validation-summary="All" class="field-error"></div>
+
+  <form method="post" class="lp-form">
+    <input type="hidden" asp-for="Input.InReplyTo">
+    <input type="hidden" asp-for="Input.References">
+    <div class="field"><label asp-for="Input.To">To</label><input asp-for="Input.To" type="email" required></div>
+    <div class="field"><label asp-for="Input.Subject">Subject</label><input asp-for="Input.Subject" required></div>
+    <div class="field"><label asp-for="Input.Body">Message</label><textarea asp-for="Input.Body" rows="14" required></textarea></div>
+    <button class="btn btn-primary" type="submit">Send →</button>
+  </form>
+</main>

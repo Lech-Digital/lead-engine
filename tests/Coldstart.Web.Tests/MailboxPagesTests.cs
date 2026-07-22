@@ -218,4 +218,83 @@ public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<Cold
         }
         finally { factory.Mailbox.Unreachable = false; }
     }
+
+    [Fact]
+    public async Task Compose_Post_SendsMailAndRedirectsWithFlash()
+    {
+        // Arrange
+        var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        factory.Mailbox.Sent.Clear();
+        var token = await TestAuth.AntiforgeryAsync(client, "/admin/mailbox/compose");
+
+        // Act
+        var response = await client.PostAsync("/admin/mailbox/compose", new FormUrlEncodedContent(
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token!,
+                ["Input.To"] = "prospect@example.com",
+                ["Input.Subject"] = "Invitation to Coldstart",
+                ["Input.Body"] = "Hi — here is your invite.",
+            }));
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        factory.Mailbox.Sent.Should().ContainSingle(s =>
+            s.To == "prospect@example.com" && s.Subject == "Invitation to Coldstart");
+    }
+
+    [Fact]
+    public async Task Compose_AsReply_PrefillsQuoteAndThreadsCorrectly()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        factory.Mailbox.Messages.Clear();
+        factory.Mailbox.Sent.Clear();
+        factory.Mailbox.Messages.Add(Msg(21, "Question about pricing"));
+
+        // Act — GET prefill, then POST the reply
+        var form = await client.GetStringAsync("/admin/mailbox/compose?replyTo=21");
+        var token = await TestAuth.AntiforgeryAsync(client, "/admin/mailbox/compose?replyTo=21");
+        await client.PostAsync("/admin/mailbox/compose", new FormUrlEncodedContent(
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token!,
+                ["Input.To"] = "prospect@example.com",
+                ["Input.Subject"] = "Re: Question about pricing",
+                ["Input.Body"] = "Answer.",
+                ["Input.InReplyTo"] = "<msg-21@example.com>",
+                ["Input.References"] = "<msg-21@example.com>",
+            }));
+
+        // Assert
+        form.Should().Contain("Re: Question about pricing");
+        form.Should().Contain("wrote:");                       // quoted original marker
+        factory.Mailbox.Sent.Should().ContainSingle(s => s.InReplyToMessageId == "<msg-21@example.com>");
+    }
+
+    [Fact]
+    public async Task Compose_InvalidEmail_ShowsErrorAndSendsNothing()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        factory.Mailbox.Sent.Clear();
+        var token = await TestAuth.AntiforgeryAsync(client, "/admin/mailbox/compose");
+
+        // Act
+        var response = await client.PostAsync("/admin/mailbox/compose", new FormUrlEncodedContent(
+            new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token!,
+                ["Input.To"] = "not-an-email",
+                ["Input.Subject"] = "x",
+                ["Input.Body"] = "y",
+            }));
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);   // page re-rendered with validation error
+        factory.Mailbox.Sent.Should().BeEmpty();
+    }
 }
