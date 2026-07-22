@@ -44,6 +44,11 @@ public sealed class ComposeModel(IMailbox mailbox, ILogger<ComposeModel> logger)
     public async Task<IActionResult> OnPostAsync(CancellationToken ct)
     {
         if (!ModelState.IsValid) return Page();
+        if (Input.To.Any(c => c is '\r' or '\n') || Input.Subject.Any(c => c is '\r' or '\n'))
+        {
+            ModelState.AddModelError("", "Line breaks are not allowed in address or subject.");
+            return Page();
+        }
         try
         {
             await mailbox.SendAsync(new OutgoingMail(
