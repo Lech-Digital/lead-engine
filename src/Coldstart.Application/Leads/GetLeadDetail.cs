@@ -17,6 +17,6 @@ internal sealed class GetLeadDetail(ILeadRepository leads) : IGetLeadDetail
             ContactLinkBuilder.Build(lead.Company, lead.SourceUrl),
             lead.MatchedSignals,
             lead.EmailConfidence.ToString(),
-            lead.Notes.Select(n => new LeadNoteView(n.Id, n.Text, n.CreatedAt, n.UpdatedAt)).ToList());
+            lead.Notes.OrderByDescending(n => n.CreatedAt).Select(n => new LeadNoteView(n.Id, n.Text, n.CreatedAt, n.UpdatedAt)).ToList());
     }
 }

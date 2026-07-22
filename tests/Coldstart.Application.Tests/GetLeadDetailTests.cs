@@ -56,6 +56,27 @@ public class GetLeadDetailTests
     }
 
     [Fact]
+    public async Task ForLeadAsync_WithMultipleNotes_OrdersThemNewestFirst()
+    {
+        // Arrange
+        var customerId = Guid.NewGuid();
+        var lead = LeadFor(new CustomerId(customerId));
+        var olderId = lead.AddNote("older note", DateTimeOffset.UtcNow.AddMinutes(-10));
+        var newerId = lead.AddNote("newer note", DateTimeOffset.UtcNow);
+        var repo = Substitute.For<ILeadRepository>();
+        repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns(lead);
+        var sut = new GetLeadDetail(repo);
+
+        // Act
+        var detail = await sut.ForLeadAsync(customerId, lead.Id.Value, CancellationToken.None);
+
+        // Assert
+        detail!.Notes.Should().HaveCount(2);
+        detail.Notes[0].Id.Should().Be(newerId);
+        detail.Notes[1].Id.Should().Be(olderId);
+    }
+
+    [Fact]
     public async Task ForLeadAsync_ForAnotherCustomer_ReturnsNull()
     {
         // Arrange
