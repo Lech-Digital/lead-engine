@@ -37,6 +37,12 @@ services:
       Smtp__Password: ${SMTP_PASSWORD:?set SMTP_PASSWORD (Resend API key) in deploy/.env.prod}
       Smtp__FromName: ${SMTP_FROM_NAME:-Coldstart}
       Smtp__FromAddress: ${SMTP_FROM_ADDRESS:-noreply@getcoldstart.nl}
+      # Admin mailbox (IMAP/SMTP inbox view). Soft-degrade: no hard-fail guard here —
+      # until these are set in deploy/.env.prod the app starts fine and the admin
+      # mailbox panel simply shows "Mailbox unreachable" instead of crashing.
+      Mailbox__Host: ${MAILBOX_HOST:-}
+      Mailbox__Username: ${MAILBOX_USERNAME:-}
+      Mailbox__Password: ${MAILBOX_PASSWORD:-}
     volumes:
       - coldstart-dpkeys:/app/keys
     expose:
