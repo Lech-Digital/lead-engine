@@ -8,7 +8,7 @@ public class HintPickerTests
 {
     private static readonly DateOnly Day1 = new(2026, 7, 22);
     private static readonly DateOnly Day2 = new(2026, 7, 23);
-    private static HintState Empty => new([], null);
+    private static HintState Empty => new([], null, null);
     private static string FirstKey => OnboardingHints.All[0].Key;
     private static string SecondKey => OnboardingHints.All[1].Key;
 
@@ -43,7 +43,7 @@ public class HintPickerTests
     public void Pick_SameDayBeforeDismiss_KeepsShowingSameHint_WithoutAdvancing()
     {
         // Arrange — first hint was shown today, not yet dismissed
-        var state = new HintState([], Day1);
+        var state = new HintState([], Day1, null);
 
         // Act
         var decision = HintPicker.Pick(state, Day1);
@@ -54,10 +54,25 @@ public class HintPickerTests
     }
 
     [Fact]
+    public void Pick_SecondHintSameDayBeforeDismiss_KeepsShowing_DespiteEarlierSeenKeys()
+    {
+        // Arrange — hint #1 dismissed on a PRIOR day; hint #2 was promoted today and not yet
+        // dismissed. SeenKeys is non-empty from the old dismissal — this is the case a two-field
+        // model got wrong (it treated any non-empty SeenKeys as "dismissed today").
+        var state = new HintState([FirstKey], ShownOn: Day2, DismissedOn: Day1);
+
+        // Act
+        var decision = HintPicker.Pick(state, Day2);
+
+        // Assert — hint #2 must stay visible on same-day reloads until it too is dismissed
+        decision.ToShow!.Key.Should().Be(SecondKey);
+    }
+
+    [Fact]
     public void Pick_SameDayAfterDismiss_ShowsNothingMoreToday()
     {
         // Arrange — first hint shown AND dismissed today
-        var state = new HintState([FirstKey], Day1);
+        var state = new HintState([FirstKey], ShownOn: Day1, DismissedOn: Day1);
 
         // Act
         var decision = HintPicker.Pick(state, Day1);
@@ -69,8 +84,8 @@ public class HintPickerTests
     [Fact]
     public void Pick_NextDayAfterDismiss_ShowsSecondHint()
     {
-        // Arrange — first dismissed, last shown was yesterday
-        var state = new HintState([FirstKey], Day1);
+        // Arrange — first dismissed yesterday, nothing shown/dismissed today yet
+        var state = new HintState([FirstKey], ShownOn: Day1, DismissedOn: Day1);
 
         // Act
         var decision = HintPicker.Pick(state, Day2);
@@ -84,7 +99,7 @@ public class HintPickerTests
     public void Pick_WhenAllSeen_ShowsNothing()
     {
         // Arrange
-        var state = new HintState(OnboardingHints.All.Select(h => h.Key).ToList(), Day1);
+        var state = new HintState(OnboardingHints.All.Select(h => h.Key).ToList(), Day1, Day1);
 
         // Act
         var decision = HintPicker.Pick(state, Day2);
@@ -97,7 +112,7 @@ public class HintPickerTests
     public void Pick_IgnoresUnknownOrStaleSeenKeys()
     {
         // Arrange — a stale key no longer in the catalogue must not break selection
-        var state = new HintState(["removed-old-key"], null);
+        var state = new HintState(["removed-old-key"], null, null);
 
         // Act
         var decision = HintPicker.Pick(state, Day1);
@@ -107,30 +122,29 @@ public class HintPickerTests
     }
 
     [Fact]
-    public void Dismiss_AddsKeyToSeen_PreservingShownOn()
+    public void Dismiss_AddsKeyToSeen_AndStampsDismissedOn()
     {
         // Arrange
-        var state = new HintState([], Day1);
+        var state = new HintState([], Day1, null);
 
         // Act
-        var next = HintPicker.Dismiss(state, FirstKey);
+        var next = HintPicker.Dismiss(state, FirstKey, Day1);
 
         // Assert
         next.SeenKeys.Should().Contain(FirstKey);
         next.ShownOn.Should().Be(Day1);
+        next.DismissedOn.Should().Be(Day1);
     }
 
     [Fact]
-    public void Reset_ClearsSeenAndShownOn()
+    public void Reset_ClearsAllState()
     {
-        // Arrange
-        var state = new HintState([FirstKey, SecondKey], Day2);
-
         // Act
         var next = HintPicker.Reset();
 
         // Assert
         next.SeenKeys.Should().BeEmpty();
         next.ShownOn.Should().BeNull();
+        next.DismissedOn.Should().BeNull();
     }
 }
