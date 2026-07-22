@@ -30,13 +30,29 @@ public sealed class MessageModel(IMailbox mailbox, ILogger<MessageModel> logger)
 
     public async Task<IActionResult> OnPostMarkUnreadAsync(uint uid, CancellationToken ct)
     {
-        await mailbox.MarkReadAsync(uid, read: false, ct);
+        try
+        {
+            await mailbox.MarkReadAsync(uid, read: false, ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "Mailbox unreachable while marking message {Uid} unread.", uid);
+            return RedirectToInboxUnreachable();
+        }
         return RedirectToPage("/Mailbox/Index", new { area = "Admin" });
     }
 
     public async Task<IActionResult> OnPostDeleteAsync(uint uid, CancellationToken ct)
     {
-        await mailbox.DeleteAsync(uid, ct);
+        try
+        {
+            await mailbox.DeleteAsync(uid, ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "Mailbox unreachable while deleting message {Uid}.", uid);
+            return RedirectToInboxUnreachable();
+        }
         TempData["MailFlash"] = "Message deleted.";
         return RedirectToPage("/Mailbox/Index", new { area = "Admin" });
     }
@@ -44,8 +60,22 @@ public sealed class MessageModel(IMailbox mailbox, ILogger<MessageModel> logger)
     public async Task<IActionResult> OnGetAttachmentAsync(uint uid, int index, CancellationToken ct)
     {
         if (index < 0) return NotFound();
-        var att = await mailbox.GetAttachmentAsync(uid, index, ct);
-        if (att is null) return NotFound();
-        return File(att.Content, att.ContentType, att.FileName);   // always Content-Disposition: attachment
+        try
+        {
+            var att = await mailbox.GetAttachmentAsync(uid, index, ct);
+            if (att is null) return NotFound();
+            return File(att.Content, att.ContentType, att.FileName);   // always Content-Disposition: attachment
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "Mailbox unreachable while downloading attachment {Index} for message {Uid}.", index, uid);
+            return RedirectToInboxUnreachable();
+        }
+    }
+
+    private IActionResult RedirectToInboxUnreachable()
+    {
+        TempData["MailFlash"] = "Mailbox unreachable — the action didn't complete.";
+        return RedirectToPage("/Mailbox/Index", new { area = "Admin" });
     }
 }

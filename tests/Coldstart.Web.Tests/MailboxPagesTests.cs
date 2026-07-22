@@ -145,6 +145,74 @@ public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<Cold
     }
 
     [Fact]
+    public async Task Message_MarkUnread_WhenMailboxUnreachable_RedirectsWithFlashNot500()
+    {
+        // Arrange
+        var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        factory.Mailbox.Messages.Clear();
+        factory.Mailbox.Messages.Add(Msg(40, "Unread me", seen: true));
+        var token = await TestAuth.AntiforgeryAsync(client, "/admin/mailbox/40");
+        factory.Mailbox.Unreachable = true;
+        try
+        {
+            // Act
+            var response = await client.PostAsync("/admin/mailbox/40?handler=MarkUnread",
+                new FormUrlEncodedContent(new Dictionary<string, string> { ["__RequestVerificationToken"] = token! }));
+
+            // Assert
+            response.StatusCode.Should().Be(HttpStatusCode.Redirect);
+            response.Headers.Location!.ToString().Should().Contain("/admin/mailbox");
+        }
+        finally { factory.Mailbox.Unreachable = false; }
+    }
+
+    [Fact]
+    public async Task Message_Delete_WhenMailboxUnreachable_RedirectsWithFlashNot500()
+    {
+        // Arrange
+        var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        factory.Mailbox.Messages.Clear();
+        factory.Mailbox.Messages.Add(Msg(41, "Delete me"));
+        var token = await TestAuth.AntiforgeryAsync(client, "/admin/mailbox/41");
+        factory.Mailbox.Unreachable = true;
+        try
+        {
+            // Act
+            var response = await client.PostAsync("/admin/mailbox/41?handler=Delete",
+                new FormUrlEncodedContent(new Dictionary<string, string> { ["__RequestVerificationToken"] = token! }));
+
+            // Assert
+            response.StatusCode.Should().Be(HttpStatusCode.Redirect);
+            response.Headers.Location!.ToString().Should().Contain("/admin/mailbox");
+        }
+        finally { factory.Mailbox.Unreachable = false; }
+    }
+
+    [Fact]
+    public async Task Message_AttachmentDownload_WhenMailboxUnreachable_RedirectsWithFlashNot500()
+    {
+        // Arrange
+        var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        factory.Mailbox.Messages.Clear();
+        factory.Mailbox.Messages.Add(Msg(42, "With attachment",
+            atts: [new MailAttachmentInfo(0, "report.pdf", "application/pdf", 3)]));
+        factory.Mailbox.Unreachable = true;
+        try
+        {
+            // Act
+            var response = await client.GetAsync("/admin/mailbox/42?handler=Attachment&index=0");
+
+            // Assert
+            response.StatusCode.Should().Be(HttpStatusCode.Redirect);
+            response.Headers.Location!.ToString().Should().Contain("/admin/mailbox");
+        }
+        finally { factory.Mailbox.Unreachable = false; }
+    }
+
+    [Fact]
     public async Task Message_AttachmentDownload_StreamsBytes_And404sOutOfRange()
     {
         // Arrange
