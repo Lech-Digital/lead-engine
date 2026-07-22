@@ -1,4 +1,5 @@
 using System.Net;
+using Coldstart.Application.Leads;
 using Coldstart.Domain;
 using Coldstart.Infrastructure;
 using Coldstart.Infrastructure.Identity;
@@ -69,6 +70,58 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Assert — never leaks another tenant's lead
         response.StatusCode.Should().Be(HttpStatusCode.Redirect);
         response.Headers.Location!.OriginalString.Should().Contain("/app");
+    }
+
+    [Fact]
+    public async Task Detail_ForPendingLead_ShowsApprove_AndHidesMarkSent()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var email = $"detail-pending-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        var id = await AddLeadForUserAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"));
+
+        // Act
+        var html = await client.GetStringAsync($"/app/leads/{id}");
+
+        // Assert
+        html.Should().Contain("handler=Accept");
+        html.Should().NotContain("handler=MarkSent");
+    }
+
+    [Fact]
+    public async Task Detail_ForApprovedLeadWithRecipient_ShowsMarkSentAndHandoff()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var email = $"detail-approved-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        var id = await AddApprovedLeadWithRecipientAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"), "ceo@acme.com");
+
+        // Act
+        var html = await client.GetStringAsync($"/app/leads/{id}");
+
+        // Assert
+        html.Should().Contain("handler=MarkSent");
+        html.Should().Contain("handoff-gmail");
+        html.Should().Contain("Send from your own inbox");
+    }
+
+    private async Task<Guid> AddApprovedLeadWithRecipientAsync(string email, string company, string fingerprint, string recipient)
+    {
+        using var scope = factory.Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var workflow = scope.ServiceProvider.GetRequiredService<ILeadWorkflow>();
+        var db = scope.ServiceProvider.GetRequiredService<ColdstartDbContext>();
+        var user = await users.FindByEmailAsync(email);
+        var lead = Lead.CreateHarvested(new CustomerId(user!.CustomerId!.Value), company, Fit.Yes,
+            "subj", "body", "hackernews", "https://x/1", fingerprint, 0.7, "outbound", DateTimeOffset.UtcNow);
+        db.Leads.Add(lead);
+        await db.SaveChangesAsync();
+
+        var result = await workflow.AcceptAsync(user.CustomerId.Value, lead.Id.Value, "subj", "body", recipient, CancellationToken.None);
+        result.IsOk.Should().BeTrue();
+        return lead.Id.Value;
     }
 
     private async Task<Guid> AddLeadForUserAsync(string email, string company, string fingerprint)
