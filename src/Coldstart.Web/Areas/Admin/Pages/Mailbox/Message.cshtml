@@ -1,0 +1,63 @@
+@page "/admin/mailbox/{uid}"
+@model Coldstart.Web.Areas.Admin.Pages.Mailbox.MessageModel
+@{ ViewData["Title"] = "Message — Coldstart admin"; Layout = "/Pages/Shared/_Layout.cshtml"; var m = Model.Mail; }
+
+<header class="app-bar">
+  <a class="wordmark" href="/">coldstart<i>*</i></a>
+  <nav class="app-nav"><a href="/admin">Admin</a><a href="/admin/mailbox">Mailbox</a></nav>
+</header>
+
+<main class="wrap app-zone">
+  <p class="auth-alt"><a href="/admin/mailbox">← Back to inbox</a></p>
+
+  @if (Model.Unreachable)
+  {
+    <p class="mail-error">Mailbox unreachable right now — check the connection and try again.</p>
+  }
+  else if (m is not null)
+  {
+    <section class="app-briefing"><h1>@m.Subject</h1></section>
+    <dl class="mail-head">
+      <dt>From</dt><dd>@(string.IsNullOrWhiteSpace(m.FromName) ? m.FromAddress : $"{m.FromName} <{m.FromAddress}>")</dd>
+      <dt>To</dt><dd>@m.To</dd>
+      <dt>Date</dt><dd><span class="ts">@m.Date.ToString("dd MMM yyyy · HH:mm", System.Globalization.CultureInfo.InvariantCulture)</span></dd>
+    </dl>
+
+    <div class="mail-actions">
+      <a class="btn btn-primary" href="/admin/mailbox/compose?replyTo=@m.Uid">Reply</a>
+      <form method="post" asp-page-handler="MarkUnread" asp-route-uid="@m.Uid"><button class="btn btn-ghost" type="submit">Mark unread</button></form>
+      <button class="btn btn-ghost" type="button" onclick="document.getElementById('confirm-delete').showModal()">Delete</button>
+    </div>
+
+    @if (m.HtmlBody is not null)
+    {
+      @if (m.RemoteImagesRemoved) { <p class="mail-note">Remote images were removed for your safety.</p> }
+      <div class="mail-html">@Html.Raw(m.HtmlBody)</div>   @* sanitized in Infrastructure — see spec *@
+    }
+    else
+    {
+      <div class="mail-text">@m.TextBody</div>
+    }
+
+    @if (m.Attachments.Count > 0)
+    {
+      <div class="mail-attachments">
+        @foreach (var a in m.Attachments)
+        {
+          <a class="app-link-out" href="/admin/mailbox/@m.Uid?handler=Attachment&index=@a.Index">📎 @a.FileName (@a.ContentType)</a>
+        }
+      </div>
+    }
+
+    <dialog id="confirm-delete" class="lead-modal">
+      <form method="post" asp-page-handler="Delete" asp-route-uid="@m.Uid" class="lead-modal-card">
+        <p class="lead-modal-eyebrow">Delete message</p>
+        <h2 class="lead-modal-title">Delete "@m.Subject"?</h2>
+        <div class="lead-modal-actions">
+          <button class="btn btn-primary" type="submit">Delete</button>
+          <button class="btn btn-ghost" type="button" onclick="this.closest('dialog').close()">Cancel</button>
+        </div>
+      </form>
+    </dialog>
+  }
+</main>
