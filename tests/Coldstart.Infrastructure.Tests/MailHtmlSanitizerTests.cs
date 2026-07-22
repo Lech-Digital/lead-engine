@@ -121,6 +121,59 @@ public class MailHtmlSanitizerTests
     }
 
     [Fact]
+    public void Sanitize_WhenStyleCarriesBackgroundImageUrl_StripsIt()
+    {
+        // Arrange
+        var html = """<p style="background-image:url('https://tracker.example/p.png')">hi</p>""";
+
+        // Act
+        var result = MailHtmlSanitizer.Sanitize(html);
+
+        // Assert
+        result.Html.Should().NotContain("tracker.example");
+    }
+
+    [Fact]
+    public void Sanitize_WhenStyleCarriesBackgroundUrl_StripsIt()
+    {
+        // Arrange
+        var html = """<div style="background:url(https://tracker.example/p.png)">hi</div>""";
+
+        // Act
+        var result = MailHtmlSanitizer.Sanitize(html);
+
+        // Assert
+        result.Html.Should().NotContain("tracker.example");
+    }
+
+    [Fact]
+    public void Sanitize_WhenStyleCarriesContentUrl_StripsIt()
+    {
+        // Arrange
+        var html = """<img src="cid:ok" style="content:url(https://tracker.example/p.png)">""";
+
+        // Act
+        var result = MailHtmlSanitizer.Sanitize(html);
+
+        // Assert
+        result.Html.Should().NotContain("tracker.example");
+    }
+
+    [Fact]
+    public void Sanitize_WhenInputTypeImageHasRemoteSrc_RemovesTheElement()
+    {
+        // Arrange
+        var html = """<input type="image" src="https://tracker.example/p.png">""";
+
+        // Act
+        var result = MailHtmlSanitizer.Sanitize(html);
+
+        // Assert
+        result.Html.Should().NotContain("tracker.example");
+        result.Html.Should().NotContain("<input");
+    }
+
+    [Fact]
     public void Sanitize_PlainFormatting_SurvivesUntouched()
     {
         // Arrange
