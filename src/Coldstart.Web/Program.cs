@@ -16,6 +16,7 @@ builder.Services.AddInfrastructure(
 
 builder.Services.Configure<Coldstart.Infrastructure.Email.SmtpOptions>(builder.Configuration.GetSection("Smtp"));
 builder.Services.Configure<Coldstart.Infrastructure.Mailbox.MailboxOptions>(builder.Configuration.GetSection("Mailbox"));
+builder.Services.Configure<Coldstart.Infrastructure.Harvest.LlmOptions>(builder.Configuration.GetSection("Llm"));
 
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>(o => { o.SignIn.RequireConfirmedAccount = false; })

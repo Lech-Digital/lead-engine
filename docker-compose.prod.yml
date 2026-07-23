@@ -43,6 +43,9 @@ services:
       Mailbox__Host: ${MAILBOX_HOST:-}
       Mailbox__Username: ${MAILBOX_USERNAME:-}
       Mailbox__Password: ${MAILBOX_PASSWORD:-}
+      # "Polish with AI" (Groq). Soft-degrade: no hard-fail guard — until this is set
+      # in deploy/.env.prod the button just shows "Couldn't polish just now".
+      Llm__ApiKey: ${LLM_API_KEY:-}
     volumes:
       - coldstart-dpkeys:/app/keys
     expose:
