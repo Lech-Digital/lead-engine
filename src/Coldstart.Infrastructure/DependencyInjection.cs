@@ -30,4 +30,12 @@ public static class DependencyInjection
         services.AddScoped<Application.Customers.ICompanyBriefPolisher, Harvest.GroqBriefPolisher>();
         return services;
     }
+
+    // Web-only: resolve the tenant from the signed-in principal's claim (overrides the default context).
+    public static IServiceCollection AddHttpTenantResolution(this IServiceCollection services)
+    {
+        services.AddHttpContextAccessor();
+        services.AddScoped<Application.Ports.ITenantContext, Tenancy.HttpTenantContext>();
+        return services;
+    }
 }

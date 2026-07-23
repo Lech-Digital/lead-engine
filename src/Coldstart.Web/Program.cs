@@ -13,6 +13,7 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(
     builder.Configuration.GetConnectionString("Coldstart")
         ?? throw new InvalidOperationException("Missing ConnectionStrings:Coldstart"));
+builder.Services.AddHttpTenantResolution();
 
 builder.Services.Configure<Coldstart.Infrastructure.Email.SmtpOptions>(builder.Configuration.GetSection("Smtp"));
 builder.Services.Configure<Coldstart.Infrastructure.Mailbox.MailboxOptions>(builder.Configuration.GetSection("Mailbox"));
@@ -21,7 +22,8 @@ builder.Services.Configure<Coldstart.Infrastructure.Harvest.LlmOptions>(builder.
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>(o => { o.SignIn.RequireConfirmedAccount = false; })
     .AddEntityFrameworkStores<ColdstartDbContext>()
-    .AddDefaultTokenProviders();
+    .AddDefaultTokenProviders()
+    .AddClaimsPrincipalFactory<AppUserClaimsPrincipalFactory>();
 
 builder.Services.ConfigureApplicationCookie(o =>
 {
