@@ -14,6 +14,9 @@ internal sealed class CustomerConfiguration : IEntityTypeConfiguration<Customer>
             .HasConversion(id => id.Value, value => new CustomerId(value))
             .ValueGeneratedNever();
         builder.Property(c => c.Name).IsRequired();
+        builder.Property(c => c.Plan).HasConversion<string>().HasMaxLength(16).HasDefaultValue(CustomerPlan.Free);
+        builder.Property(c => c.HarvestStatus).HasConversion<string>().HasMaxLength(16).HasDefaultValue(HarvestStatus.None);
+        builder.Property(c => c.LastHarvestAt);
         builder.HasMany(c => c.Leads)
             .WithOne()
             .HasForeignKey(l => l.CustomerId)
@@ -32,6 +35,10 @@ internal sealed class CustomerConfiguration : IEntityTypeConfiguration<Customer>
             p.Property(x => x.ContactEmail).HasColumnName("ProfileContactEmail");
             p.Property(x => x.Brief).HasColumnName("ProfileBrief");
             p.Property(x => x.MentionSourceTool).HasColumnName("ProfileMentionSourceTool").HasDefaultValue(false);
+            p.Property(x => x.Offer).HasColumnName("ProfileOffer");
+            p.Property(x => x.TargetKeywords).HasColumnName("ProfileTargetKeywords");
+            p.Property(x => x.BuyingSignals).HasColumnName("ProfileBuyingSignals");
+            p.Property(x => x.Disqualifiers).HasColumnName("ProfileDisqualifiers");
         });
         builder.Navigation(c => c.Profile).IsRequired();   // Profile is never null (defaults to Empty)
     }

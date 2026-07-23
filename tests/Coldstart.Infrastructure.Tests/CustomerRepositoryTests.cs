@@ -110,4 +110,41 @@ public class CustomerRepositoryTests(PostgresFixture fixture) : IClassFixture<Po
         reloaded!.Profile.Brief.Should().Be("We do X for Y.");
         reloaded.Profile.MentionSourceTool.Should().BeTrue();
     }
+
+    [Fact]
+    public async Task Update_PersistsPlanHarvestStatusAndSearchProfile()
+    {
+        // Arrange — provision a customer, then set plan + harvest + a generated search profile
+        var name = $"Cust-{Guid.NewGuid():N}";
+        Guid id;
+        await using (var seed = fixture.NewDbContext())
+        {
+            var c = Customer.Create(name);
+            seed.Customers.Add(c);
+            await seed.SaveChangesAsync();
+            id = c.Id.Value;
+        }
+        await using (var write = fixture.NewDbContext(/* tenant */ null))
+        {
+            var repo = new CustomerRepository(write);
+            var c = await repo.GetByNameAsync(name, CancellationToken.None);
+            c!.SetPlan(CustomerPlan.Full);
+            c.MarkHarvest(HarvestStatus.Done, DateTimeOffset.UtcNow);
+            c.UpdateProfile(new CompanyProfile("Co", null, null, null, "dentists", null, null,
+                Brief: "we sell scheduling", MentionSourceTool: false,
+                Offer: "scheduling software", TargetKeywords: "dentist\nclinic",
+                BuyingSignals: "hiring\nexpanding", Disqualifiers: "enterprise"));
+            await repo.UpdateAsync(c, CancellationToken.None);
+        }
+
+        // Act — read it back (GetByName bypasses the tenant filter)
+        await using var read = fixture.NewDbContext();
+        var loaded = await new CustomerRepository(read).GetByNameAsync(name, CancellationToken.None);
+
+        // Assert
+        loaded!.Plan.Should().Be(CustomerPlan.Full);
+        loaded.HarvestStatus.Should().Be(HarvestStatus.Done);
+        loaded.Profile.TargetKeywords.Should().Be("dentist\nclinic");
+        loaded.Profile.Offer.Should().Be("scheduling software");
+    }
 }

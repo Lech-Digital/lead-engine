@@ -27,9 +27,26 @@ namespace Coldstart.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("HarvestStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasDefaultValue("None");
+
+                    b.Property<DateTimeOffset?>("LastHarvestAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<string>("Plan")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasDefaultValue("Free");
 
                     b.HasKey("Id");
 
@@ -365,6 +382,10 @@ namespace Coldstart.Infrastructure.Migrations
                                 .HasColumnType("text")
                                 .HasColumnName("ProfileBrief");
 
+                            b1.Property<string>("BuyingSignals")
+                                .HasColumnType("text")
+                                .HasColumnName("ProfileBuyingSignals");
+
                             b1.Property<string>("CompanyName")
                                 .HasColumnType("text")
                                 .HasColumnName("ProfileCompanyName");
@@ -372,6 +393,10 @@ namespace Coldstart.Infrastructure.Migrations
                             b1.Property<string>("ContactEmail")
                                 .HasColumnType("text")
                                 .HasColumnName("ProfileContactEmail");
+
+                            b1.Property<string>("Disqualifiers")
+                                .HasColumnType("text")
+                                .HasColumnName("ProfileDisqualifiers");
 
                             b1.Property<string>("KvkNumber")
                                 .HasColumnType("text")
@@ -386,6 +411,14 @@ namespace Coldstart.Infrastructure.Migrations
                             b1.Property<string>("Niche")
                                 .HasColumnType("text")
                                 .HasColumnName("ProfileNiche");
+
+                            b1.Property<string>("Offer")
+                                .HasColumnType("text")
+                                .HasColumnName("ProfileOffer");
+
+                            b1.Property<string>("TargetKeywords")
+                                .HasColumnType("text")
+                                .HasColumnName("ProfileTargetKeywords");
 
                             b1.Property<string>("VatNumber")
                                 .HasColumnType("text")

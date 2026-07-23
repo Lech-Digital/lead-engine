@@ -9,7 +9,11 @@ public sealed record CompanyProfile(
     string? Website,
     string? ContactEmail,
     string? Brief = null,
-    bool MentionSourceTool = false)
+    bool MentionSourceTool = false,
+    string? Offer = null,
+    string? TargetKeywords = null,
+    string? BuyingSignals = null,
+    string? Disqualifiers = null)
 {
     public static CompanyProfile Empty { get; } = new(null, null, null, null, null, null, null);
 }
