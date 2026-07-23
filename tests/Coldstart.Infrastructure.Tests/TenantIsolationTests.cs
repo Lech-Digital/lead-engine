@@ -79,4 +79,40 @@ public class TenantIsolationTests(PostgresFixture fixture) : IClassFixture<Postg
         // Assert
         found.Should().NotBeNull();
     }
+
+    [Fact]
+    public async Task SameFingerprint_CanBelongToTwoTenants_AndDedupIsPerTenant()
+    {
+        // Arrange
+        var fp = "fp-shared-" + Guid.NewGuid().ToString("N");
+        Guid a, b;
+        await using (var seed = fixture.NewDbContext())
+        {
+            var ca = Customer.Create($"A-{Guid.NewGuid():N}");
+            var cb = Customer.Create($"B-{Guid.NewGuid():N}");
+            seed.Customers.AddRange(ca, cb);
+            await seed.SaveChangesAsync();
+            a = ca.Id.Value; b = cb.Id.Value;
+        }
+
+        // Act — the same fingerprint saved under BOTH tenants must both succeed (composite unique)
+        await using (var asA = fixture.NewDbContext(a))
+        {
+            var lead = Lead.CreateHarvested(new CustomerId(a), "Acme", Fit.Yes, "s", "b", "hn", "https://x/1", fp, 0.7, "outbound", DateTimeOffset.UtcNow);
+            asA.Leads.Add(lead);
+            await asA.SaveChangesAsync();
+        }
+        await using (var asB = fixture.NewDbContext(b))
+        {
+            var lead = Lead.CreateHarvested(new CustomerId(b), "Acme", Fit.Yes, "s", "b", "hn", "https://x/1", fp, 0.7, "outbound", DateTimeOffset.UtcNow);
+            asB.Leads.Add(lead);
+            await asB.SaveChangesAsync(); // must NOT throw a unique violation
+        }
+
+        // Assert — dedup is per-tenant
+        await using var checkA = fixture.NewDbContext(a);
+        (await new LeadRepository(checkA).ExistsByFingerprintAsync(fp, CancellationToken.None)).Should().BeTrue();
+        await using var fresh = fixture.NewDbContext(Guid.NewGuid());
+        (await new LeadRepository(fresh).ExistsByFingerprintAsync(fp, CancellationToken.None)).Should().BeFalse();
+    }
 }

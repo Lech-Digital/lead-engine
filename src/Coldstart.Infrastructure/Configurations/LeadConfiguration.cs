@@ -33,9 +33,9 @@ internal sealed class LeadConfiguration : IEntityTypeConfiguration<Lead>
         builder.Property(l => l.Fingerprint);
         builder.Property(l => l.Score);
         builder.Property(l => l.MatchedSignals);
-        builder.HasIndex(l => l.Fingerprint)
+        builder.HasIndex(l => new { l.CustomerId, l.Fingerprint })
             .IsUnique()
-            .HasFilter("\"Fingerprint\" <> ''");   // seeded/mock leads have '' — don't collide
+            .HasFilter("\"Fingerprint\" <> ''");   // seeded/mock leads have '' — don't collide; dedup is per-tenant
 
         builder.OwnsMany(l => l.Notes, n =>
         {
