@@ -12,7 +12,10 @@ internal sealed class GroqLeadEnricher : ILeadEnricher
         "You are a top-performing B2B SDR known for replies, not blasts. You read one piece of " +
         "public web content, judge honestly whether the author/company is a real fit for a " +
         "specific offer, and if so write outreach so specific it could not have been sent to " +
-        "anyone else. You never invent facts. You would rather say NO than send a generic pitch.";
+        "anyone else. Every email opens in the prospect's world — what they are doing and the " +
+        "pressure they are under — never with your own product. You write like a sharp person " +
+        "typing to one human: short, clean sentences, one idea each, no marketing voice. You " +
+        "never invent facts. You would rather say NO than send a generic pitch.";
 
     // Retry ceiling for rate-limit / transient responses. On the free tier a batch
     // otherwise loses ~2/3 of its calls to 429s that are silently dropped.
@@ -108,7 +111,7 @@ internal sealed class GroqLeadEnricher : ILeadEnricher
         {n.Offer}
         {(string.IsNullOrWhiteSpace(sender.Brief) ? "" : $"""
 
-        WHO IS REACHING OUT (the sender's own company — use it for credible context, still open on a specific detail about THEM):
+        WHO IS REACHING OUT (the sender's own company — use only for credibility, in at most one short clause; the email is about the prospect, not the sender):
         {sender.Brief}
         """)}
 
@@ -130,13 +133,13 @@ internal sealed class GroqLeadEnricher : ILeadEnricher
         FIT: YES | MAYBE | NO — would this specific person plausibly buy the offer? Be strict; default to NO if the content is off-topic, a job seeker, a competitor, or just noise.
         SUMMARY: one sentence — who they are and the concrete reason they do or don't fit.
         SUBJECT: a 4-7 word subject line referencing their specific situation (no clickbait, no emojis).
-        DRAFT: 3-4 sentences from {n.SenderName} ({n.SenderTitle}). Open with a SPECIFIC detail from the content, connect it to one concrete way the offer helps, end with one low-friction question. No greeting or signature. Banned: "I hope this email finds you well", "I came across", "reaching out", "game-changer", "revolutionize", "synergy", "circle back", "touch base", "in today's fast-paced".
+        DRAFT: 4-5 short sentences from {n.SenderName} ({n.SenderTitle}), written to one person. Build it in this order: (1) a specific detail from THEIR content that proves you actually read it; (2) the concrete need or pressure that detail creates for them right now; (3) one sentence on the specific outcome the offer gives them for that need — a result they'd want, not a feature list; (4) a short question that is easy to answer. One idea per sentence — no comma splices, no filler, no marketing voice. No greeting or signature. Banned: "I hope this email finds you well", "I came across", "reaching out", "game-changer", "revolutionize", "synergy", "circle back", "touch base", "in today's fast-paced".
         COMPANY: the real company/org name this is about, or "-" if it cannot be determined. Never guess.
 
         If FIT is NO, still fill SUBJECT and DRAFT with "-".
         {(sender.MentionSourceTool ? """
 
-        Also: mention that you discovered this company using Coldstart — the exact lead-generation tool you are offering them — as concrete proof it works. One natural sentence, not a boast.
+        Also: work in one natural sentence that this very email is proof the tool works — you found them with Coldstart, the exact lead engine you are offering. Make it a quiet demonstration, not a boast.
         """ : "")}
         """;
 }
