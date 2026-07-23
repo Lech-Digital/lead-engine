@@ -9,7 +9,7 @@ using Xunit;
 
 namespace Coldstart.Web.Tests;
 
-public sealed class ColdstartWebFactory : WebApplicationFactory<Program>, IAsyncLifetime
+public class ColdstartWebFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private readonly PostgreSqlContainer _db =
         new PostgreSqlBuilder("postgres:17").Build();

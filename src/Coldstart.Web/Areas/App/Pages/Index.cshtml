@@ -7,6 +7,13 @@
     var latest = Model.New.Count > 0 ? Model.New.Max(l => l.CreatedAt) : (DateTimeOffset?)null;
 }
 
+<style>
+  .lead-row.is-locked { position: relative; }
+  .lead-row.is-locked .lead-row-main { filter: blur(4px); pointer-events: none; user-select: none; }
+  .app-foil { margin: 16px 0; padding: 16px 20px; border: 1px dashed #C7BFA9; border-radius: 12px; background: #FBF8F1; text-align: center; }
+  .app-foil p { margin: 0 0 10px; color: #5D5A50; }
+</style>
+
 <header class="app-bar">
   <a class="wordmark" href="/">coldstart<i>*</i></a>
   <nav class="app-nav">
@@ -19,7 +26,17 @@
   @Html.AntiForgeryToken()
 
   <section class="app-briefing">
-    @if (overnight > 0)
+    @if (Model.TotalLeads == 0 && Model.HarvestStatus is Coldstart.Domain.HarvestStatus.Pending or Coldstart.Domain.HarvestStatus.Running)
+    {
+      <h1>Finding your first leads…</h1>
+      <p class="app-briefing-ts">This takes a few minutes. Refresh shortly and they'll appear here.</p>
+    }
+    else if (Model.TotalLeads == 0 && Model.HarvestStatus == Coldstart.Domain.HarvestStatus.Failed)
+    {
+      <h1>We couldn't fetch leads yet</h1>
+      <p class="app-briefing-ts">We'll try again — check back soon.</p>
+    }
+    else if (overnight > 0)
     {
       <h1>Good morning — @overnight new @(overnight == 1 ? "lead" : "leads") found overnight</h1>
       @if (latest is not null) { <p class="app-briefing-ts ts">latest found @latest.Value.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture) UTC</p> }
@@ -75,27 +92,49 @@
     <a class="app-tab @(Model.Tab == "discarded" ? "is-active" : "")" data-tab="discarded" href="/app?tab=discarded">Skipped <span class="app-tab-count">@Model.DiscardedCount</span></a>
   </nav>
 
+  @if (Model.LockedCount > 0)
+  {
+    <div class="app-foil">
+      <p><strong>@Model.LockedCount more @(Model.LockedCount == 1 ? "lead" : "leads")</strong> ready behind your free plan.</p>
+      <button class="btn btn-primary" type="button" onclick="document.getElementById('upgrade').showModal()">Unlock all leads</button>
+    </div>
+  }
+
   @{
     void Card(Coldstart.Application.Leads.LeadSummary lead, bool draggable, bool actionable)
     {
-      <article class="lead-row" data-lead-id="@lead.Id" draggable="@(draggable ? "true" : "false")">
-        <a class="lead-row-main" href="/app/leads/@lead.Id">
-          <div class="lead-row-head">
-            <span class="lead-row-co">@lead.Company</span>
-            <span class="fit fit-@lead.Fit.ToLower()">@lead.Fit</span>
-            <span class="ts lead-row-ts">@lead.CreatedAt.ToString("dd MMM · HH:mm", System.Globalization.CultureInfo.InvariantCulture)</span>
-          </div>
-          <div class="lead-row-sub">
-            @if (!string.IsNullOrWhiteSpace(lead.MatchedSignals)) { <span class="lead-row-why">⚡ @lead.MatchedSignals.Split(',')[0].Trim()</span><span class="lead-row-dot">·</span> }
-            <span class="lead-row-subj">@lead.Subject</span>
-          </div>
-        </a>
-        @if (actionable)
+      var locked = lead.Locked;
+      <article class="lead-row @(locked ? "is-locked" : "")" data-lead-id="@lead.Id" draggable="@(draggable && !locked ? "true" : "false")">
+        @if (locked)
         {
-          <div class="lead-row-actions">
-            <button type="button" class="btn btn-ghost btn-sm app-act-skip" data-move="discarded">Skip</button>
-            <button type="button" class="btn btn-primary btn-sm app-act-approve" data-move="accepted">Approve</button>
+          <div class="lead-row-main">
+            <div class="lead-row-head">
+              <span class="lead-row-co">@lead.Company</span>
+              <span class="fit fit-@lead.Fit.ToLower()">@lead.Fit</span>
+            </div>
+            <div class="lead-row-sub"><span class="lead-row-subj">@lead.Subject</span></div>
           </div>
+        }
+        else
+        {
+          <a class="lead-row-main" href="/app/leads/@lead.Id">
+            <div class="lead-row-head">
+              <span class="lead-row-co">@lead.Company</span>
+              <span class="fit fit-@lead.Fit.ToLower()">@lead.Fit</span>
+              <span class="ts lead-row-ts">@lead.CreatedAt.ToString("dd MMM · HH:mm", System.Globalization.CultureInfo.InvariantCulture)</span>
+            </div>
+            <div class="lead-row-sub">
+              @if (!string.IsNullOrWhiteSpace(lead.MatchedSignals)) { <span class="lead-row-why">⚡ @lead.MatchedSignals.Split(',')[0].Trim()</span><span class="lead-row-dot">·</span> }
+              <span class="lead-row-subj">@lead.Subject</span>
+            </div>
+          </a>
+          @if (actionable)
+          {
+            <div class="lead-row-actions">
+              <button type="button" class="btn btn-ghost btn-sm app-act-skip" data-move="discarded">Skip</button>
+              <button type="button" class="btn btn-primary btn-sm app-act-approve" data-move="accepted">Approve</button>
+            </div>
+          }
         }
       </article>
     }
@@ -131,6 +170,15 @@
       <p class="lead-modal-eyebrow">Move blocked</p>
       <h2 class="lead-modal-title" id="move-error-title">Couldn't move that lead</h2>
       <p class="lead-modal-detail" id="move-error-detail"></p>
+      <div class="lead-modal-actions"><button class="btn btn-primary" value="ok" autofocus>Got it</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="upgrade" class="lead-modal" aria-labelledby="upgrade-title">
+    <form method="dialog" class="lead-modal-card">
+      <p class="lead-modal-eyebrow">Free plan</p>
+      <h2 class="lead-modal-title" id="upgrade-title">Unlock every lead</h2>
+      <p class="lead-modal-detail">Your free plan shows a sample. To see and send every lead we find, upgrade your plan — email <a href="mailto:andrzej@getcoldstart.nl">andrzej@getcoldstart.nl</a> and we'll set it up. (Self-serve subscriptions are coming soon.)</p>
       <div class="lead-modal-actions"><button class="btn btn-primary" value="ok" autofocus>Got it</button></div>
     </form>
   </dialog>

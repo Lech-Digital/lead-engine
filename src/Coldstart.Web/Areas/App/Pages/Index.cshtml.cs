@@ -24,6 +24,11 @@ public sealed class IndexModel(UserManager<ApplicationUser> users, IGetLeadInbox
 
     public Hint? ActiveHint { get; private set; }
 
+    public Coldstart.Domain.CustomerPlan Plan { get; private set; }
+    public Coldstart.Domain.HarvestStatus HarvestStatus { get; private set; }
+    public int LockedCount { get; private set; }
+    public int TotalLeads { get; private set; }
+
     public int NewCount => New.Count;
     public int AcceptedCount => AcceptedReady.Count + Sent.Count;
     public int DiscardedCount => Shelved.Count + AutoSkipped.Count;
@@ -46,6 +51,10 @@ public sealed class IndexModel(UserManager<ApplicationUser> users, IGetLeadInbox
 
         var result = await inbox.ForCustomerAsync(user.CustomerId.Value, ct);
         CustomerName = result.CustomerName;
+        Plan = result.Plan;
+        HarvestStatus = result.HarvestStatus;
+        LockedCount = result.LockedCount;
+        TotalLeads = result.Leads.Count;
         Profile = await profiles.ForCustomerAsync(user.CustomerId.Value, ct);
 
         New = result.Leads.Where(l => l.Status == "PendingReview").ToList();
