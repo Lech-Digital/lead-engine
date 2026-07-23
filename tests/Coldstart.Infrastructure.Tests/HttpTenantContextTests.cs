@@ -3,6 +3,7 @@ using Coldstart.Infrastructure.Identity;
 using Coldstart.Infrastructure.Tenancy;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
+using NSubstitute;
 using Xunit;
 
 namespace Coldstart.Infrastructure.Tests;
@@ -16,7 +17,7 @@ public class HttpTenantContextTests
         {
             HttpContext = user is null ? null : new DefaultHttpContext { User = user },
         };
-        return new HttpTenantContext(accessor);
+        return new HttpTenantContext(accessor, new MutableTenantContext());
     }
 
     [Fact]
@@ -66,5 +67,20 @@ public class HttpTenantContextTests
 
         // Act / Assert
         sut.CustomerId.Should().BeNull();
+    }
+
+    [Fact]
+    public void CustomerId_WithNoHttpContext_FallsBackToMutableTenantContext()
+    {
+        // Arrange — no HttpContext, but a tenant set on the fallback (as a background job would)
+        var accessor = Substitute.For<IHttpContextAccessor>();
+        accessor.HttpContext.Returns((HttpContext?)null);
+        var fallback = new MutableTenantContext();
+        var id = Guid.NewGuid();
+        ((Coldstart.Application.Ports.ITenantScope)fallback).SetCurrent(id);
+        var sut = new HttpTenantContext(accessor, fallback);
+
+        // Act / Assert
+        sut.CustomerId.Should().Be(id);
     }
 }

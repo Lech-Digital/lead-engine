@@ -40,4 +40,13 @@ public static class DependencyInjection
         services.AddScoped<Application.Ports.ITenantContext, Tenancy.HttpTenantContext>();
         return services;
     }
+
+    // Web-only: the in-process harvest queue + its background worker.
+    public static IServiceCollection AddHarvestQueue(this IServiceCollection services)
+    {
+        services.AddSingleton<Harvest.HarvestQueue>();
+        services.AddSingleton<Application.Harvest.IHarvestQueue>(sp => sp.GetRequiredService<Harvest.HarvestQueue>());
+        services.AddHostedService<Harvest.HarvestQueueService>();
+        return services;
+    }
 }

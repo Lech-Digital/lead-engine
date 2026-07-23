@@ -4,15 +4,17 @@ using Microsoft.AspNetCore.Http;
 
 namespace Coldstart.Infrastructure.Tenancy;
 
-// Reads the tenant from the signed-in principal's customer_id claim. Null when anonymous/absent.
-internal sealed class HttpTenantContext(IHttpContextAccessor accessor) : ITenantContext
+// Request claim wins; with no HttpContext/claim (e.g. a background harvest scope) fall back to the
+// scoped MutableTenantContext that ITenantScope.SetCurrent writes.
+internal sealed class HttpTenantContext(IHttpContextAccessor accessor, MutableTenantContext fallback) : ITenantContext
 {
     public Guid? CustomerId
     {
         get
         {
             var value = accessor.HttpContext?.User?.FindFirst(AppUserClaimsPrincipalFactory.CustomerIdClaim)?.Value;
-            return Guid.TryParse(value, out var id) ? id : null;
+            if (Guid.TryParse(value, out var id)) return id;
+            return fallback.CustomerId;
         }
     }
 }
