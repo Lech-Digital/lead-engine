@@ -16,6 +16,9 @@ public sealed class ProfileModel(UserManager<ApplicationUser> users, IGetCompany
 
     [BindProperty] public ProfileInput Input { get; set; } = new();
 
+    // True only immediately after a Polish action, so the polished (unsaved) brief scrolls into view.
+    public bool JustPolished { get; private set; }
+
     public sealed class ProfileInput
     {
         public string? CompanyName { get; set; }
@@ -49,7 +52,10 @@ public sealed class ProfileModel(UserManager<ApplicationUser> users, IGetCompany
         if (user?.CustomerId is null) return RedirectToPage("Index");
         await updateProfile.UpdateAsync(user.CustomerId.Value,
             new CompanyProfileInput(Input.CompanyName, Input.Address, Input.VatNumber, Input.KvkNumber, Input.Niche, Input.Website, Input.ContactEmail, Input.Brief, Input.MentionSourceTool), ct);
-        return RedirectToPage("Index");
+        StatusMessage = "Company profile saved.";
+        // PRG back to this page (not the briefing) with a fragment, so the confirmation shows here
+        // and the browser lands on the form instead of jumping to the very top.
+        return RedirectToPage(null, null, null, "outreach");
     }
 
     public async Task<IActionResult> OnPostPolishAsync(CancellationToken ct)
@@ -60,7 +66,12 @@ public sealed class ProfileModel(UserManager<ApplicationUser> users, IGetCompany
         if (Input.Brief is { Length: > 2000 }) Input.Brief = Input.Brief[..2000]; // defensive cap before it goes to the LLM
 
         var polished = string.IsNullOrWhiteSpace(Input.Brief) ? null : await polisher.PolishAsync(Input.Brief!, ct);
-        if (polished is not null) Input.Brief = polished;
+        if (polished is not null)
+        {
+            Input.Brief = polished;
+            JustPolished = true;
+            StatusMessage = "Polished — review it below, then click Save to keep the change.";
+        }
         else StatusMessage = "Couldn't polish just now — your text is unchanged.";
         ModelState.Clear(); // otherwise asp-for re-renders the raw posted value instead of the polished one
         return Page(); // re-render with the polished (unsaved) text; admin reviews then Saves
@@ -78,6 +89,6 @@ public sealed class ProfileModel(UserManager<ApplicationUser> users, IGetCompany
             await users.UpdateAsync(user);
         }
         StatusMessage = "Onboarding hints will show again.";
-        return RedirectToPage();
+        return RedirectToPage(null, null, null, "hints");
     }
 }

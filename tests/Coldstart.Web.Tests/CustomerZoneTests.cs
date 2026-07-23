@@ -170,6 +170,31 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
     }
 
     [Fact]
+    public async Task ProfilePost_RedirectsBackToProfile_WithAnchorAndSavedConfirmation()
+    {
+        // Arrange
+        var client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        await TestAuth.SignInAsync(factory, client, $"prof-save-redir-{Guid.NewGuid():N}@test.com", "Passw0rd!");
+        var form = await AntiforgeryForm(client, "/app/profile", new()
+        {
+            ["Input.CompanyName"] = "Acme Ltd", ["Input.VatNumber"] = "", ["Input.Niche"] = "",
+            ["Input.Address"] = "", ["Input.KvkNumber"] = "", ["Input.Website"] = "", ["Input.ContactEmail"] = "",
+            ["Input.Brief"] = "we help B2B founders",
+        });
+
+        // Act
+        var post = await client.PostAsync("/app/profile", new FormUrlEncodedContent(form));
+
+        // Assert — PRG back to the profile page itself (not /app), with a fragment so the browser
+        // returns to the form instead of jumping to the very top; the confirmation then shows inline.
+        post.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        post.Headers.Location!.OriginalString.Should().StartWith("/app/profile");
+        post.Headers.Location!.OriginalString.Should().Contain("#");
+        var page = await client.GetStringAsync("/app/profile");
+        page.Should().Contain("Company profile saved");
+    }
+
+    [Fact]
     public async Task ProfilePolish_ReturnsPolishedText_WithoutPersisting()
     {
         // Arrange
