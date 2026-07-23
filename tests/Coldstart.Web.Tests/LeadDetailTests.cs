@@ -122,9 +122,12 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         var id = await AddApprovedLeadWithRecipientAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"), "ceo@acme.com");
         factory.Outreach.LastSent = null;
 
-        // Act
+        // Act — the send posts the email form (recipient/subject/draft), which the server saves then sends
         var page = await client.GetStringAsync($"/app/leads/{id}");
-        var form = await AntiforgeryForm(client, $"/app/leads/{id}", new());
+        var form = await AntiforgeryForm(client, $"/app/leads/{id}", new()
+        {
+            ["Input.Recipient"] = "ceo@acme.com", ["Input.Subject"] = "subj", ["Input.Draft"] = "body",
+        });
         var post = await client.PostAsync($"/app/leads/{id}?handler=SendFromColdstart", new FormUrlEncodedContent(form));
 
         // Assert — admin sees the button; posting sends via the mailer and marks the lead Sent
@@ -134,6 +137,33 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         factory.Outreach.LastSent!.To.Should().Be("ceo@acme.com");
         var sent = await client.GetStringAsync("/app?tab=sent");
         sent.Should().Contain("Acme Co");
+    }
+
+    [Fact]
+    public async Task Detail_SendFromColdstart_UsesTheEditedRecipient_EvenWithoutSaveDraft()
+    {
+        // Arrange — admin with an approved lead whose STORED recipient is the original address
+        var client = factory.CreateClient();
+        var email = $"admin-edit-send-{Guid.NewGuid():N}@test.com";
+        await TestAuth.CreateUserAsync(factory, email, "Passw0rd!", role: ColdstartRoles.SuperAdmin, provisionTenant: true);
+        await TestAuth.PostFormAsync(client, "/Identity/Account/Login", new()
+        {
+            ["Input.Email"] = email, ["Input.Password"] = "Passw0rd!", ["Input.RememberMe"] = "false",
+        });
+        var id = await AddApprovedLeadWithRecipientAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"), "old@acme.com");
+        factory.Outreach.LastSent = null;
+
+        // Act — the send posts the email FORM with an edited recipient/subject, WITHOUT a prior "Save draft"
+        var form = await AntiforgeryForm(client, $"/app/leads/{id}", new()
+        {
+            ["Input.Recipient"] = "new@acme.com", ["Input.Subject"] = "Updated subject", ["Input.Draft"] = "Updated body",
+        });
+        await client.PostAsync($"/app/leads/{id}?handler=SendFromColdstart", new FormUrlEncodedContent(form));
+
+        // Assert — it sends to what the operator sees (the edited recipient), not the stale stored one
+        factory.Outreach.LastSent.Should().NotBeNull();
+        factory.Outreach.LastSent!.To.Should().Be("new@acme.com");
+        factory.Outreach.LastSent!.Subject.Should().Be("Updated subject");
     }
 
     [Fact]

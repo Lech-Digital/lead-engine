@@ -44,7 +44,7 @@
     <div class="ld-col">
       <section class="panel">
         <h4>The email</h4>
-        <form method="post">
+        <form method="post" id="lead-edit">
           <div class="field"><label for="lead-recipient">Recipient</label>
             <input asp-for="Input.Recipient" id="lead-recipient" type="email" placeholder="name@company.com — set before sending" disabled="@sent"></div>
           <div class="field"><label for="lead-subject">Subject</label>
@@ -76,16 +76,18 @@
             <button class="btn btn-ghost" id="handoff-copy" type="button">⧉ Copy email</button>
             <span class="ld-copied ts" id="handoff-copied" hidden>Copied ✓</span>
           </div>
-          <form method="post" class="ld-marksent">
-            <button class="btn btn-primary" type="submit" asp-page-handler="MarkSent" disabled="@(!hasRecipient)">Mark as sent ✓</button>
-            @if (!hasRecipient) { <span class="ts">Add a recipient first.</span> }
-          </form>
+          @* These submit the email form above (form="lead-edit"), so they send/mark what's currently
+             on screen — the server saves the fields first, then acts. *@
+          <div class="ld-marksent">
+            <button class="btn btn-primary" type="submit" form="lead-edit" asp-page-handler="MarkSent" id="btn-marksent" disabled="@(!hasRecipient)">Mark as sent ✓</button>
+            <span class="ts" id="need-recipient" @(hasRecipient ? "hidden" : null)>Add a recipient first.</span>
+          </div>
           @if (User.IsInRole(ColdstartRoles.SuperAdmin))
           {
-            <form method="post" class="ld-marksent">
-              <button class="btn btn-primary" type="submit" asp-page-handler="SendFromColdstart" disabled="@(!hasRecipient)">Send from Coldstart ✓</button>
-              <span class="ts">Sends the approved draft from your Coldstart address, branded.</span>
-            </form>
+            <div class="ld-marksent">
+              <button class="btn btn-primary" type="submit" form="lead-edit" asp-page-handler="SendFromColdstart" id="btn-sendcoldstart" disabled="@(!hasRecipient)">Send from Coldstart ✓</button>
+              <span class="ts">Sends the current draft from your Coldstart address, branded.</span>
+            </div>
           }
         </section>
       }

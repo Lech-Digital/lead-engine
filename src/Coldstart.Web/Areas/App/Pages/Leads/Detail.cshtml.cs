@@ -44,13 +44,22 @@ public sealed class DetailModel(UserManager<ApplicationUser> users, IGetLeadDeta
     public Task<IActionResult> OnPostReopenAsync(Guid id, CancellationToken ct) =>
         RunAsync(id, ct, cid => workflow.ReopenAsync(cid, id, ct));
 
+    // Send/mark actions post the email form's current fields and persist them FIRST, so they
+    // always act on what the operator sees — not a stale stored recipient/draft they edited
+    // without clicking "Save draft" (which matches the client-side Gmail/mailto handoff).
     public Task<IActionResult> OnPostMarkSentAsync(Guid id, CancellationToken ct) =>
-        RunAsync(id, ct, cid => workflow.MarkSentAsync(cid, id, ct));
+        RunAsync(id, ct, cid => SaveThenAsync(cid, id, () => workflow.MarkSentAsync(cid, id, ct), ct));
 
     public async Task<IActionResult> OnPostSendFromColdstartAsync(Guid id, CancellationToken ct)
     {
         if (!User.IsInRole(ColdstartRoles.SuperAdmin)) return Forbid();
-        return await RunAsync(id, ct, cid => workflow.SendFromColdstartAsync(cid, id, ct));
+        return await RunAsync(id, ct, cid => SaveThenAsync(cid, id, () => workflow.SendFromColdstartAsync(cid, id, ct), ct));
+    }
+
+    private async Task<LeadActionResult> SaveThenAsync(Guid customerId, Guid id, Func<Task<LeadActionResult>> then, CancellationToken ct)
+    {
+        var saved = await workflow.SaveDraftAsync(customerId, id, Input.Subject, Input.Draft, Input.Recipient, ct);
+        return saved.IsOk ? await then() : saved;
     }
 
     public Task<IActionResult> OnPostAddNoteAsync(Guid id, CancellationToken ct) =>

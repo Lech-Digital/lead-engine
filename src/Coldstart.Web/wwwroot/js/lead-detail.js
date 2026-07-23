@@ -9,6 +9,9 @@
   var mailto = document.getElementById("handoff-mailto");
   var copy = document.getElementById("handoff-copy");
   var copied = document.getElementById("handoff-copied");
+  var markBtn = document.getElementById("btn-marksent");
+  var sendBtn = document.getElementById("btn-sendcoldstart");
+  var needRecipient = document.getElementById("need-recipient");
   if (!subj || !body) return;   // not on an approved lead
 
   function vals() {
@@ -24,6 +27,11 @@
       encodeURIComponent(v.to) + "&su=" + encodeURIComponent(v.su) + "&body=" + encodeURIComponent(v.bd);
     if (mailto) mailto.href = "mailto:" + encodeURIComponent(v.to) +
       "?subject=" + encodeURIComponent(v.su) + "&body=" + encodeURIComponent(v.bd);
+    // Enable send/mark to match the CURRENT recipient (they save-then-act on the live field).
+    var hasTo = v.to.length > 0;
+    if (markBtn) markBtn.disabled = !hasTo;
+    if (sendBtn) sendBtn.disabled = !hasTo;
+    if (needRecipient) needRecipient.hidden = hasTo;
   }
   [to, subj, body].forEach(function (el) { if (el) el.addEventListener("input", refresh); });
   refresh();
