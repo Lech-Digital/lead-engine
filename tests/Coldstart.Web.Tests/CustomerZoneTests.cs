@@ -246,6 +246,22 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
     }
 
     [Fact]
+    public async Task Profile_UsesAppBarShell_NotTheNarrowAuthCard()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        await TestAuth.SignInAsync(factory, client, $"prof-shell-{Guid.NewGuid():N}@test.com", "Passw0rd!");
+
+        // Act
+        var html = await client.GetStringAsync("/app/profile");
+
+        // Assert — top app-bar nav (like the lead pages), grouped panels, no auth-card shell
+        html.Should().Contain("app-bar");
+        html.Should().Contain("profile-grid");
+        html.Should().NotContain("auth-card");
+    }
+
+    [Fact]
     public async Task GetProfile_WhenNotAuthenticated_RedirectsToLogin()
     {
         // Arrange

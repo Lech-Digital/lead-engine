@@ -2,37 +2,65 @@
 @model Coldstart.Web.Areas.App.Pages.ProfileModel
 @{ ViewData["Title"] = "Company profile"; Layout = "/Pages/Shared/_Layout.cshtml"; }
 
-<main class="wrap auth-shell">
-  <div class="auth-card">
+<header class="app-bar">
+  <a class="wordmark" href="/">coldstart<i>*</i></a>
+  <nav class="app-nav">
+    <a href="/app">Your briefing</a>
+    <form method="post" asp-page="/Account/Logout" asp-area="Identity"><button class="btn btn-ghost" type="submit">Log out</button></form>
+  </nav>
+</header>
+
+<main class="wrap app-zone profile">
+  <section class="app-briefing">
     <h1>Company profile</h1>
-    <p class="auth-sub">Shown on your account. All fields optional.</p>
-    <form method="post">
-      <button type="submit" hidden aria-hidden="true" tabindex="-1"></button>
-      <div class="field"><label asp-for="Input.CompanyName">Company name</label><input asp-for="Input.CompanyName"></div>
-      <div class="field"><label asp-for="Input.Address">Address</label><input asp-for="Input.Address"></div>
-      <div class="field"><label asp-for="Input.VatNumber">VAT number</label><input asp-for="Input.VatNumber"></div>
-      <div class="field"><label asp-for="Input.KvkNumber">KvK number</label><input asp-for="Input.KvkNumber"></div>
-      <div class="field"><label asp-for="Input.Niche">Niche</label><input asp-for="Input.Niche"></div>
-      <div class="field"><label asp-for="Input.Website">Website</label><input asp-for="Input.Website"></div>
-      <div class="field"><label asp-for="Input.ContactEmail">Contact email</label><input asp-for="Input.ContactEmail" type="email"></div>
+    <p class="app-briefing-ts">Shown on your account · all fields optional</p>
+  </section>
+
+  <form method="post" class="profile-form">
+    <button type="submit" hidden aria-hidden="true" tabindex="-1"></button>
+
+    <section class="panel">
+      <h2 class="app-group-head">Company</h2>
+      <div class="profile-grid">
+        <div class="field"><label asp-for="Input.CompanyName">Company name</label><input asp-for="Input.CompanyName"></div>
+        <div class="field"><label asp-for="Input.Website">Website</label><input asp-for="Input.Website"></div>
+        <div class="field"><label asp-for="Input.Niche">Niche</label><input asp-for="Input.Niche"></div>
+        <div class="field"><label asp-for="Input.ContactEmail">Contact email</label><input asp-for="Input.ContactEmail" type="email"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 class="app-group-head">Registration</h2>
+      <div class="profile-grid">
+        <div class="field profile-span-2"><label asp-for="Input.Address">Address</label><input asp-for="Input.Address"></div>
+        <div class="field"><label asp-for="Input.VatNumber">VAT number</label><input asp-for="Input.VatNumber"></div>
+        <div class="field"><label asp-for="Input.KvkNumber">KvK number</label><input asp-for="Input.KvkNumber"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 class="app-group-head">Outreach</h2>
       <div class="field">
         <label asp-for="Input.Brief">Company brief <span class="field-hint">— a short "who we are" used as context in your outreach</span></label>
         <textarea asp-for="Input.Brief" rows="4" placeholder="e.g. Acme helps dental clinics fill last-minute cancellations with automated waitlist texts."></textarea>
-        <button class="btn btn-ghost btn-sm" type="submit" asp-page-handler="Polish">Polish with AI</button>
+        <button class="btn btn-ghost btn-sm profile-polish" type="submit" asp-page-handler="Polish">Polish with AI</button>
       </div>
       <div class="field field-check">
         <label><input asp-for="Input.MentionSourceTool" type="checkbox"> Mention leads were found via Coldstart</label>
       </div>
-      <button class="btn btn-primary" type="submit">Save →</button>
-    </form>
-    @if (Model.StatusMessage is not null) { <p class="form-status">@Model.StatusMessage</p> }
-    <section class="app-hints-reset">
-      <h2 class="app-group-head">Onboarding hints</h2>
-      <p>Want the getting-started tips again? They'll reappear one per day.</p>
-      <form method="post" asp-page-handler="ShowHints">
-        <button type="submit" class="btn btn-ghost">Show hints again</button>
-      </form>
     </section>
-    <p class="auth-alt"><a href="/app">← Back to your leads</a></p>
-  </div>
+
+    <div class="profile-actions">
+      <button class="btn btn-primary" type="submit">Save →</button>
+      @if (Model.StatusMessage is not null) { <span class="form-status">@Model.StatusMessage</span> }
+    </div>
+  </form>
+
+  <section class="panel profile-hints">
+    <h2 class="app-group-head">Onboarding hints</h2>
+    <p>Want the getting-started tips again? They'll reappear one per day.</p>
+    <form method="post" asp-page-handler="ShowHints">
+      <button type="submit" class="btn btn-ghost">Show hints again</button>
+    </form>
+  </section>
 </main>
