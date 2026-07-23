@@ -2,6 +2,7 @@ using System.Net;
 using Coldstart.Domain;
 using Coldstart.Infrastructure;
 using Coldstart.Infrastructure.Identity;
+using Coldstart.Web;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using FluentAssertions;
@@ -104,6 +105,64 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         html.Should().Contain("handler=MarkSent");
         html.Should().Contain("handoff-gmail");
         html.Should().Contain("Send from your own inbox");
+    }
+
+    [Fact]
+    public async Task Detail_ForAdmin_ShowsSendFromColdstart_AndSendingMarksSent()
+    {
+        // Arrange — an account that is BOTH SuperAdmin and has a tenant (role added before sign-in
+        // so it lands in the auth cookie), with an approved lead.
+        var client = factory.CreateClient();
+        var email = $"admin-send-{Guid.NewGuid():N}@test.com";
+        await TestAuth.CreateUserAsync(factory, email, "Passw0rd!", role: ColdstartRoles.SuperAdmin, provisionTenant: true);
+        await TestAuth.PostFormAsync(client, "/Identity/Account/Login", new()
+        {
+            ["Input.Email"] = email, ["Input.Password"] = "Passw0rd!", ["Input.RememberMe"] = "false",
+        });
+        var id = await AddApprovedLeadWithRecipientAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"), "ceo@acme.com");
+        factory.Outreach.LastSent = null;
+
+        // Act
+        var page = await client.GetStringAsync($"/app/leads/{id}");
+        var form = await AntiforgeryForm(client, $"/app/leads/{id}", new());
+        var post = await client.PostAsync($"/app/leads/{id}?handler=SendFromColdstart", new FormUrlEncodedContent(form));
+
+        // Assert — admin sees the button; posting sends via the mailer and marks the lead Sent
+        page.Should().Contain("SendFromColdstart");
+        post.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Redirect);
+        factory.Outreach.LastSent.Should().NotBeNull();
+        factory.Outreach.LastSent!.To.Should().Be("ceo@acme.com");
+        var sent = await client.GetStringAsync("/app?tab=sent");
+        sent.Should().Contain("Acme Co");
+    }
+
+    [Fact]
+    public async Task Detail_ForRegularCustomer_HidesSendFromColdstart_AndForbidsThePost()
+    {
+        // Arrange — a normal customer (no SuperAdmin role)
+        var client = factory.CreateClient();
+        var email = $"cust-send-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        var id = await AddApprovedLeadWithRecipientAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"), "ceo@acme.com");
+        factory.Outreach.LastSent = null;
+
+        // Act
+        var page = await client.GetStringAsync($"/app/leads/{id}");
+        var form = await AntiforgeryForm(client, $"/app/leads/{id}", new());
+        // Mark the request as AJAX so the cookie auth handler surfaces the handler's Forbid() as a
+        // raw 403 instead of a 302 to AccessDeniedPath (which is configured to the same Login page,
+        // so a plain browser POST would otherwise land on a 200 login page rather than 403).
+        using var req = new HttpRequestMessage(HttpMethod.Post, $"/app/leads/{id}?handler=SendFromColdstart")
+        {
+            Content = new FormUrlEncodedContent(form),
+        };
+        req.Headers.Add("X-Requested-With", "XMLHttpRequest");
+        var post = await client.SendAsync(req);
+
+        // Assert — no button, and the handler refuses non-admins
+        page.Should().NotContain("SendFromColdstart");
+        post.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        factory.Outreach.LastSent.Should().BeNull();
     }
 
     [Fact]

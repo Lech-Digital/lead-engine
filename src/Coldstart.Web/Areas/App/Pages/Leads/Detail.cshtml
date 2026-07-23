@@ -79,6 +79,13 @@
             <button class="btn btn-primary" type="submit" asp-page-handler="MarkSent" disabled="@(!hasRecipient)">Mark as sent ✓</button>
             @if (!hasRecipient) { <span class="ts">Add a recipient first.</span> }
           </form>
+          @if (User.IsInRole("SuperAdmin"))
+          {
+            <form method="post" class="ld-marksent">
+              <button class="btn btn-primary" type="submit" asp-page-handler="SendFromColdstart" disabled="@(!hasRecipient)">Send from Coldstart ✓</button>
+              <span class="ts">Sends the approved draft from your Coldstart address, branded.</span>
+            </form>
+          }
         </section>
       }
     </div>

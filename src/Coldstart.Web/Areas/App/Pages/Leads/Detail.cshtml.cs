@@ -1,5 +1,6 @@
 using Coldstart.Application.Leads;
 using Coldstart.Infrastructure.Identity;
+using Coldstart.Web;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -45,6 +46,12 @@ public sealed class DetailModel(UserManager<ApplicationUser> users, IGetLeadDeta
 
     public Task<IActionResult> OnPostMarkSentAsync(Guid id, CancellationToken ct) =>
         RunAsync(id, ct, cid => workflow.MarkSentAsync(cid, id, ct));
+
+    public async Task<IActionResult> OnPostSendFromColdstartAsync(Guid id, CancellationToken ct)
+    {
+        if (!User.IsInRole(ColdstartRoles.SuperAdmin)) return Forbid();
+        return await RunAsync(id, ct, cid => workflow.SendFromColdstartAsync(cid, id, ct));
+    }
 
     public Task<IActionResult> OnPostAddNoteAsync(Guid id, CancellationToken ct) =>
         NoteActionAsync(id, ct, cid => workflow.AddNoteAsync(cid, id, Guid.NewGuid(), Input.NoteText ?? "", ct));

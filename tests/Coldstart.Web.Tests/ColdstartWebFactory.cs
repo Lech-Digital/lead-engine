@@ -17,6 +17,7 @@ public sealed class ColdstartWebFactory : WebApplicationFactory<Program>, IAsync
     public FakeEmailSender Email { get; } = new();
     public FakeMailbox Mailbox { get; } = new();
     public FakeCompanyBriefPolisher BriefPolisher { get; } = new();
+    public FakeOutreachMailer Outreach { get; } = new();
 
     public Task InitializeAsync() => _db.StartAsync();
 
@@ -35,7 +36,23 @@ public sealed class ColdstartWebFactory : WebApplicationFactory<Program>, IAsync
             services.AddSingleton<Coldstart.Application.Mailbox.IMailbox>(Mailbox);
             services.RemoveAll<ICompanyBriefPolisher>();
             services.AddSingleton<ICompanyBriefPolisher>(BriefPolisher);
+            services.RemoveAll<Coldstart.Application.Outreach.IOutreachMailer>();
+            services.AddSingleton<Coldstart.Application.Outreach.IOutreachMailer>(Outreach);
         });
+    }
+}
+
+// Fake IOutreachMailer: records the last sent email; can be told to throw to simulate SMTP failure.
+public sealed class FakeOutreachMailer : Coldstart.Application.Outreach.IOutreachMailer
+{
+    public Coldstart.Application.Outreach.OutreachEmail? LastSent { get; set; }
+    public bool Throw { get; set; }
+
+    public Task SendAsync(Coldstart.Application.Outreach.OutreachEmail mail, CancellationToken ct)
+    {
+        if (Throw) throw new InvalidOperationException("simulated smtp failure");
+        LastSent = mail;
+        return Task.CompletedTask;
     }
 }
 
