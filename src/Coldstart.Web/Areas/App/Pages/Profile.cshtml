@@ -7,6 +7,7 @@
     <h1>Company profile</h1>
     <p class="auth-sub">Shown on your account. All fields optional.</p>
     <form method="post">
+      <button type="submit" hidden aria-hidden="true" tabindex="-1"></button>
       <div class="field"><label asp-for="Input.CompanyName">Company name</label><input asp-for="Input.CompanyName"></div>
       <div class="field"><label asp-for="Input.Address">Address</label><input asp-for="Input.Address"></div>
       <div class="field"><label asp-for="Input.VatNumber">VAT number</label><input asp-for="Input.VatNumber"></div>

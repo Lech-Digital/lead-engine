@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Coldstart.Application.Customers;
 using Coldstart.Application.Hints;
 using Coldstart.Infrastructure.Identity;
@@ -24,7 +25,7 @@ public sealed class ProfileModel(UserManager<ApplicationUser> users, IGetCompany
         public string? Niche { get; set; }
         public string? Website { get; set; }
         public string? ContactEmail { get; set; }
-        public string? Brief { get; set; }
+        [StringLength(2000)] public string? Brief { get; set; }
         public bool MentionSourceTool { get; set; }
     }
 
@@ -53,6 +54,11 @@ public sealed class ProfileModel(UserManager<ApplicationUser> users, IGetCompany
 
     public async Task<IActionResult> OnPostPolishAsync(CancellationToken ct)
     {
+        var user = await users.GetUserAsync(User);
+        if (user?.CustomerId is null) return RedirectToPage("Index");
+
+        if (Input.Brief is { Length: > 2000 }) Input.Brief = Input.Brief[..2000]; // defensive cap before it goes to the LLM
+
         var polished = string.IsNullOrWhiteSpace(Input.Brief) ? null : await polisher.PolishAsync(Input.Brief!, ct);
         if (polished is not null) Input.Brief = polished;
         else StatusMessage = "Couldn't polish just now — your text is unchanged.";

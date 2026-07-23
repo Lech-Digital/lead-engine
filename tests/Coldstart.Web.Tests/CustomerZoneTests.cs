@@ -204,6 +204,48 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
     }
 
     [Fact]
+    public async Task ProfileGet_HiddenDefaultSubmit_PrecedesThePolishButton_SoEnterKeySaves()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        await TestAuth.SignInAsync(factory, client, $"prof-enter-{Guid.NewGuid():N}@test.com", "Passw0rd!");
+
+        // Act
+        var html = await client.GetStringAsync("/app/profile");
+
+        // Assert
+        var hiddenDefaultSubmit = "<button type=\"submit\" hidden aria-hidden=\"true\" tabindex=\"-1\"></button>";
+        html.Should().Contain(hiddenDefaultSubmit);
+        html.Should().Contain("handler=Polish");
+        html.IndexOf(hiddenDefaultSubmit, StringComparison.Ordinal)
+            .Should().BeLessThan(html.IndexOf("handler=Polish", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task ProfilePolish_WhenPolisherFails_ShowsFriendlyNotice_AndKeepsTypedText()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        await TestAuth.SignInAsync(factory, client, $"prof-polish-fail-{Guid.NewGuid():N}@test.com", "Passw0rd!");
+        factory.BriefPolisher.Result = null;
+        var polishForm = await AntiforgeryForm(client, "/app/profile", new()
+        {
+            ["Input.CompanyName"] = "", ["Input.VatNumber"] = "", ["Input.Niche"] = "",
+            ["Input.Address"] = "", ["Input.KvkNumber"] = "", ["Input.Website"] = "", ["Input.ContactEmail"] = "",
+            ["Input.Brief"] = "my own words",
+        });
+
+        // Act
+        var polish = await client.PostAsync("/app/profile?handler=Polish", new FormUrlEncodedContent(polishForm));
+        var polishHtml = await polish.Content.ReadAsStringAsync();
+
+        // Assert
+        polish.StatusCode.Should().Be(HttpStatusCode.OK);
+        polishHtml.Should().Contain("polish just now"); // the friendly degradation notice (HTML-encodes the apostrophe in "Couldn't")
+        polishHtml.Should().Contain("my own words"); // unchanged
+    }
+
+    [Fact]
     public async Task GetProfile_WhenNotAuthenticated_RedirectsToLogin()
     {
         // Arrange

@@ -43,4 +43,15 @@ public class CustomerProfileTests
         // Assert
         customer.Profile.Should().Be(CompanyProfile.Empty);
     }
+
+    [Fact]
+    public void Empty_HasNoBriefAndDoesNotMentionTheSourceTool()
+    {
+        // Act
+        var profile = CompanyProfile.Empty;
+
+        // Assert
+        profile.Brief.Should().BeNull();
+        profile.MentionSourceTool.Should().BeFalse();
+    }
 }
