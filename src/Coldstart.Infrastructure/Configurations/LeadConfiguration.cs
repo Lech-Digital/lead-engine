@@ -36,6 +36,7 @@ internal sealed class LeadConfiguration : IEntityTypeConfiguration<Lead>
         builder.HasIndex(l => new { l.CustomerId, l.Fingerprint })
             .IsUnique()
             .HasFilter("\"Fingerprint\" <> ''");   // seeded/mock leads have '' — don't collide; dedup is per-tenant
+        builder.HasIndex(l => l.CustomerId);   // covers tenant-scoped reads (global query filter); partial composite above can't serve these
 
         builder.OwnsMany(l => l.Notes, n =>
         {

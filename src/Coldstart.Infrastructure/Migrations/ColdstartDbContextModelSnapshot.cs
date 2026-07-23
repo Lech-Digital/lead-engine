@@ -130,6 +130,8 @@ namespace Coldstart.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CustomerId");
+
                     b.HasIndex("CustomerId", "Fingerprint")
                         .IsUnique()
                         .HasFilter("\"Fingerprint\" <> ''");
