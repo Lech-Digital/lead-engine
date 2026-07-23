@@ -59,4 +59,25 @@ public class CompanyProfileUseCasesTests
         view.IsEmpty.Should().BeTrue();
         view.CompanyName.Should().BeNull();
     }
+
+    [Fact]
+    public async Task UpdateThenGet_CarriesBriefAndToggle()
+    {
+        // Arrange
+        var customer = Customer.Create("sam@acme.com");
+        var repo = Substitute.For<ICustomerRepository>();
+        repo.GetAsync(Arg.Any<CustomerId>(), Arg.Any<CancellationToken>()).Returns(customer);
+        var update = new UpdateCompanyProfile(repo);
+        var get = new GetCompanyProfile(repo);
+        var input = new CompanyProfileInput("Acme", null, null, null, null, null, null,
+            Brief: "We help dentists fill their calendar.", MentionSourceTool: true);
+
+        // Act
+        await update.UpdateAsync(customer.Id.Value, input, CancellationToken.None);
+        var view = await get.ForCustomerAsync(customer.Id.Value, CancellationToken.None);
+
+        // Assert
+        view.Brief.Should().Be("We help dentists fill their calendar.");
+        view.MentionSourceTool.Should().BeTrue();
+    }
 }

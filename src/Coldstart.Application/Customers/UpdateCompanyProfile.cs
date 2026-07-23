@@ -10,7 +10,7 @@ internal sealed class UpdateCompanyProfile(ICustomerRepository customers) : IUpd
         var customer = await customers.GetAsync(new CustomerId(customerId), ct);
         if (customer is null) return;
         customer.UpdateProfile(new CompanyProfile(input.CompanyName, input.Address, input.VatNumber,
-            input.KvkNumber, input.Niche, input.Website, input.ContactEmail));
+            input.KvkNumber, input.Niche, input.Website, input.ContactEmail, input.Brief, input.MentionSourceTool));
         await customers.UpdateAsync(customer, ct);
     }
 }
