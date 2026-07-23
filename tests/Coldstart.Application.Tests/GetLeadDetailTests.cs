@@ -21,7 +21,7 @@ public class GetLeadDetailTests
         var lead = LeadFor(new CustomerId(customerId));
         var repo = Substitute.For<ILeadRepository>();
         repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns(lead);
-        var sut = new GetLeadDetail(repo);
+        var sut = new GetLeadDetail(repo, Substitute.For<ICustomerRepository>(), new QuotaOptions());
 
         // Act
         var detail = await sut.ForLeadAsync(customerId, lead.Id.Value, CancellationToken.None);
@@ -45,7 +45,7 @@ public class GetLeadDetailTests
         var noteId = lead.AddNote("call back Friday", DateTimeOffset.UtcNow);
         var repo = Substitute.For<ILeadRepository>();
         repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns(lead);
-        var sut = new GetLeadDetail(repo);
+        var sut = new GetLeadDetail(repo, Substitute.For<ICustomerRepository>(), new QuotaOptions());
 
         // Act
         var detail = await sut.ForLeadAsync(customerId, lead.Id.Value, CancellationToken.None);
@@ -65,7 +65,7 @@ public class GetLeadDetailTests
         var newerId = lead.AddNote("newer note", DateTimeOffset.UtcNow);
         var repo = Substitute.For<ILeadRepository>();
         repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns(lead);
-        var sut = new GetLeadDetail(repo);
+        var sut = new GetLeadDetail(repo, Substitute.For<ICustomerRepository>(), new QuotaOptions());
 
         // Act
         var detail = await sut.ForLeadAsync(customerId, lead.Id.Value, CancellationToken.None);
@@ -83,7 +83,7 @@ public class GetLeadDetailTests
         var lead = LeadFor(new CustomerId(Guid.NewGuid()));
         var repo = Substitute.For<ILeadRepository>();
         repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns(lead);
-        var sut = new GetLeadDetail(repo);
+        var sut = new GetLeadDetail(repo, Substitute.For<ICustomerRepository>(), new QuotaOptions());
 
         // Act
         var detail = await sut.ForLeadAsync(Guid.NewGuid(), lead.Id.Value, CancellationToken.None);
@@ -98,12 +98,55 @@ public class GetLeadDetailTests
         // Arrange
         var repo = Substitute.For<ILeadRepository>();
         repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns((Lead?)null);
-        var sut = new GetLeadDetail(repo);
+        var sut = new GetLeadDetail(repo, Substitute.For<ICustomerRepository>(), new QuotaOptions());
 
         // Act
         var detail = await sut.ForLeadAsync(Guid.NewGuid(), Guid.NewGuid(), CancellationToken.None);
 
         // Assert
         detail.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ForLeadAsync_WhenLeadIsLockedForFreeCustomer_ReturnsNull()
+    {
+        // Arrange — Free customer, quota 1, two leads; the 2nd (lower score) is locked
+        var cid = Guid.NewGuid();
+        var customer = Customer.Create("Acme");   // Free
+        var l1 = Lead.CreateHarvested(new CustomerId(cid), "A", Fit.Yes, "s", "b", "hn", "https://x/1", "fp1", 0.9, "x", DateTimeOffset.UtcNow);
+        var l2 = Lead.CreateHarvested(new CustomerId(cid), "B", Fit.Yes, "s", "b", "hn", "https://x/2", "fp2", 0.5, "x", DateTimeOffset.UtcNow);
+        var customers = Substitute.For<ICustomerRepository>();
+        customers.GetAsync(new CustomerId(cid), Arg.Any<CancellationToken>()).Returns(customer);
+        var leads = Substitute.For<ILeadRepository>();
+        leads.GetAsync(l2.Id, Arg.Any<CancellationToken>()).Returns(l2);
+        leads.ForCustomerAsync(new CustomerId(cid), Arg.Any<CancellationToken>()).Returns(new[] { l1, l2 });
+        var sut = new GetLeadDetail(leads, customers, new QuotaOptions { FreeLeadCount = 1 });
+
+        // Act
+        var detail = await sut.ForLeadAsync(cid, l2.Id.Value, CancellationToken.None);
+
+        // Assert
+        detail.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ForLeadAsync_WhenLeadIsUnlocked_ReturnsDetail()
+    {
+        // Arrange — the top lead under quota 1 is unlocked
+        var cid = Guid.NewGuid();
+        var customer = Customer.Create("Acme");
+        var l1 = Lead.CreateHarvested(new CustomerId(cid), "A", Fit.Yes, "s", "b", "hn", "https://x/1", "fp1", 0.9, "x", DateTimeOffset.UtcNow);
+        var customers = Substitute.For<ICustomerRepository>();
+        customers.GetAsync(new CustomerId(cid), Arg.Any<CancellationToken>()).Returns(customer);
+        var leads = Substitute.For<ILeadRepository>();
+        leads.GetAsync(l1.Id, Arg.Any<CancellationToken>()).Returns(l1);
+        leads.ForCustomerAsync(new CustomerId(cid), Arg.Any<CancellationToken>()).Returns(new[] { l1 });
+        var sut = new GetLeadDetail(leads, customers, new QuotaOptions { FreeLeadCount = 1 });
+
+        // Act
+        var detail = await sut.ForLeadAsync(cid, l1.Id.Value, CancellationToken.None);
+
+        // Assert
+        detail.Should().NotBeNull();
     }
 }

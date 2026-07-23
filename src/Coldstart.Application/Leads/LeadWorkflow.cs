@@ -4,7 +4,7 @@ using Coldstart.Domain;
 
 namespace Coldstart.Application.Leads;
 
-internal sealed class LeadWorkflow(ILeadRepository leads, IOutreachMailer outreach) : ILeadWorkflow
+internal sealed class LeadWorkflow(ILeadRepository leads, IOutreachMailer outreach, ICustomerRepository customers, QuotaOptions quota) : ILeadWorkflow
 {
     public Task<LeadActionResult> SaveDraftAsync(Guid customerId, Guid leadId, string subject, string draft, string? recipient, CancellationToken ct) =>
         MutateAsync(customerId, leadId, ct, lead =>
@@ -46,6 +46,8 @@ internal sealed class LeadWorkflow(ILeadRepository leads, IOutreachMailer outrea
         var lead = await leads.GetAsync(new LeadId(leadId), ct);
         if (lead is null || lead.CustomerId.Value != customerId)
             return LeadActionResult.NotFound;
+        if (await IsLockedAsync(customerId, leadId, ct))
+            return LeadActionResult.NotFound;
         if (lead.Status != LeadStatus.Approved)
             return LeadActionResult.Invalid("Approve the lead before sending from Coldstart.");
         if (lead.RecipientEmail is null)
@@ -85,11 +87,22 @@ internal sealed class LeadWorkflow(ILeadRepository leads, IOutreachMailer outrea
         return LeadActionResult.Ok;
     }
 
+    // Locked leads (beyond the free-tier quota) are not actionable. Runs after the ownership check.
+    private async Task<bool> IsLockedAsync(Guid customerId, Guid leadId, CancellationToken ct)
+    {
+        var customer = await customers.GetAsync(new CustomerId(customerId), ct);
+        if (customer is null) return false;
+        var all = await leads.ForCustomerAsync(new CustomerId(customerId), ct);
+        return Leads.LeadLocking.LockedLeadIds(all, customer.Plan, quota.FreeLeadCount).Contains(leadId);
+    }
+
     // Single tenant-isolation choke point: load, verify ownership, mutate, persist.
     private async Task<LeadActionResult> MutateAsync(Guid customerId, Guid leadId, CancellationToken ct, Func<Lead, LeadActionResult> mutate)
     {
         var lead = await leads.GetAsync(new LeadId(leadId), ct);
         if (lead is null || lead.CustomerId.Value != customerId)
+            return LeadActionResult.NotFound;
+        if (await IsLockedAsync(customerId, leadId, ct))
             return LeadActionResult.NotFound;
 
         LeadActionResult result;

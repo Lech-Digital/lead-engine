@@ -25,7 +25,10 @@ public class LeadWorkflowSendTests
         var repo = Substitute.For<ILeadRepository>();
         if (lead is not null) repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns(lead);
         var mailer = Substitute.For<IOutreachMailer>();
-        return (new LeadWorkflow(repo, mailer), repo, mailer);
+        var customer = Customer.Create("Acme");   // Free by default, few leads — nothing locks
+        var customers = Substitute.For<ICustomerRepository>();
+        customers.GetAsync(new CustomerId(CustomerId), Arg.Any<CancellationToken>()).Returns(customer);
+        return (new LeadWorkflow(repo, mailer, customers, new QuotaOptions()), repo, mailer);
     }
 
     [Fact]
