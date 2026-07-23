@@ -35,6 +35,20 @@ public class EmailTemplatesTests
     }
 
     [Fact]
+    public void Shell_IsMobileResponsive_FluidWidthAndMediaQuery()
+    {
+        // Act
+        var html = EmailTemplates.PasswordReset(Url).HtmlBody;
+
+        // Assert — fluid up to a 600px cap, with a small-screen media query; no fixed pixel width
+        // attribute (which is what makes an email render "very wide" / overflow on phones).
+        html.Should().Contain("width=device-width").And.Contain("initial-scale=1"); // viewport
+        html.Should().Contain("max-width:600px");
+        html.Should().Contain("@media");
+        html.Should().NotContain("width=\"600\""); // no fixed-width attribute
+    }
+
+    [Fact]
     public void Invitation_HtmlEncodesCompanyName()
     {
         // Act — a company name with HTML-significant characters must not inject raw markup
