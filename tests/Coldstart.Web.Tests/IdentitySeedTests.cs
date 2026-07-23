@@ -36,8 +36,15 @@ public class IdentitySeedTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Assert
         admin.Should().NotBeNull();
         admin!.EmailConfirmed.Should().BeTrue();
-        admin.CustomerId.Should().BeNull();
+        admin.CustomerId.Should().NotBeNull("the operator is dogfooding — linked to the Coldstart tenant");
         (await users.IsInRoleAsync(admin, ColdstartRoles.SuperAdmin)).Should().BeTrue();
+
+        // the linked tenant is the "Coldstart" customer (name lookup is a system-path bypass, so it
+        // resolves with no tenant context — unlike GetAsync(id), which is tenant-filtered)
+        var customers = scope.ServiceProvider.GetRequiredService<Coldstart.Application.Ports.ICustomerRepository>();
+        var tenant = await customers.GetByNameAsync("Coldstart", CancellationToken.None);
+        tenant.Should().NotBeNull();
+        tenant!.Id.Value.Should().Be(admin.CustomerId!.Value);
     }
 
     [Fact]

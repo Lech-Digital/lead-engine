@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Coldstart.Application.Customers;
 using Coldstart.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,5 +30,14 @@ public static class IdentitySeeder
         }
         if (!await users.IsInRoleAsync(admin, ColdstartRoles.SuperAdmin))
             await users.AddToRoleAsync(admin, ColdstartRoles.SuperAdmin);
+
+        // The operator dogfoods Coldstart: link the account to a "Coldstart" tenant so it has its
+        // own briefing/leads (and can send from the lead detail like any customer).
+        if (admin.CustomerId is null)
+        {
+            var provision = services.GetRequiredService<IProvisionCustomer>();
+            admin.CustomerId = await provision.ProvisionAsync("Coldstart", ct);
+            await users.UpdateAsync(admin);
+        }
     }
 }
