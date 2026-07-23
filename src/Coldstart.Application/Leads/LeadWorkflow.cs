@@ -1,9 +1,10 @@
+using Coldstart.Application.Outreach;
 using Coldstart.Application.Ports;
 using Coldstart.Domain;
 
 namespace Coldstart.Application.Leads;
 
-internal sealed class LeadWorkflow(ILeadRepository leads) : ILeadWorkflow
+internal sealed class LeadWorkflow(ILeadRepository leads, IOutreachMailer outreach) : ILeadWorkflow
 {
     public Task<LeadActionResult> SaveDraftAsync(Guid customerId, Guid leadId, string subject, string draft, string? recipient, CancellationToken ct) =>
         MutateAsync(customerId, leadId, ct, lead =>
@@ -39,6 +40,30 @@ internal sealed class LeadWorkflow(ILeadRepository leads) : ILeadWorkflow
             lead.MarkSent(DateTimeOffset.UtcNow);
             return LeadActionResult.Ok;
         });
+
+    public async Task<LeadActionResult> SendFromColdstartAsync(Guid customerId, Guid leadId, CancellationToken ct)
+    {
+        var lead = await leads.GetAsync(new LeadId(leadId), ct);
+        if (lead is null || lead.CustomerId.Value != customerId)
+            return LeadActionResult.NotFound;
+        if (lead.Status != LeadStatus.Approved)
+            return LeadActionResult.Invalid("Approve the lead before sending from Coldstart.");
+        if (lead.RecipientEmail is null)
+            return LeadActionResult.Invalid("A recipient is required before sending.");
+
+        try
+        {
+            await outreach.SendAsync(new OutreachEmail(lead.RecipientEmail.Value, lead.Subject, lead.Draft), ct);
+        }
+        catch (Exception) when (!ct.IsCancellationRequested)
+        {
+            return LeadActionResult.Invalid("Couldn't send just now — the email wasn't sent. Please try again.");
+        }
+
+        lead.MarkSent(DateTimeOffset.UtcNow);
+        await leads.UpdateAsync(lead, ct);
+        return LeadActionResult.Ok;
+    }
 
     public Task<LeadActionResult> AddNoteAsync(Guid customerId, Guid leadId, Guid noteId, string text, CancellationToken ct) =>
         MutateAsync(customerId, leadId, ct, lead => { lead.AddNote(noteId, text, DateTimeOffset.UtcNow); return LeadActionResult.Ok; });

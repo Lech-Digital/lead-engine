@@ -1,4 +1,5 @@
 using Coldstart.Application.Leads;
+using Coldstart.Application.Outreach;
 using Coldstart.Application.Ports;
 using Coldstart.Domain;
 using FluentAssertions;
@@ -21,7 +22,7 @@ public class LeadWorkflowTests
         var lead = LeadFor(new CustomerId(customerId));
         var repo = Substitute.For<ILeadRepository>();
         repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns(lead);
-        var sut = new LeadWorkflow(repo);
+        var sut = new LeadWorkflow(repo, Substitute.For<IOutreachMailer>());
 
         // Act
         var result = await sut.AcceptAsync(customerId, lead.Id.Value, "s2", "b2", null, CancellationToken.None);
@@ -41,7 +42,7 @@ public class LeadWorkflowTests
         var lead = LeadFor(new CustomerId(ownerId));
         var repo = Substitute.For<ILeadRepository>();
         repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns(lead);
-        var sut = new LeadWorkflow(repo);
+        var sut = new LeadWorkflow(repo, Substitute.For<IOutreachMailer>());
 
         // Act
         var result = await sut.AcceptAsync(attackerId, lead.Id.Value, "s", "b", null, CancellationToken.None);
@@ -60,7 +61,7 @@ public class LeadWorkflowTests
         var lead = LeadFor(new CustomerId(customerId));
         var repo = Substitute.For<ILeadRepository>();
         repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns(lead);
-        var sut = new LeadWorkflow(repo);
+        var sut = new LeadWorkflow(repo, Substitute.For<IOutreachMailer>());
 
         // Act
         var result = await sut.AcceptAsync(customerId, lead.Id.Value, "s", "b", "not-an-email", CancellationToken.None);
@@ -78,7 +79,7 @@ public class LeadWorkflowTests
         var lead = LeadFor(new CustomerId(customerId));
         var repo = Substitute.For<ILeadRepository>();
         repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns(lead);
-        var sut = new LeadWorkflow(repo);
+        var sut = new LeadWorkflow(repo, Substitute.For<IOutreachMailer>());
 
         // Act
         var result = await sut.ApproveAsync(customerId, lead.Id.Value, CancellationToken.None);
@@ -100,7 +101,7 @@ public class LeadWorkflowTests
         lead.Approve();
         var repo = Substitute.For<ILeadRepository>();
         repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns(lead);
-        var sut = new LeadWorkflow(repo);
+        var sut = new LeadWorkflow(repo, Substitute.For<IOutreachMailer>());
 
         // Act
         var result = await sut.MarkSentAsync(customerId, lead.Id.Value, CancellationToken.None);
@@ -115,7 +116,7 @@ public class LeadWorkflowTests
         // Arrange
         var repo = Substitute.For<ILeadRepository>();
         repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns((Lead?)null);
-        var sut = new LeadWorkflow(repo);
+        var sut = new LeadWorkflow(repo, Substitute.For<IOutreachMailer>());
 
         // Act
         var result = await sut.DiscardAsync(Guid.NewGuid(), Guid.NewGuid(), CancellationToken.None);
@@ -132,7 +133,7 @@ public class LeadWorkflowTests
         var lead = LeadFor(new CustomerId(customerId));
         var repo = Substitute.For<ILeadRepository>();
         repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns(lead);
-        var sut = new LeadWorkflow(repo);
+        var sut = new LeadWorkflow(repo, Substitute.For<IOutreachMailer>());
 
         // Act
         var noteId = Guid.NewGuid();
@@ -153,7 +154,7 @@ public class LeadWorkflowTests
         var lead = LeadFor(new CustomerId(customerId));
         var repo = Substitute.For<ILeadRepository>();
         repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns(lead);
-        var sut = new LeadWorkflow(repo);
+        var sut = new LeadWorkflow(repo, Substitute.For<IOutreachMailer>());
 
         // Act
         var result = await sut.AddNoteAsync(customerId, lead.Id.Value, Guid.NewGuid(), "   ", CancellationToken.None);
@@ -171,7 +172,7 @@ public class LeadWorkflowTests
         var lead = LeadFor(new CustomerId(customerId));
         var repo = Substitute.For<ILeadRepository>();
         repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns(lead);
-        var sut = new LeadWorkflow(repo);
+        var sut = new LeadWorkflow(repo, Substitute.For<IOutreachMailer>());
 
         // Act
         var result = await sut.AddNoteAsync(Guid.NewGuid(), lead.Id.Value, Guid.NewGuid(), "x", CancellationToken.None);
@@ -190,7 +191,7 @@ public class LeadWorkflowTests
         var noteId = lead.AddNote("original", DateTimeOffset.UtcNow);
         var repo = Substitute.For<ILeadRepository>();
         repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns(lead);
-        var sut = new LeadWorkflow(repo);
+        var sut = new LeadWorkflow(repo, Substitute.For<IOutreachMailer>());
 
         // Act
         var result = await sut.UpdateNoteAsync(customerId, lead.Id.Value, noteId, "revised", CancellationToken.None);
@@ -210,7 +211,7 @@ public class LeadWorkflowTests
         var noteId = lead.AddNote("original", DateTimeOffset.UtcNow);
         var repo = Substitute.For<ILeadRepository>();
         repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns(lead);
-        var sut = new LeadWorkflow(repo);
+        var sut = new LeadWorkflow(repo, Substitute.For<IOutreachMailer>());
 
         // Act
         var result = await sut.UpdateNoteAsync(customerId, lead.Id.Value, noteId, "   ", CancellationToken.None);
@@ -228,7 +229,7 @@ public class LeadWorkflowTests
         var lead = LeadFor(new CustomerId(customerId));
         var repo = Substitute.For<ILeadRepository>();
         repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns(lead);
-        var sut = new LeadWorkflow(repo);
+        var sut = new LeadWorkflow(repo, Substitute.For<IOutreachMailer>());
         var noteId = Guid.NewGuid();
         await sut.AddNoteAsync(customerId, lead.Id.Value, noteId, "temp", CancellationToken.None);
 
@@ -249,7 +250,7 @@ public class LeadWorkflowTests
         var noteId = lead.AddNote("temp", DateTimeOffset.UtcNow);
         var repo = Substitute.For<ILeadRepository>();
         repo.GetAsync(Arg.Any<LeadId>(), Arg.Any<CancellationToken>()).Returns(lead);
-        var sut = new LeadWorkflow(repo);
+        var sut = new LeadWorkflow(repo, Substitute.For<IOutreachMailer>());
 
         // Act
         var result = await sut.RemoveNoteAsync(Guid.NewGuid(), lead.Id.Value, noteId, CancellationToken.None);
