@@ -110,4 +110,32 @@ public class HarvestLeadsTests
         await enricher.Received(1).EnrichAsync(
             Arg.Is<RawItem>(i => i.Fingerprint == no.Fingerprint), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<CancellationToken>());
     }
+
+    [Fact]
+    public async Task RunAsync_PassesTargetCustomerBriefAndToggle_ToTheEnricher()
+    {
+        // Arrange — seed the target customer WITH a profile brief + toggle via the fake ICustomerRepository;
+        // the enricher fake captures the SenderContext it received via Arg.Do.
+        var item = new RawItem("fake", "1", "", "hiring outbound SDR", "", "u1", "");
+        var source = new FakeSource(item);
+        SenderContext? captured = null;
+        var enricher = Substitute.For<ILeadEnricher>();
+        enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(),
+                Arg.Do<SenderContext>(s => captured = s), Arg.Any<CancellationToken>())
+            .Returns(new EnrichmentResult(Fit.Yes, "s", "subj", "draft", "Acme"));
+        var leads = Substitute.For<ILeadRepository>();
+        leads.ExistsByFingerprintAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(false);
+        var target = Customer.Create("Acme Target");
+        target.UpdateProfile(new CompanyProfile(null, null, null, null, null, null, null, "We help dentists.", true));
+        var customers = Substitute.For<ICustomerRepository>();
+        customers.GetByNameAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(target);
+        var sut = new HarvestLeads([source], enricher, leads, customers, Niche());
+
+        // Act
+        await sut.RunAsync(CancellationToken.None);
+
+        // Assert
+        captured!.Brief.Should().Be("We help dentists.");
+        captured.MentionSourceTool.Should().BeTrue();
+    }
 }

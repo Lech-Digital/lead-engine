@@ -39,9 +39,10 @@ internal sealed class HarvestLeads(
 
         // Phase 2: enrich only the top-N by score (spend cap), save real fits.
         var target = await ResolveTargetCustomerAsync(ct);
+        var sender = new SenderContext(target.Profile.Brief, target.Profile.MentionSourceTool);
         foreach (var (item, signal) in candidates.OrderByDescending(c => c.signal.Score).Take(niche.MaxEnrichPerRun))
         {
-            var result = await enricher.EnrichAsync(item, niche, signal, SenderContext.None, ct);
+            var result = await enricher.EnrichAsync(item, niche, signal, sender, ct);
             if (result is null) continue;         // LLM failed/empty → retried next run
             enriched++;
             var company = string.IsNullOrWhiteSpace(result.Company) || result.Company == "-" ? item.Author : result.Company;
