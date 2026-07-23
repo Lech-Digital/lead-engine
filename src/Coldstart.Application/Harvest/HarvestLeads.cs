@@ -8,10 +8,17 @@ internal sealed class HarvestLeads(
     ILeadEnricher enricher,
     ILeadRepository leads,
     ICustomerRepository customers,
-    NicheOptions niche) : IHarvestLeads
+    NicheOptions niche,
+    ITenantScope tenantScope) : IHarvestLeads
 {
     public async Task<HarvestReport> RunAsync(CancellationToken ct)
     {
+        // Resolve the target tenant first and set the scope so dedup reads (and, once query
+        // filters land, all repository reads) run under the right tenant from the start.
+        var target = await ResolveTargetCustomerAsync(ct);
+        tenantScope.SetCurrent(target.Id.Value);
+        var sender = new SenderContext(target.Profile.Brief, target.Profile.MentionSourceTool);
+
         int harvested = 0, scoredIn = 0, deduped = 0, enriched = 0, saved = 0, rejected = 0;
 
         // Phase 1: harvest + cheap score gate + dedup (no LLM spend yet).
@@ -38,8 +45,6 @@ internal sealed class HarvestLeads(
         }
 
         // Phase 2: enrich only the top-N by score (spend cap), save real fits.
-        var target = await ResolveTargetCustomerAsync(ct);
-        var sender = new SenderContext(target.Profile.Brief, target.Profile.MentionSourceTool);
         foreach (var (item, signal) in candidates.OrderByDescending(c => c.signal.Score).Take(niche.MaxEnrichPerRun))
         {
             var result = await enricher.EnrichAsync(item, niche, signal, sender, ct);

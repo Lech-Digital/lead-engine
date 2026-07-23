@@ -2,6 +2,7 @@ using Coldstart.Application.Harvest;
 using Coldstart.Application.Ports;
 using Coldstart.Domain;
 using Coldstart.Infrastructure.Repositories;
+using Coldstart.Infrastructure.Tenancy;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using NSubstitute;
@@ -27,8 +28,9 @@ public class HarvestEndToEndTests(PostgresFixture fixture) : IClassFixture<Postg
         var enricher = Substitute.For<ILeadEnricher>();
         enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<CancellationToken>())
             .Returns(new EnrichmentResult(Fit.Yes, "sum", "subj", "draft", "Acme"));
+        var tenantScope = new MutableTenantContext();
         HarvestLeads Sut(ColdstartDbContext ctx) =>
-            new([new OneSource(item)], enricher, new LeadRepository(ctx), new CustomerRepository(ctx), niche);
+            new([new OneSource(item)], enricher, new LeadRepository(ctx), new CustomerRepository(ctx), niche, tenantScope);
 
         // Act
         var first = await Sut(db).RunAsync(CancellationToken.None);
@@ -43,5 +45,7 @@ public class HarvestEndToEndTests(PostgresFixture fixture) : IClassFixture<Postg
         lead.Company.Should().Be("Acme");
         var house = await read.Customers.SingleAsync(c => c.Name == "Coldstart");
         lead.CustomerId.Should().Be(house.Id);
+        // The tenant scope is set before dedup/save, so it reflects the resolved target customer.
+        ((ITenantContext)tenantScope).CustomerId.Should().Be(house.Id.Value);
     }
 }
