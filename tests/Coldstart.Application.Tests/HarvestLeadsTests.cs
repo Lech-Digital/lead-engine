@@ -140,4 +140,41 @@ public class HarvestLeadsTests
         captured!.Brief.Should().Be("We help dentists.");
         captured.MentionSourceTool.Should().BeTrue();
     }
+
+    [Fact]
+    public async Task RunForCustomerAsync_SavesEnrichedLeadsToTheGivenCustomer_UsingTargetingKeywords()
+    {
+        // Arrange — one source item that matches the targeting keyword; enricher returns a YES
+        var cid = Guid.NewGuid();
+        var customer = Customer.Create("Acme");
+        var customers = Substitute.For<ICustomerRepository>();
+        customers.GetAsync(new CustomerId(cid), Arg.Any<CancellationToken>()).Returns(customer);
+
+        var item = new RawItem("hackernews", "1", "hiring a dentist", "we need a dentist now", "acme", "https://x/1", "2026-07-23");
+        var source = Substitute.For<ILeadSource>();
+        source.Enabled.Returns(true);
+        source.BaseScore.Returns(0.0);
+        source.ScoreWeight.Returns(1.0);
+        source.FetchAsync(Arg.Any<CancellationToken>()).Returns(new[] { item });
+
+        var leads = Substitute.For<ILeadRepository>();
+        leads.ExistsByFingerprintAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(false);
+
+        var enricher = Substitute.For<ILeadEnricher>();
+        enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<CancellationToken>())
+            .Returns(new EnrichmentResult(Fit.Yes, "sum", "subj", "draft", "Acme"));
+
+        var globalNiche = new NicheOptions();   // provides HackerNews/Funding source config
+        var scope = Substitute.For<ITenantScope>();
+        var sut = new HarvestLeads(new[] { source }, enricher, leads, customers, globalNiche, scope);
+        var targeting = new HarvestTargeting("offer", ["dentist"], ["hiring"], [], "Acme", "", 0.4, 30);
+
+        // Act
+        var report = await sut.RunForCustomerAsync(cid, targeting, CancellationToken.None);
+
+        // Assert — the run scoped to the customer and saved the lead under its id
+        scope.Received().SetCurrent(cid);
+        report.Saved.Should().Be(1);
+        await leads.Received().AddAsync(Arg.Is<Lead>(l => l.CustomerId.Value == cid && l.Company == "Acme"), Arg.Any<CancellationToken>());
+    }
 }

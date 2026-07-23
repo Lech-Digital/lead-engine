@@ -13,12 +13,27 @@ internal sealed class HarvestLeads(
 {
     public async Task<HarvestReport> RunAsync(CancellationToken ct)
     {
-        // Resolve the target tenant first and set the scope so dedup reads (and, once query
-        // filters land, all repository reads) run under the right tenant from the start.
+        // Console path: resolve the configured target tenant, build sender from ITS profile (unchanged).
         var target = await ResolveTargetCustomerAsync(ct);
         tenantScope.SetCurrent(target.Id.Value);
         var sender = new SenderContext(target.Profile.Brief, target.Profile.MentionSourceTool);
+        return await RunPipelineAsync(target.Id, HarvestTargeting.FromNiche(niche), sender, ct);
+    }
 
+    public async Task<HarvestReport> RunForCustomerAsync(Guid customerId, HarvestTargeting targeting, CancellationToken ct)
+    {
+        var cid = new CustomerId(customerId);
+        tenantScope.SetCurrent(customerId);
+        var customer = await customers.GetAsync(cid, ct);
+        var sender = customer is null
+            ? SenderContext.None
+            : new SenderContext(customer.Profile.Brief, customer.Profile.MentionSourceTool);
+        return await RunPipelineAsync(cid, targeting, sender, ct);
+    }
+
+    private async Task<HarvestReport> RunPipelineAsync(CustomerId cid, HarvestTargeting targeting, SenderContext sender, CancellationToken ct)
+    {
+        var runNiche = BuildRunNiche(targeting);
         int harvested = 0, scoredIn = 0, deduped = 0, enriched = 0, saved = 0, rejected = 0;
 
         // Phase 1: harvest + cheap score gate + dedup (no LLM spend yet).
@@ -32,8 +47,8 @@ internal sealed class HarvestLeads(
             foreach (var item in items)
             {
                 harvested++;
-                var signal = SignalScorer.Score(item, niche, source.BaseScore, source.ScoreWeight);
-                if (signal.Score < niche.MinScore) continue;
+                var signal = SignalScorer.Score(item, runNiche, source.BaseScore, source.ScoreWeight);
+                if (signal.Score < runNiche.MinScore) continue;
                 scoredIn++;
                 if (await leads.ExistsByFingerprintAsync(item.Fingerprint, ct)) { deduped++; continue; }
                 // The same item can surface twice in one run (e.g. an HN comment matching several
@@ -45,13 +60,13 @@ internal sealed class HarvestLeads(
         }
 
         // Phase 2: enrich only the top-N by score (spend cap), save real fits.
-        foreach (var (item, signal) in candidates.OrderByDescending(c => c.signal.Score).Take(niche.MaxEnrichPerRun))
+        foreach (var (item, signal) in candidates.OrderByDescending(c => c.signal.Score).Take(runNiche.MaxEnrichPerRun))
         {
-            var result = await enricher.EnrichAsync(item, niche, signal, sender, ct);
+            var result = await enricher.EnrichAsync(item, runNiche, signal, sender, ct);
             if (result is null) continue;         // LLM failed/empty → retried next run
             enriched++;
             var company = string.IsNullOrWhiteSpace(result.Company) || result.Company == "-" ? item.Author : result.Company;
-            var lead = Lead.CreateHarvested(target.Id, company, result.Fit, result.Subject, result.Draft,
+            var lead = Lead.CreateHarvested(cid, company, result.Fit, result.Subject, result.Draft,
                 item.Source, item.Url, item.Fingerprint, signal.Score, string.Join(",", signal.Matched), DateTimeOffset.UtcNow);
             if (result.Fit == Fit.No)
             {
@@ -69,6 +84,21 @@ internal sealed class HarvestLeads(
 
         return new HarvestReport(harvested, scoredIn, deduped, enriched, saved, rejected);
     }
+
+    // Per-run options: per-customer targeting + the injected global source config.
+    private NicheOptions BuildRunNiche(HarvestTargeting t) => new()
+    {
+        Offer = t.Offer,
+        SenderName = t.SenderName,
+        SenderTitle = t.SenderTitle,
+        TargetKeywords = t.TargetKeywords.ToList(),
+        BuyingSignals = t.BuyingSignals.ToList(),
+        Disqualifiers = t.Disqualifiers.ToList(),
+        MinScore = t.MinScore,
+        MaxEnrichPerRun = t.MaxEnrichPerRun,
+        HackerNews = niche.HackerNews,
+        Funding = niche.Funding,
+    };
 
     private async Task<Customer> ResolveTargetCustomerAsync(CancellationToken ct)
     {
