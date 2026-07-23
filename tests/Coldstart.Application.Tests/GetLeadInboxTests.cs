@@ -15,8 +15,8 @@ public class GetLeadInboxTests
         // Arrange
         var customer = Customer.Create("Coldstart");
         var customers = Substitute.For<ICustomerRepository>();
-        customers.AllAsync(Arg.Any<CancellationToken>())
-            .Returns(new[] { customer });
+        customers.GetAsync(customer.Id, Arg.Any<CancellationToken>())
+            .Returns(customer);
         var summary = new LeadSummary(Guid.NewGuid(), "Patronus AI", "Yes", "Approved", "anand@patronus.ai", "High",
             "A thought after the $50M", "Body", "funding", 0.7, DateTimeOffset.UtcNow, "raised $50M Series C");
         var listLeads = Substitute.For<IListLeads>();
@@ -38,8 +38,8 @@ public class GetLeadInboxTests
     {
         // Arrange
         var customers = Substitute.For<ICustomerRepository>();
-        customers.AllAsync(Arg.Any<CancellationToken>())
-            .Returns(Array.Empty<Customer>());
+        customers.GetAsync(Arg.Any<CustomerId>(), Arg.Any<CancellationToken>())
+            .Returns((Customer?)null);
         var listLeads = Substitute.For<IListLeads>();
         var sut = new GetLeadInbox(customers, listLeads);
 

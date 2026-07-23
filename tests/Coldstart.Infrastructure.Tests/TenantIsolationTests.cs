@@ -39,6 +39,32 @@ public class TenantIsolationTests(PostgresFixture fixture) : IClassFixture<Postg
     }
 
     [Fact]
+    public async Task NoTenantSet_ReadsReturnNothing_FailClosed()
+    {
+        // Arrange — seed a customer + lead, then read with NO tenant established
+        Guid customerId, leadId;
+        await using (var seed = fixture.NewDbContext())
+        {
+            var c = Customer.Create($"FC-{Guid.NewGuid():N}");
+            var l = c.AddLead("Acme", Fit.Yes, "s", "b", DateTimeOffset.UtcNow);
+            seed.Customers.Add(c);
+            await seed.SaveChangesAsync();
+            customerId = c.Id.Value; leadId = l.Id.Value;
+        }
+
+        // Act — a context with no tenant (null) must match zero rows, never "all"
+        await using var noTenant = fixture.NewDbContext(); // tenantId: null
+        var leadRead = await new LeadRepository(noTenant).GetAsync(new LeadId(leadId), CancellationToken.None);
+        var listRead = await new LeadRepository(noTenant).ForCustomerAsync(new CustomerId(customerId), CancellationToken.None);
+        var customerRead = await new CustomerRepository(noTenant).GetAsync(new CustomerId(customerId), CancellationToken.None);
+
+        // Assert — the core security invariant: no tenant => nothing leaks
+        leadRead.Should().BeNull();
+        listRead.Should().BeEmpty();
+        customerRead.Should().BeNull();
+    }
+
+    [Fact]
     public async Task Customer_IsNotVisible_ToAnotherTenant_ButAdminBypassSeesAll()
     {
         // Arrange

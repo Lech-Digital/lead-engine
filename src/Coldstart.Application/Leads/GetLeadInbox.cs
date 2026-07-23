@@ -8,8 +8,9 @@ internal sealed class GetLeadInbox(ICustomerRepository customers, IListLeads lis
     public async Task<LeadInbox> ForCustomerAsync(Guid customerId, CancellationToken ct)
     {
         var id = new CustomerId(customerId);
-        var all = await customers.AllAsync(ct);
-        var customer = all.FirstOrDefault(c => c.Id == id);
+        // Load only this tenant's own row (goes through the tenant query filter) — not every
+        // customer via the admin bypass.
+        var customer = await customers.GetAsync(id, ct);
         if (customer is null)
             return new LeadInbox("—", Array.Empty<LeadSummary>());
 
