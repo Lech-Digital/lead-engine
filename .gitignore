@@ -5,7 +5,7 @@ __pycache__/
 *.db
 *.csv
 logs/
-outreach/
+/outreach/
 
 # .NET
 bin/
