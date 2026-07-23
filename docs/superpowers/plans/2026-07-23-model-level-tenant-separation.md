@@ -392,7 +392,8 @@ git commit -m "refactor(harvest): resolve target tenant first and set the tenant
 
 **Files:**
 - Modify: `src/Coldstart.Infrastructure/ColdstartDbContext.cs` (add `HasQueryFilter`)
-- Modify: `src/Coldstart.Infrastructure/Repositories/CustomerRepository.cs` (`IgnoreQueryFilters` on `GetByNameAsync`, `AllAsync`)
+- Modify: `src/Coldstart.Infrastructure/Repositories/CustomerRepository.cs` (`IgnoreQueryFilters` on `GetByNameAsync`, `AllAsync`, and `DeleteAsync`'s reads if an admin test needs it)
+- Modify: `src/Coldstart.Infrastructure/DbSeeder.cs` (`IgnoreQueryFilters` on the seed guard)
 - Modify: existing Infra tests that read tenant-scoped data via `PostgresFixture` (set the tenant)
 - Test: `tests/Coldstart.Infrastructure.Tests/TenantIsolationTests.cs` (new)
 
@@ -517,6 +518,11 @@ public class TenantIsolationTests(PostgresFixture fixture) : IClassFixture<Postg
 - [ ] **Step 4: Fix existing Infra tests that now read filtered data**
 
 Run the Infra suite and update every test that reads tenant-scoped data through `PostgresFixture` to pass the owning customer's id to `NewDbContext(id)`. Known files to review: `LeadRepositoryTests` (e.g. `AddAndReadBack…` reads `ForCustomerAsync(customer.Id)` → read context must be `NewDbContext(customer.Id.Value)`), `CustomerRepositoryTests`, `HarvestEndToEndTests`, `DbSeederTests`, `InquiryRepositoryTests` (Inquiry is **unfiltered** — likely no change). For `DeleteAsync` used by admin tests: it reads `db.Leads.Where(...)` and `db.Customers.FirstOrDefault(...)`; under filters these need the tenant set or `IgnoreQueryFilters()`. If an admin test deletes cross-tenant, add `.IgnoreQueryFilters()` to `CustomerRepository.DeleteAsync`'s two reads (it is an admin operation) — make that change here and note it. Do **not** weaken any assertion; only supply the correct tenant.
+
+**Startup seeders must be filter-safe (production code, not just tests).** These run at app boot with **no tenant** established, so any filtered query fails closed:
+- `src/Coldstart.Infrastructure/DbSeeder.cs` — `SeedAsync` guards on `db.Customers.AnyAsync(ct)`. Under the `Customer` filter this returns `false` forever → it reseeds "Coldstart" every boot. Change it to `db.Customers.IgnoreQueryFilters().AnyAsync(ct)`.
+- `src/Coldstart.Web/Identity/IdentitySeeder.cs` links the operator to the "Coldstart" tenant via `IProvisionCustomer.ProvisionAsync` → `CustomerRepository.GetByNameAsync` (already `IgnoreQueryFilters` from Step 2) → safe. No change, but verify the operator seeding still resolves/links the tenant with no tenant context.
+- Confirm `DbSeederTests` still pass (they build the context via `PostgresFixture`; the `IgnoreQueryFilters` guard makes the seed idempotent regardless of tenant).
 
 - [ ] **Step 5: Run**
 
