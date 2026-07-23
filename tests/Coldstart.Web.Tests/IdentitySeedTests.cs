@@ -66,4 +66,17 @@ public class IdentitySeedTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Assert
         (await users.IsInRoleAsync(admin!, ColdstartRoles.SuperAdmin)).Should().BeTrue();
     }
+
+    [Fact]
+    public async Task Seed_MakesTheOperatorColdstartTenantFullPlan()
+    {
+        // Arrange / Act — the app has already seeded on startup
+        using var scope = factory.Services.CreateScope();
+        var customers = scope.ServiceProvider.GetRequiredService<Coldstart.Application.Ports.ICustomerRepository>();
+
+        // Assert
+        var coldstart = await customers.GetByNameAsync("Coldstart", CancellationToken.None);
+        coldstart.Should().NotBeNull();
+        coldstart!.Plan.Should().Be(Coldstart.Domain.CustomerPlan.Full);
+    }
 }

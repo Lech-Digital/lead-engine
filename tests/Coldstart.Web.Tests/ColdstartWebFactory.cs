@@ -18,6 +18,8 @@ public sealed class ColdstartWebFactory : WebApplicationFactory<Program>, IAsync
     public FakeMailbox Mailbox { get; } = new();
     public FakeCompanyBriefPolisher BriefPolisher { get; } = new();
     public FakeOutreachMailer Outreach { get; } = new();
+    public FakeHarvestQueue HarvestQueue { get; } = new();
+    public FakeSearchProfileGenerator SearchProfiles { get; } = new();
 
     public Task InitializeAsync() => _db.StartAsync();
 
@@ -28,6 +30,7 @@ public sealed class ColdstartWebFactory : WebApplicationFactory<Program>, IAsync
         builder.UseSetting("Authentication:Google:ClientId", "");
         builder.UseSetting("Authentication:Google:ClientSecret", "");
         builder.UseSetting("ConnectionStrings:Coldstart", _db.GetConnectionString());
+        builder.UseSetting("Quota:FreeLeadCount", "100000");   // effectively no foil for the shared factory
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<IEmailSender>();
@@ -38,6 +41,10 @@ public sealed class ColdstartWebFactory : WebApplicationFactory<Program>, IAsync
             services.AddSingleton<ICompanyBriefPolisher>(BriefPolisher);
             services.RemoveAll<Coldstart.Application.Outreach.IOutreachMailer>();
             services.AddSingleton<Coldstart.Application.Outreach.IOutreachMailer>(Outreach);
+            services.RemoveAll<Coldstart.Application.Harvest.IHarvestQueue>();
+            services.AddSingleton<Coldstart.Application.Harvest.IHarvestQueue>(HarvestQueue);
+            services.RemoveAll<Coldstart.Application.Customers.ISearchProfileGenerator>();
+            services.AddSingleton<Coldstart.Application.Customers.ISearchProfileGenerator>(SearchProfiles);
         });
     }
 }

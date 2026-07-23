@@ -20,6 +20,20 @@ builder.Services.Configure<Coldstart.Infrastructure.Mailbox.MailboxOptions>(buil
 builder.Services.Configure<Coldstart.Infrastructure.Harvest.LlmOptions>(builder.Configuration.GetSection("Llm"));
 builder.Services.Configure<Coldstart.Infrastructure.Outreach.OutreachMailboxOptions>(builder.Configuration.GetSection("OutreachMailbox"));
 
+builder.Services.AddSingleton(_ =>
+{
+    var n = new Coldstart.Application.Harvest.NicheOptions();
+    builder.Configuration.GetSection("Niche").Bind(n);
+    return n;
+});
+builder.Services.AddSingleton(_ =>
+{
+    var q = new Coldstart.Application.Leads.QuotaOptions();
+    builder.Configuration.GetSection("Quota").Bind(q);
+    return q;
+});
+builder.Services.AddHarvestQueue();
+
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>(o => { o.SignIn.RequireConfirmedAccount = false; })
     .AddEntityFrameworkStores<ColdstartDbContext>()

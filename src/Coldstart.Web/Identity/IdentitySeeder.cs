@@ -1,5 +1,7 @@
 using System.Security.Cryptography;
 using Coldstart.Application.Customers;
+using Coldstart.Application.Ports;
+using Coldstart.Domain;
 using Coldstart.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
@@ -38,6 +40,15 @@ public static class IdentitySeeder
             var provision = services.GetRequiredService<IProvisionCustomer>();
             admin.CustomerId = await provision.ProvisionAsync("Coldstart", ct);
             await users.UpdateAsync(admin);
+        }
+
+        // The operator's own Coldstart tenant is a full-access account — no free-tier foil.
+        var customers = services.GetRequiredService<ICustomerRepository>();
+        var coldstart = await customers.GetByNameAsync("Coldstart", ct);
+        if (coldstart is not null && coldstart.Plan != CustomerPlan.Full)
+        {
+            coldstart.SetPlan(CustomerPlan.Full);
+            await customers.UpdateAsync(coldstart, ct);
         }
     }
 }
