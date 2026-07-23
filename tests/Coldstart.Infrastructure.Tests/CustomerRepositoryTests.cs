@@ -88,4 +88,25 @@ public class CustomerRepositoryTests(PostgresFixture fixture) : IClassFixture<Po
         (await readCustomers.GetAsync(customer.Id, CancellationToken.None)).Should().BeNull();
         (await readLeads.ForCustomerAsync(customer.Id, CancellationToken.None)).Should().BeEmpty();
     }
+
+    [Fact]
+    public async Task GetAsync_AfterSavingBriefAndToggle_RoundTripsThem()
+    {
+        // Arrange
+        await using var write = fixture.NewDbContext();
+        var customer = Customer.Create("brief-co@example.com");
+        customer.UpdateProfile(new CompanyProfile("Acme", null, null, null, null, null, null,
+            Brief: "We do X for Y.", MentionSourceTool: true));
+        new CustomerRepository(write);
+        write.Customers.Add(customer);
+        await write.SaveChangesAsync();
+
+        // Act — fresh context to force a real read
+        await using var read = fixture.NewDbContext();
+        var reloaded = await new CustomerRepository(read).GetAsync(customer.Id, CancellationToken.None);
+
+        // Assert
+        reloaded!.Profile.Brief.Should().Be("We do X for Y.");
+        reloaded.Profile.MentionSourceTool.Should().BeTrue();
+    }
 }

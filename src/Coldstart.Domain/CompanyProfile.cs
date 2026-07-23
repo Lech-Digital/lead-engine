@@ -7,7 +7,9 @@ public sealed record CompanyProfile(
     string? KvkNumber,
     string? Niche,
     string? Website,
-    string? ContactEmail)
+    string? ContactEmail,
+    string? Brief = null,
+    bool MentionSourceTool = false)
 {
     public static CompanyProfile Empty { get; } = new(null, null, null, null, null, null, null);
 }

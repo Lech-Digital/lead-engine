@@ -361,6 +361,10 @@ namespace Coldstart.Infrastructure.Migrations
                                 .HasColumnType("text")
                                 .HasColumnName("ProfileAddress");
 
+                            b1.Property<string>("Brief")
+                                .HasColumnType("text")
+                                .HasColumnName("ProfileBrief");
+
                             b1.Property<string>("CompanyName")
                                 .HasColumnType("text")
                                 .HasColumnName("ProfileCompanyName");
@@ -372,6 +376,12 @@ namespace Coldstart.Infrastructure.Migrations
                             b1.Property<string>("KvkNumber")
                                 .HasColumnType("text")
                                 .HasColumnName("ProfileKvkNumber");
+
+                            b1.Property<bool>("MentionSourceTool")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("boolean")
+                                .HasDefaultValue(false)
+                                .HasColumnName("ProfileMentionSourceTool");
 
                             b1.Property<string>("Niche")
                                 .HasColumnType("text")

@@ -30,6 +30,8 @@ internal sealed class CustomerConfiguration : IEntityTypeConfiguration<Customer>
             p.Property(x => x.Niche).HasColumnName("ProfileNiche");
             p.Property(x => x.Website).HasColumnName("ProfileWebsite");
             p.Property(x => x.ContactEmail).HasColumnName("ProfileContactEmail");
+            p.Property(x => x.Brief).HasColumnName("ProfileBrief");
+            p.Property(x => x.MentionSourceTool).HasColumnName("ProfileMentionSourceTool").HasDefaultValue(false);
         });
         builder.Navigation(c => c.Profile).IsRequired();   // Profile is never null (defaults to Empty)
     }
