@@ -1,4 +1,5 @@
 using Coldstart.Infrastructure;
+using Coldstart.Infrastructure.Tenancy;
 using Microsoft.EntityFrameworkCore;
 using Testcontainers.PostgreSql;
 using Xunit;
@@ -19,12 +20,16 @@ public sealed class PostgresFixture : IAsyncLifetime
         await db.Database.EnsureCreatedAsync();
     }
 
-    public ColdstartDbContext NewDbContext()
+    // A settable tenant per context; default null. Existing tests that pass no id keep working
+    // until Task 4 adds filters, at which point tenant-scoped reads pass the owning customer's id.
+    public ColdstartDbContext NewDbContext(Guid? tenantId = null)
     {
         var options = new DbContextOptionsBuilder<ColdstartDbContext>()
             .UseNpgsql(ConnectionString)
             .Options;
-        return new ColdstartDbContext(options);
+        var tenant = new MutableTenantContext();
+        if (tenantId is { } id) ((Coldstart.Application.Ports.ITenantScope)tenant).SetCurrent(id);
+        return new ColdstartDbContext(options, tenant);
     }
 
     public Task DisposeAsync() => _container.DisposeAsync().AsTask();

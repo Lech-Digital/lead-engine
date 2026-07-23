@@ -10,6 +10,9 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString)
     {
+        services.AddScoped<Tenancy.MutableTenantContext>();
+        services.TryAddScoped<Application.Ports.ITenantContext>(sp => sp.GetRequiredService<Tenancy.MutableTenantContext>());
+        services.TryAddScoped<Application.Ports.ITenantScope>(sp => sp.GetRequiredService<Tenancy.MutableTenantContext>());
         services.AddDbContext<ColdstartDbContext>(options => options.UseNpgsql(connectionString));
         services.AddScoped<ILeadRepository, LeadRepository>();
         services.AddScoped<ICustomerRepository, CustomerRepository>();
