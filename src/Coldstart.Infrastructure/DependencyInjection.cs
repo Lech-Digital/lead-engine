@@ -29,6 +29,7 @@ public static class DependencyInjection
         services.AddScoped<Application.Harvest.ILeadSource, Harvest.FundingRssSource>();
         services.AddScoped<Application.Harvest.ILeadEnricher, Harvest.GroqLeadEnricher>();
         services.AddScoped<Application.Customers.ICompanyBriefPolisher, Harvest.GroqBriefPolisher>();
+        services.AddScoped<Application.Customers.ISearchProfileGenerator, Harvest.GroqSearchProfileGenerator>();
         return services;
     }
 
