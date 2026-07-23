@@ -22,7 +22,7 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
 
         var pending = $"pending-{Guid.NewGuid():N}@test.com";
         await TestAuth.PostFormAsync(client, "/admin?handler=Invite",
-            new() { ["Input.Company"] = "Pending Co", ["Input.Email"] = pending });
+            new() { ["Input.Company"] = "Pending Co", ["Input.Email"] = pending, ["Input.Niche"] = "test niche" });
 
         var active = $"active-{Guid.NewGuid():N}@test.com";
         await TestAuth.CreateUserAsync(factory, active, "Passw0rd!");   // EmailConfirmed=true => Active
@@ -53,7 +53,7 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
         var client = factory.CreateClient();
         await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
         var invitee = $"resend-{Guid.NewGuid():N}@test.com";
-        await TestAuth.PostFormAsync(client, "/admin?handler=Invite", new() { ["Input.Company"] = "Re Co", ["Input.Email"] = invitee });
+        await TestAuth.PostFormAsync(client, "/admin?handler=Invite", new() { ["Input.Company"] = "Re Co", ["Input.Email"] = invitee, ["Input.Niche"] = "test niche" });
         factory.Email.Sent.Clear();
 
         // Act
@@ -70,7 +70,7 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
         var client = factory.CreateClient();
         await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
         var invitee = $"revoke-{Guid.NewGuid():N}@test.com";
-        await TestAuth.PostFormAsync(client, "/admin?handler=Invite", new() { ["Input.Company"] = "Rev Co", ["Input.Email"] = invitee });
+        await TestAuth.PostFormAsync(client, "/admin?handler=Invite", new() { ["Input.Company"] = "Rev Co", ["Input.Email"] = invitee, ["Input.Niche"] = "test niche" });
 
         Guid customerId;
         using (var setupScope = factory.Services.CreateScope())
@@ -100,7 +100,7 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
         var client = factory.CreateClient();
         await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
         var invitee = $"copy-{Guid.NewGuid():N}@test.com";
-        await TestAuth.PostFormAsync(client, "/admin?handler=Invite", new() { ["Input.Company"] = "Copy Co", ["Input.Email"] = invitee });
+        await TestAuth.PostFormAsync(client, "/admin?handler=Invite", new() { ["Input.Company"] = "Copy Co", ["Input.Email"] = invitee, ["Input.Niche"] = "test niche" });
 
         // Act
         var html = await TestAuth.PostFormReadAsync(client, "/admin?handler=CopyLink", new() { ["email"] = invitee });

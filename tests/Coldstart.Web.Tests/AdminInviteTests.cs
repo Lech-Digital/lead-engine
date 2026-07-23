@@ -42,7 +42,7 @@ public class AdminInviteTests(ColdstartWebFactory factory) : IClassFixture<Colds
         // Act
         await TestAuth.PostFormAsync(client, "/admin?handler=Invite", new()
         {
-            ["Input.Company"] = "Acme Co", ["Input.Email"] = invitee,
+            ["Input.Company"] = "Acme Co", ["Input.Email"] = invitee, ["Input.Niche"] = "test niche",
         });
 
         // Assert
@@ -77,7 +77,7 @@ public class AdminInviteTests(ColdstartWebFactory factory) : IClassFixture<Colds
         // Act
         var html = await TestAuth.PostFormReadAsync(client, "/admin?handler=Invite", new()
         {
-            ["Input.Company"] = "Dup Co", ["Input.Email"] = existing,
+            ["Input.Company"] = "Dup Co", ["Input.Email"] = existing, ["Input.Niche"] = "test niche",
         });
 
         // Assert — surfaced as an error; no invite email
@@ -95,7 +95,7 @@ public class AdminInviteTests(ColdstartWebFactory factory) : IClassFixture<Colds
         var invitee = $"pending-{Guid.NewGuid():N}@test.com";
         await TestAuth.PostFormAsync(client, "/admin?handler=Invite", new()
         {
-            ["Input.Company"] = "Resend Co", ["Input.Email"] = invitee,
+            ["Input.Company"] = "Resend Co", ["Input.Email"] = invitee, ["Input.Niche"] = "test niche",
         });
         factory.Email.Sent.Clear();
 
@@ -123,7 +123,7 @@ public class AdminInviteTests(ColdstartWebFactory factory) : IClassFixture<Colds
         var invitee = $"revoke-{Guid.NewGuid():N}@test.com";
         await TestAuth.PostFormAsync(client, "/admin?handler=Invite", new()
         {
-            ["Input.Company"] = "Revoke Co", ["Input.Email"] = invitee,
+            ["Input.Company"] = "Revoke Co", ["Input.Email"] = invitee, ["Input.Niche"] = "test niche",
         });
 
         // Act

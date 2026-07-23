@@ -2,8 +2,10 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography;
 using System.Text;
 using Coldstart.Application.Customers;
+using Coldstart.Application.Harvest;
 using Coldstart.Application.Ports;
 using Coldstart.Web.Email;
+using Coldstart.Domain;
 using Coldstart.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -20,18 +22,37 @@ public sealed class IndexModel(
     IProvisionCustomer provision,
     ICustomerRepository customers,
     IDeleteCustomer deleteCustomer,
-    IEmailSender email) : PageModel
+    IEmailSender email,
+    IInquiryRepository inquiries,
+    ISearchProfileGenerator profileGen,
+    IHarvestQueue harvestQueue) : PageModel
 {
     [BindProperty]
     public InputModel Input { get; set; } = new();
 
     public string? StatusMessage { get; private set; }
     public IReadOnlyList<UserRow> Rows { get; private set; } = [];
+    public IReadOnlyList<InquiryRow> Inquiries { get; private set; } = [];
     public (string Email, string Url)? CopyLink { get; private set; }
 
     public sealed record UserRow(string Id, string Email, string Company, string Role, string Status, int? DaysLeft, bool CanManage);
+    public sealed record InquiryRow(Guid Id, string Name, string Email, string Niche, string WhatYouSell, string? Message, DateTimeOffset CreatedAt);
 
-    public async Task OnGetAsync(CancellationToken ct) => await LoadAsync(ct);
+    public async Task OnGetAsync(Guid? useInquiry, CancellationToken ct)
+    {
+        if (useInquiry is { } inqId)
+        {
+            var inq = await inquiries.GetAsync(new InquiryId(inqId), ct);
+            if (inq is not null)
+                Input = new InputModel
+                {
+                    Email = inq.Email.Value,
+                    Niche = inq.Niche,
+                    Info = string.IsNullOrWhiteSpace(inq.Message) ? inq.WhatYouSell : $"{inq.WhatYouSell}\n\n{inq.Message}",
+                };
+        }
+        await LoadAsync(ct);
+    }
 
     public async Task<IActionResult> OnPostInviteAsync(CancellationToken ct)
     {
@@ -60,10 +81,17 @@ public sealed class IndexModel(
         }
 
         await users.AddToRoleAsync(user, ColdstartRoles.CompanyAdmin);
-        user.CustomerId = await provision.ProvisionAsync(Input.Company, ct);
+
+        SearchProfile? profile = null;
+        try { profile = await profileGen.GenerateAsync(new SearchProfileRequest(Input.Niche, Input.Info ?? ""), ct); }
+        catch { /* generation must never block the invite */ }
+
+        user.CustomerId = await provision.ProvisionAsync(
+            Input.Company, new CompanyProfileSeed(Input.Niche, Input.Info, profile), ct);
         await users.UpdateAsync(user);
 
         await SendInviteAsync(user, Input.Company, ct);
+        harvestQueue.Enqueue(new HarvestJob(user.CustomerId.Value));
 
         StatusMessage = $"Invitation sent to {Input.Email}.";
         Input = new InputModel();
@@ -237,6 +265,10 @@ public sealed class IndexModel(
                 DaysLeft(u.InvitedAt), CanManage: !isSuper && !string.Equals(u.Email, currentEmail, StringComparison.OrdinalIgnoreCase)));
         }
         Rows = rows.OrderBy(r => r.Company).ThenBy(r => r.Email).ToList();
+
+        Inquiries = (await inquiries.RecentAsync(20, ct))
+            .Select(i => new InquiryRow(i.Id.Value, i.Name, i.Email.Value, i.Niche, i.WhatYouSell, i.Message, i.CreatedAt))
+            .ToList();
     }
 
     private static int? DaysLeft(DateTimeOffset? invitedAt) =>
@@ -249,5 +281,7 @@ public sealed class IndexModel(
     {
         [Required] public string Company { get; set; } = "";
         [Required, EmailAddress] public string Email { get; set; } = "";
+        [Required] public string Niche { get; set; } = "";
+        public string? Info { get; set; }
     }
 }

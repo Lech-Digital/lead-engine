@@ -22,8 +22,30 @@
     <div asp-validation-summary="All" class="field-error"></div>
     <div class="field"><label asp-for="Input.Company">Company name</label><input asp-for="Input.Company" required></div>
     <div class="field"><label asp-for="Input.Email">Admin email</label><input asp-for="Input.Email" type="email" required></div>
+    <div class="field"><label asp-for="Input.Niche">Who their customers are (niche)</label><input asp-for="Input.Niche" required placeholder="e.g. dental clinics in the Benelux"></div>
+    <div class="field"><label asp-for="Input.Info">What they sell / notes</label><textarea asp-for="Input.Info" rows="3" placeholder="from their inquiry, or a short description"></textarea></div>
     <button class="btn btn-primary" type="submit">Send invite →</button>
   </form>
+
+  @if (Model.Inquiries.Count > 0)
+  {
+    <h2 class="app-group-head">Recent inquiries</h2>
+    <table class="admin-table">
+      <thead><tr><th>Name</th><th>Email</th><th>Niche</th><th>Sells</th><th></th></tr></thead>
+      <tbody>
+      @foreach (var q in Model.Inquiries)
+      {
+        <tr>
+          <td>@q.Name</td>
+          <td>@q.Email</td>
+          <td>@q.Niche</td>
+          <td>@q.WhatYouSell</td>
+          <td class="admin-actions"><a class="btn btn-ghost btn-sm" href="/admin?useInquiry=@q.Id">Use for invite</a></td>
+        </tr>
+      }
+      </tbody>
+    </table>
+  }
 
   <h2 class="app-group-head">Companies &amp; users</h2>
   @if (Model.Rows.Count == 0) { <p class="app-group-empty">No accounts yet.</p> }
