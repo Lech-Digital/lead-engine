@@ -24,7 +24,7 @@ public class ListLeadsTests
         var sut = new ListLeads(repo);
 
         // Act
-        var result = await sut.ForCustomerAsync(customerId, CancellationToken.None);
+        var result = await sut.ForCustomerAsync(customerId, CustomerPlan.Free, 3, CancellationToken.None);
 
         // Assert
         result.Should().ContainSingle();
@@ -55,7 +55,7 @@ public class ListLeadsTests
         var sut = new ListLeads(repo);
 
         // Act
-        var result = await sut.ForCustomerAsync(customerId, CancellationToken.None);
+        var result = await sut.ForCustomerAsync(customerId, CustomerPlan.Full, 3, CancellationToken.None);
 
         // Assert — no filtering; the page routes each status to its tab
         result.Should().HaveCount(3);
@@ -73,9 +73,28 @@ public class ListLeadsTests
         var sut = new ListLeads(repo);
 
         // Act
-        var result = await sut.ForCustomerAsync(customerId, CancellationToken.None);
+        var result = await sut.ForCustomerAsync(customerId, CustomerPlan.Free, 3, CancellationToken.None);
 
         // Assert
         result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ForCustomerAsync_FreePlan_TagsLeadsBeyondQuotaAsLocked()
+    {
+        // Arrange — 2 leads, quota 1
+        var cid = new CustomerId(Guid.NewGuid());
+        var l1 = Lead.CreateHarvested(cid, "A", Fit.Yes, "s", "b", "hn", "https://x/1", "fp1", 0.9, "x", DateTimeOffset.UtcNow);
+        var l2 = Lead.CreateHarvested(cid, "B", Fit.Yes, "s", "b", "hn", "https://x/2", "fp2", 0.8, "x", DateTimeOffset.UtcNow);
+        var repo = Substitute.For<ILeadRepository>();
+        repo.ForCustomerAsync(cid, Arg.Any<CancellationToken>()).Returns(new[] { l1, l2 });
+        var sut = new ListLeads(repo);
+
+        // Act
+        var result = await sut.ForCustomerAsync(cid, CustomerPlan.Free, 1, CancellationToken.None);
+
+        // Assert
+        result.Single(s => s.Id == l1.Id.Value).Locked.Should().BeFalse();
+        result.Single(s => s.Id == l2.Id.Value).Locked.Should().BeTrue();
     }
 }

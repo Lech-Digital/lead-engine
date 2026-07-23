@@ -1,5 +1,6 @@
 using Coldstart.Application.Leads;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Coldstart.Application;
 
@@ -7,6 +8,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
+        services.TryAddSingleton(new Leads.QuotaOptions());
         services.AddScoped<IListLeads, ListLeads>();
         services.AddScoped<IGetLeadInbox, GetLeadInbox>();
         services.AddScoped<IGetLeadDetail, GetLeadDetail>();

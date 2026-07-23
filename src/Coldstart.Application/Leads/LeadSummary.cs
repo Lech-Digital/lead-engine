@@ -12,4 +12,5 @@ public sealed record LeadSummary(
     string Source,
     double Score,
     DateTimeOffset CreatedAt,
-    string MatchedSignals);
+    string MatchedSignals,
+    bool Locked = false);
