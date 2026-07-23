@@ -37,7 +37,7 @@ internal sealed class GroqLeadEnricher : ILeadEnricher
         _delay = delay;
     }
 
-    public async Task<EnrichmentResult?> EnrichAsync(RawItem item, NicheOptions niche, SignalResult signal, CancellationToken ct)
+    public async Task<EnrichmentResult?> EnrichAsync(RawItem item, NicheOptions niche, SignalResult signal, SenderContext sender, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(_o.ApiKey)) return null;
         // Pace the batch: pause before every call after the first so a sequential run
@@ -45,7 +45,7 @@ internal sealed class GroqLeadEnricher : ILeadEnricher
         if (_sentBefore && _o.RequestDelaySeconds > 0)
             await _delay(TimeSpan.FromSeconds(_o.RequestDelaySeconds), ct);
         _sentBefore = true;
-        var prompt = BuildPrompt(item, niche, signal);
+        var prompt = BuildPrompt(item, niche, signal, sender);
         var body = new
         {
             model = _o.Model,
@@ -102,10 +102,15 @@ internal sealed class GroqLeadEnricher : ILeadEnricher
     }
 
     // Ported from enrich.py PROMPT_TEMPLATE.
-    private static string BuildPrompt(RawItem item, NicheOptions n, SignalResult signal) =>
+    private static string BuildPrompt(RawItem item, NicheOptions n, SignalResult signal, SenderContext sender) =>
         $"""
         OFFER WE SELL:
         {n.Offer}
+        {(string.IsNullOrWhiteSpace(sender.Brief) ? "" : $"""
+
+        WHO IS REACHING OUT (the sender's own company — use it for credible context, still open on a specific detail about THEM):
+        {sender.Brief}
+        """)}
 
         WHO IS A GOOD FIT:
         (niche described by keywords: {string.Join(", ", n.TargetKeywords)})
@@ -129,5 +134,9 @@ internal sealed class GroqLeadEnricher : ILeadEnricher
         COMPANY: the real company/org name this is about, or "-" if it cannot be determined. Never guess.
 
         If FIT is NO, still fill SUBJECT and DRAFT with "-".
+        {(sender.MentionSourceTool ? """
+
+        Also: mention that you discovered this company using Coldstart — the exact lead-generation tool you are offering them — as concrete proof it works. One natural sentence, not a boast.
+        """ : "")}
         """;
 }

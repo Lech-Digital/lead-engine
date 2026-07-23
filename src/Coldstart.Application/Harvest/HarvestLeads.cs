@@ -41,7 +41,7 @@ internal sealed class HarvestLeads(
         var target = await ResolveTargetCustomerAsync(ct);
         foreach (var (item, signal) in candidates.OrderByDescending(c => c.signal.Score).Take(niche.MaxEnrichPerRun))
         {
-            var result = await enricher.EnrichAsync(item, niche, signal, ct);
+            var result = await enricher.EnrichAsync(item, niche, signal, SenderContext.None, ct);
             if (result is null) continue;         // LLM failed/empty → retried next run
             enriched++;
             var company = string.IsNullOrWhiteSpace(result.Company) || result.Company == "-" ? item.Author : result.Company;

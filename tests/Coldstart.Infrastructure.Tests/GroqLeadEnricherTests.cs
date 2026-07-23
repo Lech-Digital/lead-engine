@@ -26,6 +26,17 @@ public class GroqLeadEnricherTests
         }
     }
 
+    // Captures the outgoing request body so tests can assert on the exact prompt sent.
+    private sealed class CapturingHandler(string body) : HttpMessageHandler
+    {
+        public string? SentBody { get; private set; }
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage r, CancellationToken ct)
+        {
+            SentBody = r.Content is null ? null : await r.Content.ReadAsStringAsync(ct);
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
+        }
+    }
+
     private static HttpResponseMessage Ok(string body) =>
         new(HttpStatusCode.OK) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
 
@@ -51,7 +62,7 @@ public class GroqLeadEnricherTests
             (d, _) => { delays.Add(d); return Task.CompletedTask; });
 
         // Act
-        var result = await sut.EnrichAsync(Item, Niche, Signal, CancellationToken.None);
+        var result = await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
 
         // Assert — the 429 was retried, the second (200) response parsed successfully
         result.Should().NotBeNull();
@@ -70,7 +81,7 @@ public class GroqLeadEnricherTests
             (d, _) => { delays.Add(d); return Task.CompletedTask; });
 
         // Act
-        var result = await sut.EnrichAsync(Item, Niche, Signal, CancellationToken.None);
+        var result = await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
 
         // Assert — bounded retries: 1 initial + 3 retries = 4 calls, 3 backoffs, then give up
         result.Should().BeNull();
@@ -89,9 +100,9 @@ public class GroqLeadEnricherTests
             (d, _) => { delays.Add(d); return Task.CompletedTask; });
 
         // Act
-        await sut.EnrichAsync(Item, Niche, Signal, CancellationToken.None);
-        await sut.EnrichAsync(Item, Niche, Signal, CancellationToken.None);
-        await sut.EnrichAsync(Item, Niche, Signal, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
 
         // Assert — no delay before the first request, the pacing delay before each subsequent one
         handler.Calls.Should().Be(3);
@@ -110,8 +121,8 @@ public class GroqLeadEnricherTests
             (d, _) => { delays.Add(d); return Task.CompletedTask; });
 
         // Act
-        await sut.EnrichAsync(Item, Niche, Signal, CancellationToken.None);
-        await sut.EnrichAsync(Item, Niche, Signal, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
 
         // Assert
         handler.Calls.Should().Be(2);
@@ -128,9 +139,40 @@ public class GroqLeadEnricherTests
             (d, _) => { delays.Add(d); return Task.CompletedTask; });
 
         // Act
-        await sut.EnrichAsync(Item, Niche, Signal, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
 
         // Assert — the server-provided Retry-After drives the wait, not the exponential fallback
         delays.Should().ContainSingle().Which.Should().Be(TimeSpan.FromSeconds(2));
+    }
+
+    [Fact]
+    public async Task EnrichAsync_WithBrief_IncludesSenderContextInPrompt()
+    {
+        // Arrange
+        var handler = new CapturingHandler(ValidBody);
+        var sut = new GroqLeadEnricher(new HttpClient(handler), Opts(), (d, _) => Task.CompletedTask);
+        var sender = new SenderContext("Acme helps dentists fill calendars.", MentionSourceTool: false);
+
+        // Act
+        await sut.EnrichAsync(Item, Niche, Signal, sender, CancellationToken.None);
+
+        // Assert — the brief is in the prompt; the Coldstart line is NOT (toggle off)
+        handler.SentBody.Should().Contain("Acme helps dentists fill calendars.");
+        handler.SentBody.Should().NotContain("Coldstart");
+    }
+
+    [Fact]
+    public async Task EnrichAsync_WithMentionSourceTool_AddsColdstartInstruction()
+    {
+        // Arrange
+        var handler = new CapturingHandler(ValidBody);
+        var sut = new GroqLeadEnricher(new HttpClient(handler), Opts(), (d, _) => Task.CompletedTask);
+        var sender = new SenderContext(Brief: null, MentionSourceTool: true);
+
+        // Act
+        await sut.EnrichAsync(Item, Niche, Signal, sender, CancellationToken.None);
+
+        // Assert
+        handler.SentBody.Should().Contain("Coldstart");
     }
 }

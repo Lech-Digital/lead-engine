@@ -25,7 +25,7 @@ public class HarvestEndToEndTests(PostgresFixture fixture) : IClassFixture<Postg
         var niche = new NicheOptions { TargetKeywords = ["outbound"], BuyingSignals = ["hiring"], MinScore = 0.4, MaxEnrichPerRun = 5 };
         var item = new RawItem("fake", "e2e-1", "", "hiring outbound SDR", "", "https://x/1", "");
         var enricher = Substitute.For<ILeadEnricher>();
-        enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<CancellationToken>())
+        enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<CancellationToken>())
             .Returns(new EnrichmentResult(Fit.Yes, "sum", "subj", "draft", "Acme"));
         HarvestLeads Sut(ColdstartDbContext ctx) =>
             new([new OneSource(item)], enricher, new LeadRepository(ctx), new CustomerRepository(ctx), niche);
