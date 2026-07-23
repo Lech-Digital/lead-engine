@@ -31,63 +31,79 @@
         </div>
       </div>
 
-      @* Signature: the dawn moment. Overnight (night sky) → sunrise → your one client
-         surfaces from the stack as a ready-to-approve email. Same palette + the * mark. *@
+      @* Signature: the night-shift lead detective. While you sleep, a friendly robot sweeps
+         the dark with its magnifier and turns up your next client (the glowing lead card).
+         Same palette + the * mark; the sweep + found-glow + eyes animate (reduced-motion safe). *@
       <figure class="lp-hero-art" aria-hidden="true">
         <svg viewBox="0 0 460 410" role="img" xmlns="http://www.w3.org/2000/svg">
           <defs>
-            <linearGradient id="cs-sky" x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id="cs-night" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0" stop-color="#1C1F33"/>
-              <stop offset="0.42" stop-color="#3A3352"/>
-              <stop offset="0.72" stop-color="#C96F4A"/>
-              <stop offset="1" stop-color="#FF8A5C"/>
+              <stop offset="1" stop-color="#2A2F4C"/>
             </linearGradient>
-            <radialGradient id="cs-glow" cx="0.5" cy="0.5" r="0.5">
-              <stop offset="0" stop-color="#FFB98C" stop-opacity="0.9"/>
-              <stop offset="1" stop-color="#FF6A3D" stop-opacity="0"/>
+            <radialGradient id="cs-lens" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stop-color="#FFB98C" stop-opacity="0.5"/>
+              <stop offset="1" stop-color="#FF6A3D" stop-opacity="0.04"/>
             </radialGradient>
             <clipPath id="cs-frame"><rect x="1.5" y="1.5" width="457" height="407" rx="20"/></clipPath>
           </defs>
 
           <g clip-path="url(#cs-frame)">
-            <!-- night → dawn sky -->
-            <rect x="0" y="0" width="460" height="236" fill="url(#cs-sky)"/>
-            <!-- fading stars -->
+            <rect x="0" y="0" width="460" height="410" fill="url(#cs-night)"/>
+            <rect x="0" y="350" width="460" height="60" fill="#232741"/>
             <g fill="#E9E7F2">
-              <circle cx="58" cy="40" r="1.6" opacity="0.85"/>
-              <circle cx="120" cy="70" r="1.2" opacity="0.6"/>
-              <circle cx="200" cy="34" r="1.5" opacity="0.7"/>
-              <circle cx="392" cy="52" r="1.3" opacity="0.55"/>
-              <circle cx="428" cy="96" r="1.1" opacity="0.4"/>
-              <circle cx="96" cy="120" r="1.1" opacity="0.35"/>
+              <circle cx="70" cy="150" r="1.5" opacity="0.7"/><circle cx="150" cy="60" r="1.3" opacity="0.6"/>
+              <circle cx="300" cy="48" r="1.5" opacity="0.7"/><circle cx="410" cy="130" r="1.2" opacity="0.5"/>
+              <circle cx="360" cy="196" r="1.1" opacity="0.45"/><circle cx="120" cy="212" r="1.1" opacity="0.4"/>
             </g>
-            <!-- rising sun -->
-            <circle class="lp-sun-glow" cx="312" cy="212" r="120" fill="url(#cs-glow)"/>
-            <circle cx="312" cy="212" r="44" fill="#FF6A3D"/>
-            <!-- daylight ground -->
-            <rect x="0" y="236" width="460" height="174" fill="#FDFBF7"/>
-            <line x1="0" y1="236" x2="460" y2="236" stroke="#E7E2D7" stroke-width="1"/>
+            <g><circle cx="70" cy="72" r="26" fill="#F1E9D8"/><circle cx="82" cy="65" r="23" fill="#1C1F33"/></g>
+            <text x="392" y="88" font-family="'Cabinet Grotesk',Helvetica,sans-serif" font-size="26" font-weight="800" fill="#FF6A3D">*</text>
+            <ellipse cx="214" cy="352" rx="118" ry="12" fill="#121422" opacity="0.5"/>
           </g>
 
-          <!-- the overnight stack: faint leads behind, your one client lifted into daylight -->
-          <text x="88" y="262" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="11" letter-spacing="0.06em" fill="#8B8578">05:59 · found overnight</text>
-          <g class="lp-hero-cards">
-            <rect x="150" y="276" width="238" height="34" rx="8" fill="#FDFBF7" stroke="#E7E2D7" opacity="0.55"/>
-            <rect x="120" y="296" width="270" height="40" rx="9" fill="#FFFFFF" stroke="#E7E2D7" opacity="0.8"/>
-            <!-- front card = the found client, email drafted -->
-            <g class="lp-hero-lead">
-              <rect x="70" y="316" width="326" height="82" rx="12" fill="#FFFFFF" stroke="#E7E2D7"/>
-              <path d="M70 328 a12 12 0 0 1 12 -12 h0 v82 h0 a12 12 0 0 1 -12 -12 Z" fill="#FF6A3D"/>
-              <text x="96" y="350" font-family="'Cabinet Grotesk',Helvetica,sans-serif" font-size="20" font-weight="800" fill="#FF6A3D">*</text>
-              <rect x="114" y="336" width="150" height="9" rx="4.5" fill="#16192B"/>
-              <rect x="114" y="356" width="196" height="6" rx="3" fill="#D8D3C7"/>
-              <rect x="114" y="370" width="150" height="6" rx="3" fill="#D8D3C7"/>
-              <rect x="300" y="350" width="74" height="26" rx="13" fill="#FF6A3D"/>
-              <path d="M321 363 l5 5 l9 -10" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-            </g>
+          <!-- the night-shift robot -->
+          <g class="lp-bot">
+            <rect x="188" y="300" width="16" height="46" rx="8" fill="#CFC8B6"/>
+            <rect x="224" y="300" width="16" height="46" rx="8" fill="#CFC8B6"/>
+            <rect x="180" y="340" width="30" height="12" rx="6" fill="#B7AF9A"/>
+            <rect x="218" y="340" width="30" height="12" rx="6" fill="#B7AF9A"/>
+            <rect x="164" y="220" width="100" height="90" rx="22" fill="#EBE6DA"/>
+            <rect x="184" y="240" width="60" height="42" rx="10" fill="#1E2138"/>
+            <polyline points="192,262 205,262 211,249 219,273 226,262 236,262" fill="none" stroke="#FF8A5C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M170 244 q-16 12 -14 40" fill="none" stroke="#EBE6DA" stroke-width="15" stroke-linecap="round"/>
+            <circle cx="156" cy="286" r="9" fill="#D9D2C2"/>
+            <rect x="200" y="196" width="28" height="12" rx="4" fill="#CFC8B6"/>
+            <rect x="176" y="146" width="76" height="60" rx="20" fill="#EBE6DA"/>
+            <circle cx="176" cy="176" r="6" fill="#CFC8B6"/>
+            <circle cx="252" cy="176" r="6" fill="#CFC8B6"/>
+            <line x1="214" y1="146" x2="214" y2="128" stroke="#CFC8B6" stroke-width="3"/>
+            <text x="214" y="126" text-anchor="middle" font-family="'Cabinet Grotesk',Helvetica,sans-serif" font-size="20" font-weight="800" fill="#FF6A3D">*</text>
+            <rect x="186" y="158" width="56" height="38" rx="13" fill="#1E2138"/>
+            <circle class="lp-eye" cx="205" cy="176" r="6.5" fill="#FF8A5C"/>
+            <circle class="lp-eye" cx="223" cy="176" r="6.5" fill="#FF8A5C"/>
+            <path d="M205 187 q9 6 18 0" fill="none" stroke="#FF8A5C" stroke-width="2" stroke-linecap="round"/>
           </g>
 
-          <rect x="1.5" y="1.5" width="457" height="407" rx="20" fill="none" stroke="#E7E2D7"/>
+          <!-- the lead, found on the ground (glow pulses as the sweep passes over it) -->
+          <ellipse class="lp-lead-glow" cx="350" cy="342" rx="72" ry="34" fill="#FF6A3D" opacity="0.12"/>
+          <g class="lp-hero-lead">
+            <rect x="300" y="320" width="104" height="44" rx="9" fill="#EBE6DA"/>
+            <rect x="300" y="320" width="6" height="44" rx="3" fill="#FF6A3D"/>
+            <rect x="318" y="330" width="52" height="7" rx="3.5" fill="#1E2138"/>
+            <rect x="318" y="344" width="72" height="5" rx="2.5" fill="#B7B0C6"/>
+            <rect x="318" y="353" width="52" height="5" rx="2.5" fill="#B7B0C6"/>
+          </g>
+
+          <!-- magnifier in the right hand — sweeps to search, revealing the lead -->
+          <g class="lp-glass">
+            <path d="M256 236 Q292 250 302 298" fill="none" stroke="#EBE6DA" stroke-width="15" stroke-linecap="round"/>
+            <circle cx="304" cy="300" r="9" fill="#D9D2C2"/>
+            <line x1="310" y1="306" x2="324" y2="320" stroke="#CFC8B6" stroke-width="9" stroke-linecap="round"/>
+            <circle cx="334" cy="326" r="30" fill="url(#cs-lens)" stroke="#FF6A3D" stroke-width="6"/>
+            <text x="334" y="335" text-anchor="middle" font-family="'Cabinet Grotesk',Helvetica,sans-serif" font-size="26" font-weight="800" fill="#FF6A3D">*</text>
+          </g>
+
+          <rect x="1.5" y="1.5" width="457" height="407" rx="20" fill="none" stroke="#33385A"/>
         </svg>
       </figure>
     </div>

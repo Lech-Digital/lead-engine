@@ -54,18 +54,23 @@
 .lp-hero-grid { display: grid; grid-template-columns: 1fr; gap: 40px; align-items: center; }
 .lp-hero-art { margin: 0; }
 .lp-hero-art svg { display: block; width: 100%; max-width: 440px; height: auto; margin-inline: auto; filter: drop-shadow(0 18px 40px rgba(28,31,51,0.14)); }
-@media (min-width: 900px) {
+@media (min-width: 820px) {
   .lp-hero-grid { grid-template-columns: 1.05fr 0.95fr; gap: 56px; }
-  .lp-hero-art svg { max-width: 460px; margin-inline: 0 0; }
+  .lp-hero-art svg { max-width: 470px; margin-inline: 0 0; }
 }
-/* Quiet dawn entrance — the client card lifts in; disabled for reduced motion. */
+/* Quiet entrance — the found lead lifts in; the robot's eyes breathe. Off for reduced motion. */
 @media (prefers-reduced-motion: no-preference) {
   .lp-hero-art { opacity: 0; transform: translateY(12px); animation: lp-hero-in .7s ease-out .1s forwards; }
-  .lp-hero-lead { transform: translateY(8px); opacity: 0; animation: lp-hero-in .7s ease-out .35s forwards; }
-  .lp-sun-glow { transform-box: fill-box; transform-origin: center; animation: lp-sun-breathe 6s ease-in-out infinite; }
+  .lp-hero-lead { transform-box: view-box; opacity: 0; animation: lp-hero-in .7s ease-out .6s forwards; }
+  .lp-eye { animation: lp-eye-pulse 3.6s ease-in-out infinite; }
+  /* the search: the magnifier sweeps around the shoulder, and the found lead glows as it passes */
+  .lp-glass { transform-box: view-box; transform-origin: 256px 236px; animation: lp-sweep 4.8s ease-in-out infinite; }
+  .lp-lead-glow { animation: lp-found 4.8s ease-in-out infinite; }
 }
 @keyframes lp-hero-in { to { opacity: 1; transform: translateY(0); } }
-@keyframes lp-sun-breathe { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; } }
+@keyframes lp-eye-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@keyframes lp-sweep { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(5deg); } }
+@keyframes lp-found { 0%, 42%, 100% { opacity: 0.1; } 66% { opacity: 0.46; } }
 .lp-act { padding: 88px 0; }
 .lp-spam { margin: 28px 0; padding: 22px 26px; border-left: 3px solid var(--line-soft); background: #fff; border-radius: 0 10px 10px 0; }
 .lp-spam p { font-style: italic; margin: 0 0 10px; }
