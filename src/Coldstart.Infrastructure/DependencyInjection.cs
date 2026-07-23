@@ -18,6 +18,7 @@ public static class DependencyInjection
         services.AddScoped<ICustomerRepository, CustomerRepository>();
         services.AddScoped<IInquiryRepository, Repositories.InquiryRepository>();
         services.AddScoped<IEmailSender, Email.SmtpEmailSender>();
+        services.AddScoped<Application.Outreach.IOutreachMailer, Outreach.SmtpOutreachMailer>();
         services.AddScoped<Application.Mailbox.IMailbox, Mailbox.ImapMailbox>();
         services.AddHttpClient();
         services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient());
