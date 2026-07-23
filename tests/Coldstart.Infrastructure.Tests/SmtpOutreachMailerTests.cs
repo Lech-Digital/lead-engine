@@ -60,4 +60,21 @@ public class SmtpOutreachMailerTests
         msg.TextBody.Should().Contain("Founder, Coldstart");
         msg.TextBody.Should().NotContain("<");                 // plain part carries no markup
     }
+
+    [Fact]
+    public void BuildMessage_WhenBodyUsesCrlfParagraphBreaks_ProducesTwoParagraphsAndNoStrayCr()
+    {
+        // Arrange — drafts saved from the Razor textarea use CRLF ("\r\n\r\n") between paragraphs
+        var mail = new OutreachEmail("ceo@acme.com", "s", "First paragraph.\r\n\r\nSecond paragraph.");
+
+        // Act
+        var msg = SmtpOutreachMailer.BuildMessage(Opts(), mail);
+
+        // Assert
+        var htmlParagraphCount = System.Text.RegularExpressions.Regex.Matches(msg.HtmlBody!, "<p ").Count;
+        htmlParagraphCount.Should().Be(2);
+        msg.HtmlBody.Should().Contain("First paragraph.");
+        msg.HtmlBody.Should().Contain("Second paragraph.");
+        msg.HtmlBody.Should().NotContain("\r");
+    }
 }

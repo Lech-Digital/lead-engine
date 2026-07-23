@@ -35,7 +35,7 @@ internal sealed class SmtpOutreachMailer(IOptions<OutreachMailboxOptions> option
         msg.To.Add(MailboxAddress.Parse(mail.To));
         msg.Subject = mail.Subject;
 
-        var body = mail.Body ?? "";
+        var body = (mail.Body ?? "").Replace("\r\n", "\n").Replace("\r", "\n");
         msg.Body = new BodyBuilder
         {
             TextBody = body + "\n\n— Andrzej\nFounder, Coldstart\nhttps://getcoldstart.nl",

@@ -1,5 +1,6 @@
 @page "/app/leads/{id:guid}"
 @model Coldstart.Web.Areas.App.Pages.Leads.DetailModel
+@using Coldstart.Web
 @{
     ViewData["Title"] = "Lead";
     Layout = "/Pages/Shared/_Layout.cshtml";
@@ -79,7 +80,7 @@
             <button class="btn btn-primary" type="submit" asp-page-handler="MarkSent" disabled="@(!hasRecipient)">Mark as sent ✓</button>
             @if (!hasRecipient) { <span class="ts">Add a recipient first.</span> }
           </form>
-          @if (User.IsInRole("SuperAdmin"))
+          @if (User.IsInRole(ColdstartRoles.SuperAdmin))
           {
             <form method="post" class="ld-marksent">
               <button class="btn btn-primary" type="submit" asp-page-handler="SendFromColdstart" disabled="@(!hasRecipient)">Send from Coldstart ✓</button>

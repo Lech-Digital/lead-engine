@@ -85,6 +85,23 @@ public class LeadWorkflowSendTests
     }
 
     [Fact]
+    public async Task SendFromColdstartAsync_WhenApprovedWithNoRecipient_ReturnsInvalid_AndDoesNotSend()
+    {
+        // Arrange — approved without ever setting a recipient
+        var lead = Lead.CreateHarvested(new CustomerId(CustomerId), "Acme", Fit.Yes,
+            "About your raise", "Body copy.", "hn", "https://x/1", "fp3", 0.7, "outbound", DateTimeOffset.UtcNow);
+        lead.Approve();
+        var (sut, _, mailer) = Sut(lead);
+
+        // Act
+        var result = await sut.SendFromColdstartAsync(CustomerId, lead.Id.Value, CancellationToken.None);
+
+        // Assert
+        result.Status.Should().Be(LeadActionStatus.Invalid);
+        await mailer.DidNotReceive().SendAsync(Arg.Any<OutreachEmail>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task SendFromColdstartAsync_WhenLeadNotOwned_ReturnsNotFound()
     {
         // Arrange — repo returns null (not found / not this customer)
