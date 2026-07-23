@@ -21,11 +21,75 @@
           <a class="lp-login hero-login" href="/Identity/Account/Login">Log in</a>
       }
     </nav>
-    <h1>Wake up to your next client, already found — with the first email already written.</h1>
-    <p class="lp-lede">For companies that sell to other businesses. We watch the market overnight, pick the few companies that need you right now, and draft your opening email. You read it over coffee and hit approve.</p>
-    <div class="lp-cta-row">
-      <a class="btn btn-primary" href="#get-leads">Get 3 sample leads — free</a>
-      <a class="lp-quiet" href="#enemy">See one morning ↓</a>
+    <div class="lp-hero-grid">
+      <div class="lp-hero-copy">
+        <h1>Wake up to your next client, already found — with the first email already written.</h1>
+        <p class="lp-lede">For companies that sell to other businesses. We watch the market overnight, pick the few companies that need you right now, and draft your opening email. You read it over coffee and hit approve.</p>
+        <div class="lp-cta-row">
+          <a class="btn btn-primary" href="#get-leads">Get 3 sample leads — free</a>
+          <a class="lp-quiet" href="#enemy">See one morning ↓</a>
+        </div>
+      </div>
+
+      @* Signature: the dawn moment. Overnight (night sky) → sunrise → your one client
+         surfaces from the stack as a ready-to-approve email. Same palette + the * mark. *@
+      <figure class="lp-hero-art" aria-hidden="true">
+        <svg viewBox="0 0 460 410" role="img" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="cs-sky" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#1C1F33"/>
+              <stop offset="0.42" stop-color="#3A3352"/>
+              <stop offset="0.72" stop-color="#C96F4A"/>
+              <stop offset="1" stop-color="#FF8A5C"/>
+            </linearGradient>
+            <radialGradient id="cs-glow" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stop-color="#FFB98C" stop-opacity="0.9"/>
+              <stop offset="1" stop-color="#FF6A3D" stop-opacity="0"/>
+            </radialGradient>
+            <clipPath id="cs-frame"><rect x="1.5" y="1.5" width="457" height="407" rx="20"/></clipPath>
+          </defs>
+
+          <g clip-path="url(#cs-frame)">
+            <!-- night → dawn sky -->
+            <rect x="0" y="0" width="460" height="236" fill="url(#cs-sky)"/>
+            <!-- fading stars -->
+            <g fill="#E9E7F2">
+              <circle cx="58" cy="40" r="1.6" opacity="0.85"/>
+              <circle cx="120" cy="70" r="1.2" opacity="0.6"/>
+              <circle cx="200" cy="34" r="1.5" opacity="0.7"/>
+              <circle cx="392" cy="52" r="1.3" opacity="0.55"/>
+              <circle cx="428" cy="96" r="1.1" opacity="0.4"/>
+              <circle cx="96" cy="120" r="1.1" opacity="0.35"/>
+            </g>
+            <!-- rising sun -->
+            <circle class="lp-sun-glow" cx="312" cy="212" r="120" fill="url(#cs-glow)"/>
+            <circle cx="312" cy="212" r="44" fill="#FF6A3D"/>
+            <!-- daylight ground -->
+            <rect x="0" y="236" width="460" height="174" fill="#FDFBF7"/>
+            <line x1="0" y1="236" x2="460" y2="236" stroke="#E7E2D7" stroke-width="1"/>
+          </g>
+
+          <!-- the overnight stack: faint leads behind, your one client lifted into daylight -->
+          <text x="88" y="262" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="11" letter-spacing="0.06em" fill="#8B8578">05:59 · found overnight</text>
+          <g class="lp-hero-cards">
+            <rect x="150" y="276" width="238" height="34" rx="8" fill="#FDFBF7" stroke="#E7E2D7" opacity="0.55"/>
+            <rect x="120" y="296" width="270" height="40" rx="9" fill="#FFFFFF" stroke="#E7E2D7" opacity="0.8"/>
+            <!-- front card = the found client, email drafted -->
+            <g class="lp-hero-lead">
+              <rect x="70" y="316" width="326" height="82" rx="12" fill="#FFFFFF" stroke="#E7E2D7"/>
+              <path d="M70 328 a12 12 0 0 1 12 -12 h0 v82 h0 a12 12 0 0 1 -12 -12 Z" fill="#FF6A3D"/>
+              <text x="96" y="350" font-family="'Cabinet Grotesk',Helvetica,sans-serif" font-size="20" font-weight="800" fill="#FF6A3D">*</text>
+              <rect x="114" y="336" width="150" height="9" rx="4.5" fill="#16192B"/>
+              <rect x="114" y="356" width="196" height="6" rx="3" fill="#D8D3C7"/>
+              <rect x="114" y="370" width="150" height="6" rx="3" fill="#D8D3C7"/>
+              <rect x="300" y="350" width="74" height="26" rx="13" fill="#FF6A3D"/>
+              <path d="M321 363 l5 5 l9 -10" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+          </g>
+
+          <rect x="1.5" y="1.5" width="457" height="407" rx="20" fill="none" stroke="#E7E2D7"/>
+        </svg>
+      </figure>
     </div>
   </div>
 </header>
