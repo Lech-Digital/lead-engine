@@ -7,7 +7,9 @@ public static class DbSeeder
 {
     public static async Task SeedAsync(ColdstartDbContext db, CancellationToken ct)
     {
-        if (await db.Customers.AnyAsync(ct)) return;
+        // No tenant is established at boot, and the Customer filter fails closed to zero rows —
+        // without IgnoreQueryFilters this guard would never see the seeded row and would reseed forever.
+        if (await db.Customers.IgnoreQueryFilters().AnyAsync(ct)) return;
 
         var customer = Customer.Create("Coldstart");
         var now = DateTimeOffset.UtcNow;

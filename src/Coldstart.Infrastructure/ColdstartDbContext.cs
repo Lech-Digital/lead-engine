@@ -24,6 +24,9 @@ public sealed class ColdstartDbContext : IdentityDbContext<ApplicationUser>
     {
         base.OnModelCreating(modelBuilder); // Identity schema
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ColdstartDbContext).Assembly);
-        // Query filters are added in Task 4 (after every host resolves the tenant).
+
+        // Fail-closed tenant isolation. Owned LeadNotes load with their Lead, so they inherit this.
+        modelBuilder.Entity<Lead>().HasQueryFilter(l => l.CustomerId == CurrentCustomerId);
+        modelBuilder.Entity<Customer>().HasQueryFilter(c => c.Id == CurrentCustomerId);
     }
 }

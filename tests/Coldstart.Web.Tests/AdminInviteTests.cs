@@ -55,7 +55,9 @@ public class AdminInviteTests(ColdstartWebFactory factory) : IClassFixture<Colds
         user.InvitedAt.Should().NotBeNull();
         user.CustomerId.Should().NotBeNull();
         (await users.IsInRoleAsync(user, ColdstartRoles.CompanyAdmin)).Should().BeTrue();
-        (await db.Customers.AnyAsync(c => c.Id == new CustomerId(user.CustomerId!.Value))).Should().BeTrue();
+        // This scope is created outside any signed-in request, so there is no tenant claim to
+        // resolve — a system-level check of provisioning state, not a tenant-scoped read.
+        (await db.Customers.IgnoreQueryFilters().AnyAsync(c => c.Id == new CustomerId(user.CustomerId!.Value))).Should().BeTrue();
         factory.Email.Sent.Should().ContainSingle(m => m.To == invitee);
         factory.Email.Sent.Single().TextBody.Should().Contain("/Identity/Account/ResetPassword");
         factory.Email.Sent.Single().HtmlBody!.Should().Contain("/Identity/Account/ResetPassword").And.Contain("Acme Co");

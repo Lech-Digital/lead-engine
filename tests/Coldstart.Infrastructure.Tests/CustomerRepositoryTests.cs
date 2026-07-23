@@ -48,15 +48,15 @@ public class CustomerRepositoryTests(PostgresFixture fixture) : IClassFixture<Po
     public async Task Profile_RoundTripsThroughOwnedType()
     {
         // Arrange
-        await using var write = fixture.NewDbContext();
         var customer = Customer.Create("profile-roundtrip@acme.com");
+        await using var write = fixture.NewDbContext(customer.Id.Value);
         customer.UpdateProfile(new CompanyProfile("Acme Ltd", "1 Main St", "NL123", "KVK9", "B2B SaaS", "acme.com", "hi@acme.com"));
         new CustomerRepository(write);   // (repo uses db directly)
         write.Customers.Add(customer);
         await write.SaveChangesAsync();
 
         // Act
-        await using var read = fixture.NewDbContext();
+        await using var read = fixture.NewDbContext(customer.Id.Value);
         var found = await new CustomerRepository(read).GetAsync(customer.Id, CancellationToken.None);
 
         // Assert
@@ -81,8 +81,9 @@ public class CustomerRepositoryTests(PostgresFixture fixture) : IClassFixture<Po
         // Act
         await customers.DeleteAsync(customer.Id, CancellationToken.None);
 
-        // Assert
-        await using var readDb = fixture.NewDbContext();
+        // Assert — read back scoped to the deleted tenant, so this proves the rows are actually gone
+        // (not merely filtered out by a mismatched tenant context).
+        await using var readDb = fixture.NewDbContext(customer.Id.Value);
         var readCustomers = new CustomerRepository(readDb);
         var readLeads = new LeadRepository(readDb);
         (await readCustomers.GetAsync(customer.Id, CancellationToken.None)).Should().BeNull();
@@ -93,8 +94,8 @@ public class CustomerRepositoryTests(PostgresFixture fixture) : IClassFixture<Po
     public async Task GetAsync_AfterSavingBriefAndToggle_RoundTripsThem()
     {
         // Arrange
-        await using var write = fixture.NewDbContext();
         var customer = Customer.Create("brief-co@example.com");
+        await using var write = fixture.NewDbContext(customer.Id.Value);
         customer.UpdateProfile(new CompanyProfile("Acme", null, null, null, null, null, null,
             Brief: "We do X for Y.", MentionSourceTool: true));
         new CustomerRepository(write);
@@ -102,7 +103,7 @@ public class CustomerRepositoryTests(PostgresFixture fixture) : IClassFixture<Po
         await write.SaveChangesAsync();
 
         // Act — fresh context to force a real read
-        await using var read = fixture.NewDbContext();
+        await using var read = fixture.NewDbContext(customer.Id.Value);
         var reloaded = await new CustomerRepository(read).GetAsync(customer.Id, CancellationToken.None);
 
         // Assert

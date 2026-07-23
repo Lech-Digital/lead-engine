@@ -1,5 +1,4 @@
 using System.Net;
-using Coldstart.Application.Leads;
 using Coldstart.Domain;
 using Coldstart.Infrastructure;
 using Coldstart.Infrastructure.Identity;
@@ -256,18 +255,18 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
 
     private async Task<Guid> AddApprovedLeadWithRecipientAsync(string email, string company, string fingerprint, string recipient)
     {
+        // Builds the lead straight through domain methods (mirrors what ILeadWorkflow.AcceptAsync
+        // does) rather than calling the workflow itself: that goes through ILeadRepository.GetAsync,
+        // which is tenant-filtered, and this setup scope has no signed-in request/tenant claim.
         using var scope = factory.Services.CreateScope();
         var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var workflow = scope.ServiceProvider.GetRequiredService<ILeadWorkflow>();
         var db = scope.ServiceProvider.GetRequiredService<ColdstartDbContext>();
         var user = await users.FindByEmailAsync(email);
         var lead = Lead.CreateHarvested(new CustomerId(user!.CustomerId!.Value), company, Fit.Yes,
             "subj", "body", "hackernews", "https://x/1", fingerprint, 0.7, "outbound", DateTimeOffset.UtcNow);
+        lead.Approve(new EmailAddress(recipient));
         db.Leads.Add(lead);
         await db.SaveChangesAsync();
-
-        var result = await workflow.AcceptAsync(user.CustomerId.Value, lead.Id.Value, "subj", "body", recipient, CancellationToken.None);
-        result.IsOk.Should().BeTrue();
         return lead.Id.Value;
     }
 

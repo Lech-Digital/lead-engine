@@ -16,8 +16,9 @@ public class DbSeederTests(PostgresFixture fixture) : IClassFixture<PostgresFixt
         // Act
         await DbSeeder.SeedAsync(db, CancellationToken.None);
 
-        // Assert
-        var customers = await db.Customers.Include(c => c.Leads).ToListAsync();
+        // Assert — a system-level check of seed state, not a tenant-scoped read; bypass the filter
+        // deliberately (there is no signed-in tenant at boot, mirroring the seeder itself).
+        var customers = await db.Customers.IgnoreQueryFilters().Include(c => c.Leads).ToListAsync();
         customers.Should().ContainSingle();
         customers[0].Leads.Should().NotBeEmpty();
     }
@@ -32,7 +33,7 @@ public class DbSeederTests(PostgresFixture fixture) : IClassFixture<PostgresFixt
         // Act
         await DbSeeder.SeedAsync(db, CancellationToken.None);
 
-        // Assert
-        (await db.Customers.CountAsync()).Should().Be(1);
+        // Assert — bypass the filter for the same reason as above.
+        (await db.Customers.IgnoreQueryFilters().CountAsync()).Should().Be(1);
     }
 }

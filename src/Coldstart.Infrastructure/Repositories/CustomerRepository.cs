@@ -7,7 +7,7 @@ namespace Coldstart.Infrastructure.Repositories;
 internal sealed class CustomerRepository(ColdstartDbContext db) : ICustomerRepository
 {
     public async Task<IReadOnlyList<Customer>> AllAsync(CancellationToken ct) =>
-        await db.Customers.OrderBy(c => c.Name).ToListAsync(ct);
+        await db.Customers.IgnoreQueryFilters().OrderBy(c => c.Name).ToListAsync(ct);
 
     public async Task AddAsync(Customer customer, CancellationToken ct)
     {
@@ -16,7 +16,7 @@ internal sealed class CustomerRepository(ColdstartDbContext db) : ICustomerRepos
     }
 
     public async Task<Customer?> GetByNameAsync(string name, CancellationToken ct) =>
-        await db.Customers.FirstOrDefaultAsync(c => c.Name == name, ct);
+        await db.Customers.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Name == name, ct);
 
     public async Task<Customer?> GetAsync(CustomerId id, CancellationToken ct) =>
         await db.Customers.FirstOrDefaultAsync(c => c.Id == id, ct);
@@ -29,9 +29,11 @@ internal sealed class CustomerRepository(ColdstartDbContext db) : ICustomerRepos
 
     public async Task DeleteAsync(CustomerId id, CancellationToken ct)
     {
-        var leads = await db.Leads.Where(l => l.CustomerId == id).ToListAsync(ct);
+        // Admin operation: the caller (e.g. a SuperAdmin removing/revoking another tenant) is not
+        // scoped to the target tenant, so these reads must bypass the fail-closed filter.
+        var leads = await db.Leads.IgnoreQueryFilters().Where(l => l.CustomerId == id).ToListAsync(ct);
         db.Leads.RemoveRange(leads);
-        var customer = await db.Customers.FirstOrDefaultAsync(c => c.Id == id, ct);
+        var customer = await db.Customers.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == id, ct);
         if (customer is not null) db.Customers.Remove(customer);
         await db.SaveChangesAsync(ct);
     }

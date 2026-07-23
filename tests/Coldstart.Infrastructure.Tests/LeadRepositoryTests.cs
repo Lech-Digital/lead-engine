@@ -19,7 +19,7 @@ public class LeadRepositoryTests(PostgresFixture fixture) : IClassFixture<Postgr
         await db.SaveChangesAsync();
 
         // Act
-        await using var readDb = fixture.NewDbContext();
+        await using var readDb = fixture.NewDbContext(customer.Id.Value);
         var repo = new LeadRepository(readDb);
         var result = await repo.ForCustomerAsync(customer.Id, CancellationToken.None);
 
@@ -59,7 +59,7 @@ public class LeadRepositoryTests(PostgresFixture fixture) : IClassFixture<Postgr
 
         // Act
         await repo.AddAsync(lead, CancellationToken.None);
-        await using var readDb = fixture.NewDbContext();
+        await using var readDb = fixture.NewDbContext(customer.Id.Value);
         var readRepo = new LeadRepository(readDb);
         var result = await readRepo.ForCustomerAsync(customer.Id, CancellationToken.None);
 
@@ -74,9 +74,9 @@ public class LeadRepositoryTests(PostgresFixture fixture) : IClassFixture<Postgr
     public async Task ExistsByFingerprintAsync_TrueOnlyAfterSaved()
     {
         // Arrange
-        await using var db = fixture.NewDbContext();
-        var repo = new LeadRepository(db);
         var customer = Customer.Create("Coldstart");
+        await using var db = fixture.NewDbContext(customer.Id.Value);
+        var repo = new LeadRepository(db);
         db.Customers.Add(customer);
         await db.SaveChangesAsync();
         var lead = Lead.CreateHarvested(customer.Id, "Acme", Fit.Yes, "s", "b",
@@ -96,8 +96,8 @@ public class LeadRepositoryTests(PostgresFixture fixture) : IClassFixture<Postgr
     public async Task GetAsync_ThenUpdate_PersistsStatusChange()
     {
         // Arrange
-        await using var db = fixture.NewDbContext();
         var customer = Customer.Create("repo-update@test.com");
+        await using var db = fixture.NewDbContext(customer.Id.Value);
         await new CustomerRepository(db).AddAsync(customer, CancellationToken.None);
         var lead = Lead.CreateHarvested(customer.Id, "Acme", Fit.Yes, "s", "b",
             "hackernews", "https://x/1", "fp-upd", 0.7, "outbound", DateTimeOffset.UtcNow);
@@ -110,7 +110,7 @@ public class LeadRepositoryTests(PostgresFixture fixture) : IClassFixture<Postgr
         await repo.UpdateAsync(loaded, CancellationToken.None);
 
         // Assert
-        await using var read = fixture.NewDbContext();
+        await using var read = fixture.NewDbContext(customer.Id.Value);
         var reloaded = await new LeadRepository(read).GetAsync(lead.Id, CancellationToken.None);
         reloaded!.Status.Should().Be(LeadStatus.Approved);
         reloaded.RecipientEmail!.Value.Should().Be("ceo@acme.com");
@@ -144,7 +144,7 @@ public class LeadRepositoryTests(PostgresFixture fixture) : IClassFixture<Postgr
         await repo.AddAsync(lead, CancellationToken.None);
 
         // Act — fresh context to force a real DB read
-        await using var readDb = fixture.NewDbContext();
+        await using var readDb = fixture.NewDbContext(customer.Id.Value);
         var reloaded = await new LeadRepository(readDb).GetAsync(lead.Id, CancellationToken.None);
 
         // Assert
