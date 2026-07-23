@@ -147,6 +147,63 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
     }
 
     [Fact]
+    public async Task ProfilePost_PersistsBriefAndToggle()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        await TestAuth.SignInAsync(factory, client, $"prof-brief-{Guid.NewGuid():N}@test.com", "Passw0rd!");
+        var form = await AntiforgeryForm(client, "/app/profile", new()
+        {
+            ["Input.CompanyName"] = "Acme Ltd", ["Input.VatNumber"] = "", ["Input.Niche"] = "",
+            ["Input.Address"] = "", ["Input.KvkNumber"] = "", ["Input.Website"] = "", ["Input.ContactEmail"] = "",
+            ["Input.Brief"] = "We help dentists fill calendars.", ["Input.MentionSourceTool"] = "true",
+        });
+
+        // Act
+        await client.PostAsync("/app/profile", new FormUrlEncodedContent(form));
+        var page = await client.GetStringAsync("/app/profile");
+
+        // Assert
+        page.Should().Contain("We help dentists fill calendars.");
+        page.Should().Contain("id=\"Input_MentionSourceTool\"");
+        page.Should().Contain("checked=\"checked\""); // the toggle persisted as checked
+    }
+
+    [Fact]
+    public async Task ProfilePolish_ReturnsPolishedText_WithoutPersisting()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        await TestAuth.SignInAsync(factory, client, $"prof-polish-{Guid.NewGuid():N}@test.com", "Passw0rd!");
+        factory.BriefPolisher.Result = "POLISHED BRIEF";
+        var saveForm = await AntiforgeryForm(client, "/app/profile", new()
+        {
+            ["Input.CompanyName"] = "", ["Input.VatNumber"] = "", ["Input.Niche"] = "",
+            ["Input.Address"] = "", ["Input.KvkNumber"] = "", ["Input.Website"] = "", ["Input.ContactEmail"] = "",
+            ["Input.Brief"] = "rough notes",
+        });
+        await client.PostAsync("/app/profile", new FormUrlEncodedContent(saveForm)); // persist the stored brief
+
+        var polishForm = await AntiforgeryForm(client, "/app/profile", new()
+        {
+            ["Input.CompanyName"] = "", ["Input.VatNumber"] = "", ["Input.Niche"] = "",
+            ["Input.Address"] = "", ["Input.KvkNumber"] = "", ["Input.Website"] = "", ["Input.ContactEmail"] = "",
+            ["Input.Brief"] = "rough notes",
+        });
+
+        // Act
+        var polish = await client.PostAsync("/app/profile?handler=Polish", new FormUrlEncodedContent(polishForm));
+        var polishHtml = await polish.Content.ReadAsStringAsync();
+        var freshGet = await client.GetStringAsync("/app/profile");
+
+        // Assert
+        polish.StatusCode.Should().Be(HttpStatusCode.OK);
+        polishHtml.Should().Contain("POLISHED BRIEF");
+        freshGet.Should().Contain("rough notes");          // stored brief unchanged
+        freshGet.Should().NotContain("POLISHED BRIEF");    // polish did not persist
+    }
+
+    [Fact]
     public async Task GetProfile_WhenNotAuthenticated_RedirectsToLogin()
     {
         // Arrange

@@ -14,6 +14,14 @@
       <div class="field"><label asp-for="Input.Niche">Niche</label><input asp-for="Input.Niche"></div>
       <div class="field"><label asp-for="Input.Website">Website</label><input asp-for="Input.Website"></div>
       <div class="field"><label asp-for="Input.ContactEmail">Contact email</label><input asp-for="Input.ContactEmail" type="email"></div>
+      <div class="field">
+        <label asp-for="Input.Brief">Company brief <span class="field-hint">— a short "who we are" used as context in your outreach</span></label>
+        <textarea asp-for="Input.Brief" rows="4" placeholder="e.g. Acme helps dental clinics fill last-minute cancellations with automated waitlist texts."></textarea>
+        <button class="btn btn-ghost btn-sm" type="submit" asp-page-handler="Polish">Polish with AI</button>
+      </div>
+      <div class="field field-check">
+        <label><input asp-for="Input.MentionSourceTool" type="checkbox"> Mention leads were found via Coldstart</label>
+      </div>
       <button class="btn btn-primary" type="submit">Save →</button>
     </form>
     @if (Model.StatusMessage is not null) { <p class="form-status">@Model.StatusMessage</p> }

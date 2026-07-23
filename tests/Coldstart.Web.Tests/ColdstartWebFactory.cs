@@ -1,3 +1,4 @@
+using Coldstart.Application.Customers;
 using Coldstart.Application.Ports;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -15,6 +16,7 @@ public sealed class ColdstartWebFactory : WebApplicationFactory<Program>, IAsync
 
     public FakeEmailSender Email { get; } = new();
     public FakeMailbox Mailbox { get; } = new();
+    public FakeCompanyBriefPolisher BriefPolisher { get; } = new();
 
     public Task InitializeAsync() => _db.StartAsync();
 
@@ -31,6 +33,16 @@ public sealed class ColdstartWebFactory : WebApplicationFactory<Program>, IAsync
             services.AddSingleton<IEmailSender>(Email);
             services.RemoveAll<Coldstart.Application.Mailbox.IMailbox>();
             services.AddSingleton<Coldstart.Application.Mailbox.IMailbox>(Mailbox);
+            services.RemoveAll<ICompanyBriefPolisher>();
+            services.AddSingleton<ICompanyBriefPolisher>(BriefPolisher);
         });
     }
+}
+
+// Fake ICompanyBriefPolisher: settable return value, defaults to a fixed polished string.
+public sealed class FakeCompanyBriefPolisher : ICompanyBriefPolisher
+{
+    public string? Result { get; set; } = "POLISHED BRIEF";
+
+    public Task<string?> PolishAsync(string rawBrief, CancellationToken ct) => Task.FromResult(Result);
 }

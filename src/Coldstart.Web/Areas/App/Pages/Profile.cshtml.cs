@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 namespace Coldstart.Web.Areas.App.Pages;
 
 [Authorize]
-public sealed class ProfileModel(UserManager<ApplicationUser> users, IGetCompanyProfile getProfile, IUpdateCompanyProfile updateProfile) : PageModel
+public sealed class ProfileModel(UserManager<ApplicationUser> users, IGetCompanyProfile getProfile, IUpdateCompanyProfile updateProfile, ICompanyBriefPolisher polisher) : PageModel
 {
     [TempData] public string? StatusMessage { get; set; }
 
@@ -24,6 +24,8 @@ public sealed class ProfileModel(UserManager<ApplicationUser> users, IGetCompany
         public string? Niche { get; set; }
         public string? Website { get; set; }
         public string? ContactEmail { get; set; }
+        public string? Brief { get; set; }
+        public bool MentionSourceTool { get; set; }
     }
 
     public async Task<IActionResult> OnGetAsync(CancellationToken ct)
@@ -31,7 +33,12 @@ public sealed class ProfileModel(UserManager<ApplicationUser> users, IGetCompany
         var user = await users.GetUserAsync(User);
         if (user?.CustomerId is null) return RedirectToPage("Index");
         var v = await getProfile.ForCustomerAsync(user.CustomerId.Value, ct);
-        Input = new ProfileInput { CompanyName = v.CompanyName, Address = v.Address, VatNumber = v.VatNumber, KvkNumber = v.KvkNumber, Niche = v.Niche, Website = v.Website, ContactEmail = v.ContactEmail };
+        Input = new ProfileInput
+        {
+            CompanyName = v.CompanyName, Address = v.Address, VatNumber = v.VatNumber, KvkNumber = v.KvkNumber,
+            Niche = v.Niche, Website = v.Website, ContactEmail = v.ContactEmail,
+            Brief = v.Brief, MentionSourceTool = v.MentionSourceTool,
+        };
         return Page();
     }
 
@@ -40,8 +47,17 @@ public sealed class ProfileModel(UserManager<ApplicationUser> users, IGetCompany
         var user = await users.GetUserAsync(User);
         if (user?.CustomerId is null) return RedirectToPage("Index");
         await updateProfile.UpdateAsync(user.CustomerId.Value,
-            new CompanyProfileInput(Input.CompanyName, Input.Address, Input.VatNumber, Input.KvkNumber, Input.Niche, Input.Website, Input.ContactEmail), ct);
+            new CompanyProfileInput(Input.CompanyName, Input.Address, Input.VatNumber, Input.KvkNumber, Input.Niche, Input.Website, Input.ContactEmail, Input.Brief, Input.MentionSourceTool), ct);
         return RedirectToPage("Index");
+    }
+
+    public async Task<IActionResult> OnPostPolishAsync(CancellationToken ct)
+    {
+        var polished = string.IsNullOrWhiteSpace(Input.Brief) ? null : await polisher.PolishAsync(Input.Brief!, ct);
+        if (polished is not null) Input.Brief = polished;
+        else StatusMessage = "Couldn't polish just now — your text is unchanged.";
+        ModelState.Clear(); // otherwise asp-for re-renders the raw posted value instead of the polished one
+        return Page(); // re-render with the polished (unsaved) text; admin reviews then Saves
     }
 
     public async Task<IActionResult> OnPostShowHintsAsync(CancellationToken ct)

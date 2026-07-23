@@ -126,6 +126,9 @@
   .field input[disabled], .field textarea[disabled] { opacity: 0.65; cursor: not-allowed; }
   .form-status { font-size: 0.84rem; font-weight: 700; color: #3c7a70; margin: 0; min-height: 1em; }
   .form-status.error { color: #B3402A; }
+  .auth-card .field span.field-hint { color: var(--body-subtle); font-weight: 400; text-transform: none; }
+  .field-check label { display: inline-flex; align-items: center; gap: 9px; cursor: pointer; text-transform: none; letter-spacing: 0; font-weight: 500; }
+  .field-check input[type="checkbox"] { width: 17px; height: 17px; margin: 0; flex: none; accent-color: var(--sunrise-deep); cursor: pointer; }
 
   /* auth pages: email/password form + optional external-provider buttons */
   .auth-page { max-width: 420px; padding-top: 64px; padding-bottom: 64px; }
