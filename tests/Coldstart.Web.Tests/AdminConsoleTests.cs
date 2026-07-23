@@ -87,8 +87,10 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
         var mgr = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         (await mgr.FindByEmailAsync(invitee)).Should().BeNull();
 
+        // AllAsync bypasses the tenant filter (admin path); GetAsync would be filtered to null in this
+        // tenant-less scope regardless of whether the row was actually deleted, so assert non-membership.
         var customers = scope.ServiceProvider.GetRequiredService<ICustomerRepository>();
-        (await customers.GetAsync(new CustomerId(customerId), CancellationToken.None)).Should().BeNull();
+        (await customers.AllAsync(CancellationToken.None)).Select(c => c.Id.Value).Should().NotContain(customerId);
     }
 
     [Fact]
@@ -170,8 +172,10 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
         var users = scope2.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         (await users.FindByEmailAsync(target)).Should().BeNull();
 
+        // AllAsync bypasses the tenant filter (admin path); GetAsync would be filtered to null in this
+        // tenant-less scope regardless of whether the row was actually deleted, so assert non-membership.
         var customers = scope2.ServiceProvider.GetRequiredService<ICustomerRepository>();
-        (await customers.GetAsync(new CustomerId(customerId), CancellationToken.None)).Should().BeNull();
+        (await customers.AllAsync(CancellationToken.None)).Select(c => c.Id.Value).Should().NotContain(customerId);
     }
 
     [Fact]
