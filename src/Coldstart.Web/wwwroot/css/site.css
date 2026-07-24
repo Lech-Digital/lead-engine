@@ -76,15 +76,19 @@
 .scene-track { position: relative; }
 .scene-copy-inner { max-width: 30rem; }
 .lp-scene-cue { color: var(--body-subtle); font-size: 1rem; }
-.scene--night { background: var(--night); color: var(--night-text); position: relative; overflow: clip; }
+.scene--night { background: linear-gradient(180deg, #1C1F33 0%, #1C1F33 55%, #C96F4A 86%, #FF9E6B 100%); color: var(--night-text); position: relative; }
+/* Carry the sunrise out of the night scene: dawn at the top, fading to daylight before pricing. */
+.lp-act--daybreak { background: linear-gradient(180deg, #FF9E6B 0%, #F6D3BC 24%, var(--daylight) 52%); }
 .scene--night .lp-night-label { color: var(--night-faint); text-transform: uppercase; margin: 0 0 8px; }
 .scene--night .lp-time { color: var(--sunrise-soft); }
 /* Keep the night copy off the screen edge, and tighten the label/time/line rhythm. */
 .scene--night .scene-track { position: relative; z-index: 1; max-width: 1120px; margin-inline: auto; padding-inline: clamp(22px, 5vw, 56px); }
 .scene--night .scene-copy-inner p { margin: 0 0 6px; }
-/* Full-bleed night->dawn sky, pinned behind the floating robot (sticky-background trick). */
-.scene-sky { position: sticky; top: 0; height: 100vh; margin-bottom: -100vh; z-index: 0; overflow: hidden; background: linear-gradient(180deg, #1C1F33, #2A2F4C); }
-.scene-sky-dawn { position: absolute; inset: 0; background: linear-gradient(180deg, #241F36 0%, #C96F4A 58%, #FF9E6B 100%); opacity: clamp(0, calc((var(--progress, 0) - 0.55) / 0.35), 1); }
+/* Full-bleed night->dawn sky behind the floating robot: an absolute full-section layer (out of
+   flow, so no page-height games) with a sticky inner that pins to the viewport. */
+.scene-sky { position: absolute; inset: 0; z-index: 0; overflow: clip; }
+.scene-sky-inner { position: sticky; top: 0; height: 100vh; background: linear-gradient(180deg, #1C1F33, #2A2F4C); }
+.scene-sky-dawn { position: absolute; inset: 0; background: linear-gradient(180deg, #241F36 0%, #C96F4A 58%, #FF9E6B 100%); opacity: clamp(0, calc((var(--progress, 0) - 0.6) / 0.25), 1); }
 .scene-sky-art { position: absolute; inset: 0; width: 100%; height: 100%; }
 .scene--night h2 { color: var(--night-text); }
 .scene--night .lp-sunrise-sub { color: var(--night-muted); }
@@ -134,7 +138,7 @@
 
 /* Scene 2 (night shift): robot morphs by beat; sky scrubs night->dawn by --progress. */
 /* Dawn holds off until the last third of the scene, then blooms (night through the reject beat). */
-.scene--night .r-stars { opacity: clamp(0, calc((0.9 - var(--progress, 0)) / 0.3), 1); }
+.scene--night .r-stars { opacity: clamp(0, calc((0.82 - var(--progress, 0)) / 0.25), 1); }
 .scene--night .r-glass, .scene--night .r-cards, .scene--night .r-card, .scene--night .r-card-glow,
 .scene--night .r-x, .scene--night .r-email, .scene--night .r-inbox, .scene--night .r-check,
 .scene--night .r-signals { transition: opacity .5s ease, transform .55s ease; }
