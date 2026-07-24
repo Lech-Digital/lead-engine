@@ -121,6 +121,58 @@
   .scene--hero[data-active="1"] .lp-bot { animation: lp-bob 3.6s ease-in-out infinite; }
 }
 @keyframes lp-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
+/* Scene 2 (night shift): robot morphs by beat; sky scrubs night->dawn by --progress. */
+/* Dawn holds off until the last third of the scene, then blooms (night through the reject beat). */
+.scene--night .r-sky-dawn { opacity: clamp(0, calc((var(--progress, 0) - 0.55) / 0.35), 1); }
+.scene--night .r-stars { opacity: clamp(0, calc((0.9 - var(--progress, 0)) / 0.3), 1); }
+.scene--night .r-glass, .scene--night .r-cards, .scene--night .r-card, .scene--night .r-card-glow,
+.scene--night .r-x, .scene--night .r-email, .scene--night .r-inbox, .scene--night .r-check,
+.scene--night .r-signals { transition: opacity .5s ease, transform .55s ease; }
+
+/* Watch (beat 0): signals twinkle; magnifier lowered, scanning the sky; cards/email hidden. */
+.scene--night .r-signals { opacity: 1; }
+@media (prefers-reduced-motion: no-preference) { .scene--night[data-active="0"] .r-signal { animation: lp-twinkle 2.2s ease-in-out infinite; } }
+.scene--night[data-active="1"] .r-signals, .scene--night[data-active="2"] .r-signals,
+.scene--night[data-active="3"] .r-signals, .scene--night[data-active="4"] .r-signals { opacity: 0; }
+@keyframes lp-twinkle { 0%, 100% { opacity: .3; } 50% { opacity: 1; } }
+
+.scene--night .r-glass { transform-box: view-box; transform-origin: 256px 236px; }
+.scene--night[data-active="0"] .r-glass { opacity: .45; transform: rotate(-17deg); }
+.scene--night[data-active="1"] .r-glass, .scene--night[data-active="2"] .r-glass { opacity: 1; transform: rotate(calc(-4deg + 8deg * var(--progress, 0))); }
+.scene--night[data-active="3"] .r-glass, .scene--night[data-active="4"] .r-glass { opacity: 0; }
+
+/* Sniff (beat 1): candidate cards fade in. */
+.scene--night .r-cards { opacity: 0; }
+.scene--night[data-active="1"] .r-cards, .scene--night[data-active="2"] .r-cards { opacity: 1; }
+.scene--night .r-card { transition: transform .55s cubic-bezier(.4,0,.7,1), opacity .55s ease; }
+.scene--night .r-x { opacity: 0; }
+.scene--night .r-card-glow { opacity: 0; }
+
+/* Reject (beat 2+): rejects get an x and fall away (staggered); the survivor glows. */
+.scene--night[data-active="2"] .r-x, .scene--night[data-active="3"] .r-x, .scene--night[data-active="4"] .r-x { opacity: 1; }
+.scene--night[data-active="2"] .r-card--drop, .scene--night[data-active="3"] .r-card--drop, .scene--night[data-active="4"] .r-card--drop { transform: translateY(66px); opacity: 0; transition-delay: calc(var(--d, 0) * 1s); }
+.scene--night[data-active="2"] .r-card-glow { opacity: .42; }
+
+/* Draft (beat 3): the survivor unfolds into an email; its lines type in. */
+.scene--night .r-email { opacity: 0; transform-box: view-box; }
+.scene--night[data-active="3"] .r-email, .scene--night[data-active="4"] .r-email { opacity: 1; }
+.scene--night .r-email-line { transform: scaleX(0); transform-box: fill-box; transform-origin: left; }
+@media (prefers-reduced-motion: no-preference) {
+  .scene--night[data-active="3"] .r-email-line, .scene--night[data-active="4"] .r-email-line { animation: lp-type .45s steps(10) forwards; }
+  .scene--night[data-active="3"] .r-email-line:nth-child(6) { animation-delay: .3s; }
+  .scene--night[data-active="3"] .r-email-line:nth-child(7) { animation-delay: .6s; }
+}
+.scene--night[data-active="4"] .r-email-line { animation: none; transform: scaleX(1); }
+@media (prefers-reduced-motion: reduce) { .scene--night .r-email-line { transform: scaleX(1); } }
+@keyframes lp-type { to { transform: scaleX(1); } }
+
+/* Dawn / deliver (beat 4): email hands off to the inbox; a check lands. */
+.scene--night[data-active="4"] .r-email { transform: translate(28px, -16px) scale(.82); }
+.scene--night .r-inbox { opacity: 0; }
+.scene--night[data-active="4"] .r-inbox { opacity: 1; }
+.scene--night .r-check { opacity: 0; transform: scale(.4); transform-box: fill-box; transform-origin: center; transition: opacity .4s ease, transform .4s cubic-bezier(.2, 1.4, .4, 1); }
+.scene--night[data-active="4"] .r-check { opacity: 1; transform: scale(1); }
 .lp-act { padding: 88px 0; }
 .lp-spam { margin: 28px 0; padding: 22px 26px; border-left: 3px solid var(--line-soft); background: #fff; border-radius: 0 10px 10px 0; }
 .lp-spam p { font-style: italic; margin: 0 0 10px; }
