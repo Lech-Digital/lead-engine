@@ -90,10 +90,10 @@ Vanilla, dependency-free, `defer`-loaded. Responsibilities:
 
 ### 2. Scene markup + CSS (`Index.cshtml`, `site.css`)
 
-- `.scene-track` height sets the scroll length: Scene 1 ≈ `180vh` (short — read hero, then a beat), Scene 2 ≈ `560vh` (five beats, ~110vh each + pin).
+- `.scene-track` height sets the scroll length (tuned a touch faster than a full screen per beat, so it scrubs briskly but still reads): Scene 1 ≈ `150vh` (short — read hero, then the "ready" beat), Scene 2 ≈ `430vh` (five beats at ~80vh dwell each + the pin).
 - `.scene-stage`: `position: sticky; top: 0; min-height: 100vh; display: grid; place-items: center;`.
 - Desktop grid: `.scene-track { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); }` with copy on the left, stage on the right (`scene--hero` may bias columns for the hero).
-- `.beat`: `min-height: ~100vh; display: flex; align-items: center;` so each beat gets its own scroll "dwell."
+- `.beat`: `min-height: ~80vh; display: flex; align-items: center;` — each beat gets a shorter-than-a-screen dwell so scrolling advances the story quickly without feeling rushed. (Final vh values are tuning knobs, adjusted by screenshot/real-browser feel during the build.)
 - Robot state driven by `.scene[data-active="N"]` selectors toggling opacity/transform of SVG layer groups.
 
 ### 3. Robot SVG — stateful (`Index.cshtml`)
