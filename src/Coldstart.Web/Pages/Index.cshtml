@@ -47,29 +47,20 @@
           <figure class="lp-hero-art" aria-hidden="true">
         <svg viewBox="0 0 460 410" role="img" xmlns="http://www.w3.org/2000/svg">
           <defs>
-            <linearGradient id="cs-night" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color="#1C1F33"/>
-              <stop offset="1" stop-color="#2A2F4C"/>
-            </linearGradient>
+            <radialGradient id="cs-glow" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stop-color="#1C1F33" stop-opacity="0.92"/>
+              <stop offset="0.6" stop-color="#232741" stop-opacity="0.5"/>
+              <stop offset="1" stop-color="#232741" stop-opacity="0"/>
+            </radialGradient>
             <radialGradient id="cs-lens" cx="0.5" cy="0.5" r="0.5">
               <stop offset="0" stop-color="#FFB98C" stop-opacity="0.5"/>
               <stop offset="1" stop-color="#FF6A3D" stop-opacity="0.04"/>
             </radialGradient>
-            <clipPath id="cs-frame"><rect x="1.5" y="1.5" width="457" height="407" rx="20"/></clipPath>
           </defs>
 
-          <g clip-path="url(#cs-frame)">
-            <rect x="0" y="0" width="460" height="410" fill="url(#cs-night)"/>
-            <rect x="0" y="350" width="460" height="60" fill="#232741"/>
-            <g fill="#E9E7F2">
-              <circle cx="70" cy="150" r="1.5" opacity="0.7"/><circle cx="150" cy="60" r="1.3" opacity="0.6"/>
-              <circle cx="300" cy="48" r="1.5" opacity="0.7"/><circle cx="410" cy="130" r="1.2" opacity="0.5"/>
-              <circle cx="360" cy="196" r="1.1" opacity="0.45"/><circle cx="120" cy="212" r="1.1" opacity="0.4"/>
-            </g>
-            <g><circle cx="70" cy="72" r="26" fill="#F1E9D8"/><circle cx="82" cy="65" r="23" fill="#1C1F33"/></g>
-            <text x="392" y="88" font-family="'Cabinet Grotesk',Helvetica,sans-serif" font-size="26" font-weight="800" fill="#FF6A3D">*</text>
-            <ellipse cx="214" cy="352" rx="118" ry="12" fill="#121422" opacity="0.5"/>
-          </g>
+          <!-- soft night glow so the robot floats (no hard card) yet keeps contrast on the cream page -->
+          <ellipse cx="236" cy="238" rx="242" ry="206" fill="url(#cs-glow)"/>
+          <ellipse cx="214" cy="352" rx="110" ry="12" fill="#0E1020" opacity="0.3"/>
 
           <!-- the night-shift robot -->
           <g class="lp-bot">
@@ -113,7 +104,6 @@
             <text x="334" y="335" text-anchor="middle" font-family="'Cabinet Grotesk',Helvetica,sans-serif" font-size="26" font-weight="800" fill="#FF6A3D">*</text>
           </g>
 
-          <rect x="1.5" y="1.5" width="457" height="407" rx="20" fill="none" stroke="#33385A"/>
         </svg>
       </figure>
         </div>
@@ -149,6 +139,25 @@
 
 <!-- Acts 3–4 · The night shift (pinned scroll scene: watch → sniff → reject → draft → dawn) -->
 <section class="scene scene--night" id="morning" data-scene="night" data-active="0">
+  <div class="scene-sky" aria-hidden="true">
+    <div class="scene-sky-dawn"></div>
+    <svg class="scene-sky-art" viewBox="0 0 1200 760" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <g class="r-stars">
+        <g fill="#E9E7F2">
+          <circle cx="180" cy="150" r="2.4" opacity="0.7"/><circle cx="420" cy="90" r="2" opacity="0.6"/>
+          <circle cx="760" cy="120" r="2.2" opacity="0.65"/><circle cx="1020" cy="200" r="1.8" opacity="0.5"/>
+          <circle cx="300" cy="300" r="1.8" opacity="0.45"/><circle cx="900" cy="340" r="1.8" opacity="0.5"/>
+          <circle cx="1120" cy="90" r="1.6" opacity="0.5"/><circle cx="600" cy="230" r="1.6" opacity="0.4"/>
+        </g>
+        <g><circle cx="150" cy="122" r="46" fill="#F1E9D8"/><circle cx="172" cy="108" r="41" fill="#1C1F33"/></g>
+      </g>
+      <g class="r-signals" fill="#FF8A5C">
+        <circle class="r-signal" cx="360" cy="180" r="5"/><circle class="r-signal" cx="820" cy="150" r="5"/>
+        <circle class="r-signal" cx="1050" cy="300" r="5"/><circle class="r-signal" cx="560" cy="118" r="5"/>
+        <circle class="r-signal" cx="240" cy="360" r="5"/>
+      </g>
+    </svg>
+  </div>
   <div class="scene-track">
     <div class="scene-copy">
       <div class="beat" data-beat="0"><div class="scene-copy-inner">
@@ -185,29 +194,9 @@
       <figure class="lp-hero-art lp-hero-art--night">
         <svg viewBox="0 0 460 410" role="img" xmlns="http://www.w3.org/2000/svg">
           <defs>
-            <linearGradient id="csn-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1C1F33"/><stop offset="1" stop-color="#2A2F4C"/></linearGradient>
-            <linearGradient id="csn-dawn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#241F36"/><stop offset="0.55" stop-color="#C96F4A"/><stop offset="1" stop-color="#FF9E6B"/></linearGradient>
             <radialGradient id="csn-lens" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFB98C" stop-opacity="0.5"/><stop offset="1" stop-color="#FF6A3D" stop-opacity="0.04"/></radialGradient>
-            <clipPath id="csn-frame"><rect x="1.5" y="1.5" width="457" height="407" rx="20"/></clipPath>
           </defs>
-          <g clip-path="url(#csn-frame)">
-            <rect x="0" y="0" width="460" height="410" fill="url(#csn-sky)"/>
-            <rect class="r-sky-dawn" x="0" y="0" width="460" height="410" fill="url(#csn-dawn)"/>
-            <g class="r-stars" fill="#E9E7F2">
-              <circle cx="70" cy="150" r="1.5" opacity="0.7"/><circle cx="150" cy="60" r="1.3" opacity="0.6"/>
-              <circle cx="410" cy="120" r="1.2" opacity="0.5"/><circle cx="360" cy="196" r="1.1" opacity="0.45"/>
-              <circle cx="120" cy="212" r="1.1" opacity="0.4"/>
-              <g><circle cx="70" cy="72" r="26" fill="#F1E9D8"/><circle cx="82" cy="65" r="23" fill="#1C1F33"/></g>
-            </g>
-            <rect x="0" y="350" width="460" height="60" fill="#232741"/>
-            <ellipse cx="214" cy="352" rx="118" ry="12" fill="#121422" opacity="0.5"/>
-          </g>
-
-          <g class="r-signals" fill="#FF8A5C">
-            <circle class="r-signal" cx="128" cy="96" r="3"/><circle class="r-signal" cx="330" cy="70" r="3"/>
-            <circle class="r-signal" cx="392" cy="150" r="3"/><circle class="r-signal" cx="248" cy="52" r="3"/>
-            <circle class="r-signal" cx="96" cy="176" r="3"/>
-          </g>
+          <ellipse cx="214" cy="352" rx="112" ry="13" fill="#0E1020" opacity="0.34"/>
 
           <g class="r-robot">
             <rect x="188" y="300" width="16" height="46" rx="8" fill="#CFC8B6"/>
@@ -281,8 +270,6 @@
             <line x1="310" y1="306" x2="324" y2="320" stroke="#CFC8B6" stroke-width="9" stroke-linecap="round"/>
             <circle cx="334" cy="326" r="30" fill="url(#csn-lens)" stroke="#FF6A3D" stroke-width="6"/>
           </g>
-
-          <rect x="1.5" y="1.5" width="457" height="407" rx="20" fill="none" stroke="#33385A"/>
         </svg>
       </figure>
     </div>
