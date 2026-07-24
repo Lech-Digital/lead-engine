@@ -111,6 +111,16 @@
   .scene-stage { position: static; height: auto; }
   .beat { min-height: 0; margin-bottom: 28px; }
 }
+
+/* Scene 1: boot → ready (default state = fully awake, so no-JS shows a normal robot). */
+.scene--hero .lp-eye, .scene--hero .r-antenna, .scene--hero .r-scan { transition: opacity .5s ease; }
+.scene--hero[data-active="0"] .lp-eye { opacity: 0.28; animation: none; }
+.scene--hero[data-active="0"] .r-antenna { opacity: 0.22; }
+.scene--hero[data-active="0"] .r-scan { opacity: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .scene--hero[data-active="1"] .lp-bot { animation: lp-bob 3.6s ease-in-out infinite; }
+}
+@keyframes lp-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 .lp-act { padding: 88px 0; }
 .lp-spam { margin: 28px 0; padding: 22px 26px; border-left: 3px solid var(--line-soft); background: #fff; border-radius: 0 10px 10px 0; }
 .lp-spam p { font-style: italic; margin: 0 0 10px; }
