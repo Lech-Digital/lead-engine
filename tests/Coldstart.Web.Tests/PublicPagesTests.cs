@@ -38,6 +38,23 @@ public class PublicPagesTests(ColdstartWebFactory factory) : IClassFixture<Colds
     }
 
     [Fact]
+    public async Task Landing_RendersScrollSceneScaffolding_AndKeepsActCopy()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+
+        // Act
+        var html = await client.GetStringAsync("/");
+
+        // Assert — both pinned scenes, all five night beats, the engine script, and key copy are served
+        html.Should().Contain("scene--hero").And.Contain("scene--night");
+        foreach (var b in new[] { "data-beat=\"0\"", "data-beat=\"1\"", "data-beat=\"2\"", "data-beat=\"3\"", "data-beat=\"4\"" })
+            html.Should().Contain(b);
+        html.Should().Contain("lp-scroll.js");
+        html.Should().Contain("It's in your inbox.").And.Contain("What it costs. All of it.");
+    }
+
+    [Fact]
     public async Task GetLanding_HasHeroLoginLink_NotOnlyInStatusbar()
     {
         // Arrange
