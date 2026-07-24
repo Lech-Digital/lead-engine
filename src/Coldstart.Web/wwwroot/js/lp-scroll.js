@@ -1,6 +1,6 @@
-// Landing scroll-scene engine: pins each .scene's stage (via CSS sticky) and drives the pinned
-// robot by writing data-active (current beat) + --progress (0..1 scrub) on each .scene.
-// Native scrolling only — no hijacking. No-ops on mobile / reduced motion / missing APIs.
+// Landing scroll engine: drives the beats (data-active) + scrub (--progress) per scene, and the
+// single fixed robot's fade-in/out across the narrative. Native scrolling only — no hijacking.
+// No-ops on mobile / reduced motion / missing APIs (CSS handles the static fallback).
 (function () {
   "use strict";
 
@@ -10,6 +10,9 @@
 
   var scenes = [].slice.call(document.querySelectorAll(".scene"));
   if (!scenes.length || !supported) return;
+
+  var nightScene = document.querySelector(".scene--night");
+  var robotStage = nightScene && nightScene.querySelector(".scene-stage");
 
   var beatObservers = [];
   var scrollBound = false;
@@ -21,11 +24,11 @@
     teardown();
     if (!active()) {
       scenes.forEach(function (s) { s.style.removeProperty("--progress"); s.setAttribute("data-active", "0"); });
+      if (robotStage) robotStage.style.removeProperty("--robot-op");   // static/visible on mobile
       return;
     }
     scenes.forEach(function (scene) {
       var beats = [].slice.call(scene.querySelectorAll(".beat"));
-      // Activate whichever beat sits nearest the viewport centre.
       var io = new IntersectionObserver(function (entries) {
         entries.forEach(function (e) {
           if (e.isIntersecting) scene.setAttribute("data-active", e.target.getAttribute("data-beat"));
@@ -52,10 +55,20 @@
       scenes.forEach(function (scene) {
         var track = scene.querySelector(".scene-track") || scene;
         var r = track.getBoundingClientRect();
-        var total = r.height - vh;                              // scrollable range while pinned
+        var total = r.height - vh;
         var p = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 0;
         scene.style.setProperty("--progress", p.toFixed(4));
       });
+      // Single robot: visible from the top through the night, then fades out as the night's
+      // bottom rises past the lower viewport (before the daylight "how it works" section).
+      if (robotStage && nightScene) {
+        var nb = nightScene.getBoundingClientRect().bottom;
+        // Robot rides at full opacity through every beat (delivery included), then dissolves
+        // into the dawn over the delivery beat's tail — reaching zero exactly as the night
+        // ends, so it's gone before the daylight how-it-works section scrolls up.
+        var op = Math.min(1, Math.max(0, nb / (vh * 0.55)));
+        robotStage.style.setProperty("--robot-op", op.toFixed(3));
+      }
     });
   }
 
