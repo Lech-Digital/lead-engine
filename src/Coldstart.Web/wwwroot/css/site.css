@@ -76,9 +76,19 @@
 .scene-track { position: relative; }
 .scene-copy-inner { max-width: 30rem; }
 .lp-scene-cue { color: var(--body-subtle); font-size: 1rem; }
-.scene--night { background: linear-gradient(180deg, #1C1F33 0%, #1C1F33 55%, #C96F4A 86%, #FF9E6B 100%); color: var(--night-text); position: relative; }
-/* Carry the sunrise out of the night scene: dawn at the top, fading to daylight before pricing. */
-.lp-act--daybreak { background: linear-gradient(180deg, #FF9E6B 0%, #F6D3BC 24%, var(--daylight) 52%); }
+.scene--night { color: var(--night-text); position: relative; }
+
+/* One continuous sky behind the whole page (document-tall gradient), so brightness flows
+   smoothly day -> night -> dawn -> day as you scroll (no pinned dark strip). */
+.lp { position: relative; }
+.page-sky { position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(180deg,
+    #FDFBF7 0%, #FDFBF7 10%, #4A4364 16%, #2A2440 24%, #1C1F33 31%,
+    #1C1F33 52%, #C96F4A 60%, #FF9E6B 67%, #FBE0CC 70%, #FDFBF7 74%, #FDFBF7 100%); }
+.page-sky-art { position: absolute; top: 13%; left: 0; width: 100%; height: 57%; }
+@media (prefers-reduced-motion: no-preference) { .ps-signal { animation: lp-twinkle 2.4s ease-in-out infinite; } }
+.ps-signal:nth-child(2) { animation-delay: .5s; } .ps-signal:nth-child(3) { animation-delay: 1s; }
+.ps-signal:nth-child(4) { animation-delay: 1.5s; } .ps-signal:nth-child(5) { animation-delay: .8s; }
 .scene--night .lp-night-label { color: var(--night-faint); text-transform: uppercase; margin: 0 0 8px; }
 .scene--night .lp-time { color: var(--sunrise-soft); }
 /* Keep the night copy off the screen edge, and tighten the label/time/line rhythm. */
@@ -96,6 +106,16 @@
 .scene--night .beat[data-beat="4"] h2 { color: #16192B; }
 .scene--night .beat[data-beat="4"] .lp-sunrise-sub { color: #241C14; }
 .scene--night .beat[data-beat="4"] .lp-time { color: #16192B; }
+/* Beat 3 (draft) lands on the rising dawn too — dark intro copy, but the dark draft panel keeps light text. */
+.scene--night .beat[data-beat="3"] .scene-copy-inner > p { color: #241C14; }
+.scene--night .beat[data-beat="3"] .lp-time { color: var(--sunrise-deep); }
+.scene--night .beat[data-beat="3"] .lp-draft { background: rgba(28,31,51,0.92); border-color: rgba(255,255,255,0.12); }
+
+/* Enemy + belief now sit in the dusk/night zone of the continuous sky — light copy. */
+#enemy .wrap > h2, .lp-act-belief .wrap > h2 { color: #F2EEF8; }
+#enemy .wrap > p { color: #CFC9DD; }
+.lp-act-belief .lp-beliefs li { color: #CFC9DD; }
+.lp-act-belief .lp-beliefs strong { color: #F2EEF8; }
 .scene--night p { color: var(--night-text); }
 .scene--night .lp-draft { margin-top: 16px; background: var(--night-raised); border: 1px solid var(--night-border); border-radius: 10px; padding: 18px 20px; }
 .scene--night .lp-draft-subj { color: var(--night-muted); font-size: 0.9rem; margin: 0 0 8px; }

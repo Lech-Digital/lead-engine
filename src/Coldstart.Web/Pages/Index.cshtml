@@ -7,6 +7,28 @@
 
 <main class="lp">
 
+@* One continuous sky behind the whole page: a document-tall day->night->dawn->day gradient
+   (flows smoothly as you scroll — no pinned dark strip), with moon/stars/signals over the night band. *@
+<div class="page-sky" aria-hidden="true">
+  <svg class="page-sky-art" viewBox="0 0 1000 2350" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <g class="ps-stars" fill="#E9E7F2">
+      <circle cx="360" cy="180" r="3.2" opacity="0.6"/><circle cx="620" cy="260" r="3.6" opacity="0.7"/>
+      <circle cx="860" cy="200" r="3" opacity="0.55"/><circle cx="500" cy="440" r="3" opacity="0.5"/>
+      <circle cx="780" cy="520" r="3" opacity="0.5"/><circle cx="920" cy="360" r="2.6" opacity="0.5"/>
+      <circle cx="240" cy="560" r="2.6" opacity="0.45"/><circle cx="120" cy="820" r="3" opacity="0.4"/>
+      <circle cx="880" cy="900" r="3" opacity="0.4"/><circle cx="420" cy="1080" r="2.6" opacity="0.35"/>
+      <circle cx="680" cy="1360" r="2.6" opacity="0.32"/><circle cx="200" cy="1560" r="2.4" opacity="0.3"/>
+      <circle cx="820" cy="1720" r="2.4" opacity="0.3"/>
+      <g><circle cx="150" cy="270" r="44" fill="#F1E9D8"/><circle cx="175" cy="252" r="38" fill="#1C1F33"/></g>
+    </g>
+    <g class="ps-signals" fill="#FF8A5C">
+      <circle class="ps-signal" cx="430" cy="360" r="6"/><circle class="ps-signal" cx="740" cy="300" r="6"/>
+      <circle class="ps-signal" cx="900" cy="520" r="6"/><circle class="ps-signal" cx="560" cy="230" r="6"/>
+      <circle class="ps-signal" cx="300" cy="620" r="6"/>
+    </g>
+  </svg>
+</div>
+
 <!-- Act 0 · Hero (daylight) -->
 <header class="lp-hero">
   <div class="wrap">
@@ -139,27 +161,6 @@
 
 <!-- Acts 3–4 · The night shift (pinned scroll scene: watch → sniff → reject → draft → dawn) -->
 <section class="scene scene--night" id="morning" data-scene="night" data-active="0">
-  <div class="scene-sky" aria-hidden="true">
-    <div class="scene-sky-inner">
-    <div class="scene-sky-dawn"></div>
-    <svg class="scene-sky-art" viewBox="0 0 1200 760" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-      <g class="r-stars">
-        <g fill="#E9E7F2">
-          <circle cx="180" cy="150" r="2.4" opacity="0.7"/><circle cx="420" cy="90" r="2" opacity="0.6"/>
-          <circle cx="760" cy="120" r="2.2" opacity="0.65"/><circle cx="1020" cy="200" r="1.8" opacity="0.5"/>
-          <circle cx="300" cy="300" r="1.8" opacity="0.45"/><circle cx="900" cy="340" r="1.8" opacity="0.5"/>
-          <circle cx="1120" cy="90" r="1.6" opacity="0.5"/><circle cx="600" cy="230" r="1.6" opacity="0.4"/>
-        </g>
-        <g><circle cx="150" cy="122" r="46" fill="#F1E9D8"/><circle cx="172" cy="108" r="41" fill="#1C1F33"/></g>
-      </g>
-      <g class="r-signals" fill="#FF8A5C">
-        <circle class="r-signal" cx="360" cy="180" r="5"/><circle class="r-signal" cx="820" cy="150" r="5"/>
-        <circle class="r-signal" cx="1050" cy="300" r="5"/><circle class="r-signal" cx="560" cy="118" r="5"/>
-        <circle class="r-signal" cx="240" cy="360" r="5"/>
-      </g>
-    </svg>
-    </div>
-  </div>
   <div class="scene-track">
     <div class="scene-copy">
       <div class="beat" data-beat="0"><div class="scene-copy-inner">
