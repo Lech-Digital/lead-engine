@@ -21,20 +21,30 @@
           <a class="lp-login hero-login" href="/Identity/Account/Login">Log in</a>
       }
     </nav>
-    <div class="lp-hero-grid">
-      <div class="lp-hero-copy">
-        <h1>Wake up to your next client, already found — with the first email already written.</h1>
-        <p class="lp-lede">For companies that sell to other businesses. We watch the market overnight, pick the few companies that need you right now, and draft your opening email. You read it over coffee and hit approve.</p>
-        <div class="lp-cta-row">
-          <a class="btn btn-primary" href="#get-leads">Get 3 sample leads — free</a>
-          <a class="lp-quiet" href="#enemy">See one morning ↓</a>
+    <div class="scene scene--hero" data-scene="hero" data-active="0">
+      <div class="scene-track">
+        <div class="scene-copy">
+          <div class="beat" data-beat="0">
+            <div class="scene-copy-inner">
+              <h1>Wake up to your next client, already found — with the first email already written.</h1>
+              <p class="lp-lede">For companies that sell to other businesses. We watch the market overnight, pick the few companies that need you right now, and draft your opening email. You read it over coffee and hit approve.</p>
+              <div class="lp-cta-row">
+                <a class="btn btn-primary" href="#get-leads">Get 3 sample leads — free</a>
+                <a class="lp-quiet" href="#enemy">See one morning ↓</a>
+              </div>
+            </div>
+          </div>
+          <div class="beat" data-beat="1">
+            <div class="scene-copy-inner">
+              <p class="lp-scene-cue">Your night-shift engine is booting up. It works while you sleep — scroll on.</p>
+            </div>
+          </div>
         </div>
-      </div>
-
-      @* Signature: the night-shift lead detective. While you sleep, a friendly robot sweeps
-         the dark with its magnifier and turns up your next client (the glowing lead card).
-         Same palette + the * mark; the sweep + found-glow + eyes animate (reduced-motion safe). *@
-      <figure class="lp-hero-art" aria-hidden="true">
+        <div class="scene-stage" aria-hidden="true">
+          @* Signature: the night-shift lead detective. While you sleep, a friendly robot sweeps
+             the dark with its magnifier and turns up your next client (the glowing lead card).
+             Same palette + the * mark; the sweep + found-glow + eyes animate (reduced-motion safe). *@
+          <figure class="lp-hero-art" aria-hidden="true">
         <svg viewBox="0 0 460 410" role="img" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="cs-night" x1="0" y1="0" x2="0" y2="1">
@@ -106,6 +116,8 @@
           <rect x="1.5" y="1.5" width="457" height="407" rx="20" fill="none" stroke="#33385A"/>
         </svg>
       </figure>
+        </div>
+      </div>
     </div>
   </div>
 </header>
@@ -135,20 +147,24 @@
   </div>
 </section>
 
-<!-- Act 3 · While you sleep (night) -->
-<section class="lp-night" id="morning">
-  <div class="wrap wrap-narrow">
-    <p class="lp-night-label ts" data-reveal>WHILE YOU SLEEP</p>
-    <div class="lp-timeline">
-      <div class="lp-moment" data-reveal>
+<!-- Acts 3–4 · The night shift (pinned scroll scene: watch → sniff → reject → draft → dawn) -->
+<section class="scene scene--night" id="morning" data-scene="night" data-active="0">
+  <div class="scene-track">
+    <div class="scene-copy">
+      <div class="beat" data-beat="0"><div class="scene-copy-inner">
+        <p class="lp-night-label ts">WHILE YOU SLEEP</p>
         <p class="lp-time ts">06:58</p>
         <p>Patronus AI announces a $50M round amid "nearly insatiable demand." Their news is minutes old.</p>
-      </div>
-      <div class="lp-moment" data-reveal>
+      </div></div>
+      <div class="beat" data-beat="1"><div class="scene-copy-inner">
         <p class="lp-time ts">06:59</p>
-        <p>We check them against what <em>you</em> sell. Most companies fail this check — a competitor, a job seeker, plain noise — and are rejected. This one fits.</p>
-      </div>
-      <div class="lp-moment" data-reveal>
+        <p>We check them against what <em>you</em> sell.</p>
+      </div></div>
+      <div class="beat" data-beat="2"><div class="scene-copy-inner">
+        <p class="lp-time ts">06:59</p>
+        <p>Most companies fail this check — a competitor, a job seeker, plain noise — and are rejected. Out of 77 companies one recent morning, we rejected 74. This one fits.</p>
+      </div></div>
+      <div class="beat" data-beat="3"><div class="scene-copy-inner">
         <p class="lp-time ts">07:04</p>
         <p>Your opening email is drafted — four sentences, starting from <em>their</em> news, in your voice:</p>
         <div class="lp-draft">
@@ -156,17 +172,51 @@
           <p>Patronus AI's nearly insatiable demand is a strong indicator the company is about to scale headcount, which can strain HR teams. AI-screened candidate shortlists can cut time-to-hire by 40%, letting HR focus on more strategic tasks. As you invest in new tooling, how are you planning to optimize hiring to keep up with demand?</p>
           <footer class="ts">real draft · unedited · written for a sample client selling recruiting software</footer>
         </div>
-      </div>
+      </div></div>
+      <div class="beat" data-beat="4"><div class="scene-copy-inner">
+        <p class="lp-time ts">07:30</p>
+        <h2>It's in your inbox.</h2>
+        <p class="lp-sunrise-sub">All of this already runs, every morning. It's called Coldstart.</p>
+      </div></div>
     </div>
-  </div>
-</section>
-
-<!-- Act 4 · Sunrise reveal (dawn gradient) -->
-<section class="lp-sunrise">
-  <div class="wrap" data-reveal>
-    <p class="lp-time ts">07:30</p>
-    <h2>It's in your inbox.</h2>
-    <p class="lp-sunrise-sub">All of this already runs, every morning. It's called Coldstart.</p>
+    <div class="scene-stage" aria-hidden="true">
+      @* Task 4–6 replace this placeholder with the stateful night robot (sky/signals/cards/email/inbox). *@
+      <figure class="lp-hero-art lp-hero-art--night">
+        <svg viewBox="0 0 460 410" role="img" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="csn-sky" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#1C1F33"/><stop offset="1" stop-color="#2A2F4C"/>
+            </linearGradient>
+            <clipPath id="csn-frame"><rect x="1.5" y="1.5" width="457" height="407" rx="20"/></clipPath>
+          </defs>
+          <g clip-path="url(#csn-frame)">
+            <rect x="0" y="0" width="460" height="410" fill="url(#csn-sky)"/>
+            <rect x="0" y="350" width="460" height="60" fill="#232741"/>
+            <g fill="#E9E7F2"><circle cx="70" cy="150" r="1.5" opacity="0.7"/><circle cx="300" cy="48" r="1.5" opacity="0.7"/><circle cx="410" cy="130" r="1.2" opacity="0.5"/></g>
+            <g><circle cx="70" cy="72" r="26" fill="#F1E9D8"/><circle cx="82" cy="65" r="23" fill="#1C1F33"/></g>
+            <ellipse cx="214" cy="352" rx="118" ry="12" fill="#121422" opacity="0.5"/>
+          </g>
+          <g class="lp-bot">
+            <rect x="188" y="300" width="16" height="46" rx="8" fill="#CFC8B6"/>
+            <rect x="224" y="300" width="16" height="46" rx="8" fill="#CFC8B6"/>
+            <rect x="180" y="340" width="30" height="12" rx="6" fill="#B7AF9A"/>
+            <rect x="218" y="340" width="30" height="12" rx="6" fill="#B7AF9A"/>
+            <rect x="164" y="220" width="100" height="90" rx="22" fill="#EBE6DA"/>
+            <rect x="184" y="240" width="60" height="42" rx="10" fill="#1E2138"/>
+            <polyline class="r-scan" points="192,262 205,262 211,249 219,273 226,262 236,262" fill="none" stroke="#FF8A5C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="200" y="196" width="28" height="12" rx="4" fill="#CFC8B6"/>
+            <rect x="176" y="146" width="76" height="60" rx="20" fill="#EBE6DA"/>
+            <line x1="214" y1="146" x2="214" y2="128" stroke="#CFC8B6" stroke-width="3"/>
+            <text class="r-antenna" x="214" y="126" text-anchor="middle" font-family="'Cabinet Grotesk',Helvetica,sans-serif" font-size="20" font-weight="800" fill="#FF6A3D">*</text>
+            <rect x="186" y="158" width="56" height="38" rx="13" fill="#1E2138"/>
+            <circle class="lp-eye" cx="205" cy="176" r="6.5" fill="#FF8A5C"/>
+            <circle class="lp-eye" cx="223" cy="176" r="6.5" fill="#FF8A5C"/>
+            <path d="M205 187 q9 6 18 0" fill="none" stroke="#FF8A5C" stroke-width="2" stroke-linecap="round"/>
+          </g>
+          <rect x="1.5" y="1.5" width="457" height="407" rx="20" fill="none" stroke="#33385A"/>
+        </svg>
+      </figure>
+    </div>
   </div>
 </section>
 
