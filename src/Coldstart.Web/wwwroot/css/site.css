@@ -108,13 +108,14 @@
 .scene--night .beat[data-beat="4"] h2 { color: #16192B; }
 .scene--night .beat[data-beat="4"] .lp-sunrise-sub { color: #241C14; }
 .scene--night .beat[data-beat="4"] .lp-time { color: #16192B; }
-/* Beat 3 (draft) lands on the rising dawn too — dark intro copy, but the dark draft panel keeps light text. */
-.scene--night .beat[data-beat="3"] .scene-copy-inner > p { color: #241C14; }
-.scene--night .beat[data-beat="3"] .lp-time { color: var(--sunrise-deep); }
+/* Beat 3 (draft) sits on the dark night sky, so its intro copy + time stay light like the
+   earlier beats (the draft panel below carries its own dark background + light text). */
 .scene--night .beat[data-beat="3"] .lp-draft { background: rgba(28,31,51,0.92); border-color: rgba(255,255,255,0.12); }
 
-/* Enemy + belief now sit in the dusk/night zone of the continuous sky — light copy. */
-#enemy .wrap > h2, .lp-act-belief .wrap > h2 { color: #F2EEF8; }
+/* The enemy heading sits high in the sky where it's still light — black reads best there.
+   The belief heading is deeper in the dusk, so it stays light. */
+#enemy .wrap > h2 { color: #16192B; }
+.lp-act-belief .wrap > h2 { color: #F2EEF8; }
 #enemy .wrap > p { color: #CFC9DD; }
 .lp-act-belief .lp-beliefs li { color: #CFC9DD; }
 .lp-act-belief .lp-beliefs strong { color: #F2EEF8; }
