@@ -445,6 +445,34 @@
   .cz-foilcta { text-align: center; margin-top: 4px; }
   /* ===== end daily briefing queue ===== */
 
+  /* ===== History page (/app/history) ===== */
+  .cz-back { display: inline-block; font-size: 0.85rem; color: var(--body-subtle); text-decoration: none; margin-bottom: 18px; }
+  .cz-back:hover { color: var(--ink); }
+  .cz-h1 { font-family: var(--display); font-size: 1.7rem; margin: 6px 0 16px; letter-spacing: -0.02em; color: var(--ink); }
+
+  .cz-filters { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+  .cz-chip { font-size: 0.82rem; color: var(--body-subtle); background: #fff; border: 1px solid var(--line-soft); border-radius: 999px; padding: 7px 14px; cursor: pointer; text-decoration: none; }
+  .cz-chip:hover { color: var(--ink); }
+  .cz-chip.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .cz-search { margin-left: auto; display: flex; }
+  .cz-search input { font: inherit; font-size: 0.86rem; border: 1px solid var(--line-soft); border-radius: 999px; padding: 8px 14px; width: 180px; background: #fff; }
+
+  .cz-row { display: grid; grid-template-columns: 10px 1fr auto; align-items: start; gap: 14px; padding: 16px 8px 16px 4px; border-bottom: 1px solid var(--line-soft); }
+  .cz-dot { width: 8px; height: 8px; border-radius: 50%; background: #D8D3C6; margin-top: 7px; }
+  .cz-main { min-width: 0; }
+  .cz-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+  .cz-co { font-weight: 700; color: var(--ink); font-size: 1.02rem; }
+  .cz-subj { color: var(--body-subtle); font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cz-why { font-size: 0.72rem; color: var(--sunrise-deep); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; background: none; border: none; padding: 0; cursor: pointer; }
+  .cz-why:hover { text-decoration: underline; }
+  .cz-reopen-form { display: inline-flex; margin: 0; }
+
+  .cz-stbadge { font-size: 0.68rem; font-weight: 700; letter-spacing: .04em; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .st-sent { background: #E4F0E6; color: #2F7D46; }
+  .st-skip { background: #EDEAE2; color: #77726A; }
+  .st-old  { background: #FBEEDD; color: #9A6C2E; }
+  /* ===== end history page ===== */
+
   /* move-blocked modal (/app) — namespaced to avoid the landing-page .modal component */
   .lead-modal { border: none; padding: 0; background: transparent; max-width: 400px; width: calc(100% - 40px); color: var(--ink); }
   .lead-modal::backdrop { background: rgba(22, 25, 43, 0.45); }

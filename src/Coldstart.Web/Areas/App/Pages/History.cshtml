@@ -1,0 +1,70 @@
+@page "/app/history"
+@model Coldstart.Web.Areas.App.Pages.HistoryModel
+@{
+    ViewData["Title"] = "History";
+    Layout = "/Pages/Shared/_Layout.cshtml";
+}
+
+<header class="app-bar">
+  <a class="wordmark" href="/">coldstart<i>*</i></a>
+  <nav class="app-nav">
+    <a class="cz-id" href="/app/profile">@Model.CustomerName <span class="cz-chev">▾</span></a>
+    <form method="post" asp-page="/Account/Logout" asp-area="Identity"><button class="btn btn-ghost" type="submit">Log out</button></form>
+  </nav>
+</header>
+
+<main class="wrap app-zone">
+  @Html.AntiForgeryToken()
+  <a class="cz-back" href="/app">← Back to briefing</a>
+  <h1 class="cz-h1">History</h1>
+
+  <div class="cz-filters">
+    <a class="cz-chip @(Model.Filter == "all" ? "on" : "")" href="/app/history?filter=all">All <span style="opacity:.6">@Model.AllCount</span></a>
+    <a class="cz-chip @(Model.Filter == "sent" ? "on" : "")" href="/app/history?filter=sent">Sent <span style="opacity:.6">@Model.SentCount</span></a>
+    <a class="cz-chip @(Model.Filter == "skipped" ? "on" : "")" href="/app/history?filter=skipped">Skipped <span style="opacity:.6">@Model.SkippedCount</span></a>
+    <a class="cz-chip @(Model.Filter == "older" ? "on" : "")" href="/app/history?filter=older">Older unreviewed <span style="opacity:.6">@Model.OlderCount</span></a>
+    <form method="get" class="cz-search">
+      <input type="hidden" name="filter" value="@Model.Filter">
+      <input type="text" name="q" value="@Model.Query" placeholder="Search company…" aria-label="Search company">
+    </form>
+  </div>
+
+  @if (Model.Rows.Count == 0)
+  {
+    <p class="app-group-empty">Nothing here yet.</p>
+  }
+  else
+  {
+    <div class="cz-list" style="margin-top:16px">
+      @foreach (var lead in Model.Rows)
+      {
+        var isOlder = lead.Status is "PendingReview" or "Approved";
+        <div class="cz-row read">
+          <span class="cz-dot"></span>
+          <div class="cz-main">
+            <div class="cz-head">
+              <span class="cz-co">@lead.Company</span>
+              @if (lead.Status == "Sent")
+              {
+                <span class="cz-stbadge st-sent">SENT · @lead.CreatedAt.ToString("dd MMM", System.Globalization.CultureInfo.InvariantCulture)</span>
+              }
+              else if (lead.Status is "Shelved" or "Rejected")
+              {
+                <span class="cz-stbadge st-skip">SKIPPED · @(lead.Status == "Shelved" ? "you" : "not a fit")</span>
+              }
+              else if (isOlder)
+              {
+                <span class="cz-stbadge st-old">OLDER · @lead.CreatedAt.ToString("dd MMM", System.Globalization.CultureInfo.InvariantCulture)</span>
+                <form method="post" asp-page-handler="Reopen" class="cz-reopen-form">
+                  <input type="hidden" name="id" value="@lead.Id">
+                  <button class="cz-why" type="submit">reopen →</button>
+                </form>
+              }
+            </div>
+            <div class="cz-subj">@lead.Subject</div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</main>
