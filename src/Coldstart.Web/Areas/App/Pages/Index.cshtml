@@ -3,16 +3,7 @@
 @{
     ViewData["Title"] = "Your morning briefing";
     Layout = "/Pages/Shared/_Layout.cshtml";
-    var overnight = Model.New.Count;
-    var latest = Model.New.Count > 0 ? Model.New.Max(l => l.CreatedAt) : (DateTimeOffset?)null;
 }
-
-<style>
-  .lead-row.is-locked { position: relative; }
-  .lead-row.is-locked .lead-row-main { filter: blur(4px); pointer-events: none; user-select: none; }
-  .app-foil { margin: 16px 0; padding: 16px 20px; border: 1px dashed #C7BFA9; border-radius: 12px; background: #FBF8F1; text-align: center; }
-  .app-foil p { margin: 0 0 10px; color: #5D5A50; }
-</style>
 
 <header class="app-bar">
   <a class="wordmark" href="/">coldstart<i>*</i></a>
@@ -25,28 +16,39 @@
 <main class="wrap app-zone">
   @Html.AntiForgeryToken()
 
-  <section class="app-briefing">
+  <div class="cz-greet">
     @if (Model.TotalLeads == 0 && Model.HarvestStatus is Coldstart.Domain.HarvestStatus.Pending or Coldstart.Domain.HarvestStatus.Running)
     {
       <h1>Finding your first leads…</h1>
-      <p class="app-briefing-ts">This takes a few minutes. Refresh shortly and they'll appear here.</p>
     }
     else if (Model.TotalLeads == 0 && Model.HarvestStatus == Coldstart.Domain.HarvestStatus.Failed)
     {
       <h1>We couldn't fetch leads yet</h1>
-      <p class="app-briefing-ts">We'll try again — check back soon.</p>
     }
-    else if (overnight > 0)
+    else if (Model.OvernightCount > 0)
     {
-      <h1>Good morning — @overnight new @(overnight == 1 ? "lead" : "leads") found overnight</h1>
-      @if (latest is not null) { <p class="app-briefing-ts ts">latest found @latest.Value.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture) UTC</p> }
+      <h1>Good morning — @Model.OvernightCount found overnight</h1>
     }
     else
     {
       <h1>Good morning — no new leads this morning</h1>
-      <p class="app-briefing-ts">The engine runs again tonight.</p>
     }
-  </section>
+    @if (Model.Queue.Count > 0)
+    {
+      <a class="btn btn-primary" href="/app/leads/@Model.Queue[0].Id?run=1">Review all →</a>
+    }
+  </div>
+
+  @{
+    var statParts = new List<string>();
+    if (Model.LatestFound is { } latest) { statParts.Add($"latest <b>{latest.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture)}</b> UTC"); }
+    if (Model.SentTodayCount > 0) { statParts.Add($"<b>{Model.SentTodayCount}</b> sent today"); }
+    if (Model.HistoryCount > 0) { statParts.Add($"<b>{Model.HistoryCount}</b> in history"); }
+  }
+  @if (statParts.Count > 0)
+  {
+    <p class="cz-stat">@Html.Raw(string.Join(" · ", statParts))</p>
+  }
 
   @if (Model.ActiveHint is { } hint)
   {
@@ -86,12 +88,6 @@
 
   <p class="app-sub">@Model.CustomerName</p>
 
-  <nav class="app-tabs" aria-label="Lead tabs">
-    <a class="app-tab @(Model.Tab == "new" ? "is-active" : "")" data-tab="new" href="/app?tab=new">To review <span class="app-tab-count">@Model.NewCount</span></a>
-    <a class="app-tab @(Model.Tab == "accepted" ? "is-active" : "")" data-tab="accepted" href="/app?tab=accepted">Approved <span class="app-tab-count">@Model.AcceptedCount</span></a>
-    <a class="app-tab @(Model.Tab == "discarded" ? "is-active" : "")" data-tab="discarded" href="/app?tab=discarded">Skipped <span class="app-tab-count">@Model.DiscardedCount</span></a>
-  </nav>
-
   @if (Model.LockedCount > 0)
   {
     <div class="app-foil">
@@ -100,70 +96,40 @@
     </div>
   }
 
-  @{
-    void Card(Coldstart.Application.Leads.LeadSummary lead, bool draggable, bool actionable)
-    {
-      var locked = lead.Locked;
-      <article class="lead-row @(locked ? "is-locked" : "")" data-lead-id="@lead.Id" draggable="@(draggable && !locked ? "true" : "false")">
-        @if (locked)
-        {
-          <div class="lead-row-main">
+  @if (Model.Queue.Count == 0)
+  {
+    <p class="app-group-empty">Nothing to review yet — the engine hunts again tonight.</p>
+  }
+  else
+  {
+    <div class="cz-list">
+      @foreach (var lead in Model.Queue)
+      {
+        <div class="lead-row-wrap">
+          <a class="lead-row" href="/app/leads/@lead.Id">
             <div class="lead-row-head">
               <span class="lead-row-co">@lead.Company</span>
               <span class="fit fit-@lead.Fit.ToLower()">@lead.Fit</span>
+              @if (!string.IsNullOrWhiteSpace(lead.MatchedSignals))
+              {
+                <span class="lead-row-why">⚡ @lead.MatchedSignals.Split(',')[0].Trim()</span>
+              }
             </div>
-            <div class="lead-row-sub"><span class="lead-row-subj">@lead.Subject</span></div>
-          </div>
-        }
-        else
-        {
-          <a class="lead-row-main" href="/app/leads/@lead.Id">
-            <div class="lead-row-head">
-              <span class="lead-row-co">@lead.Company</span>
-              <span class="fit fit-@lead.Fit.ToLower()">@lead.Fit</span>
-              <span class="ts lead-row-ts">@lead.CreatedAt.ToString("dd MMM · HH:mm", System.Globalization.CultureInfo.InvariantCulture)</span>
-            </div>
-            <div class="lead-row-sub">
-              @if (!string.IsNullOrWhiteSpace(lead.MatchedSignals)) { <span class="lead-row-why">⚡ @lead.MatchedSignals.Split(',')[0].Trim()</span><span class="lead-row-dot">·</span> }
-              <span class="lead-row-subj">@lead.Subject</span>
-            </div>
+            <div class="lead-row-subj">@lead.Subject</div>
           </a>
-          @if (actionable)
-          {
-            <div class="lead-row-actions">
-              <button type="button" class="btn btn-ghost btn-sm app-act-skip" data-move="discarded">Skip</button>
-              <button type="button" class="btn btn-primary btn-sm app-act-approve" data-move="accepted">Approve</button>
-            </div>
-          }
-        }
-      </article>
-    }
-    void Bucket(string bucket, IReadOnlyList<Coldstart.Application.Leads.LeadSummary> leads, bool draggable, bool actionable, string emptyText)
-    {
-      <div class="app-leads" data-bucket="@bucket" data-count="@leads.Count">
-        @foreach (var l in leads) { Card(l, draggable, actionable); }
-        <p class="app-group-empty">@emptyText</p>
-      </div>
-    }
+          <form method="post" asp-page-handler="Skip" class="lead-skip-form">
+            <input type="hidden" name="id" value="@lead.Id">
+            <button class="cz-skip" type="submit" title="Skip">✕</button>
+          </form>
+        </div>
+      }
+    </div>
   }
 
-  <section class="app-panel @(Model.Tab == "new" ? "is-active" : "")" data-panel="new">
-    @{ Bucket("new", Model.New, true, true, "Nothing to review yet — the engine hunts again tonight."); }
-  </section>
-
-  <section class="app-panel @(Model.Tab == "accepted" ? "is-active" : "")" data-panel="accepted">
-    <h2 class="app-group-head">Ready to send</h2>
-    @{ Bucket("ready", Model.AcceptedReady, true, false, "Nothing approved yet — approve a lead and it appears here."); }
-    <h2 class="app-group-head">Sent</h2>
-    @{ Bucket("sent", Model.Sent, false, false, "Nothing sent yet."); }
-  </section>
-
-  <section class="app-panel @(Model.Tab == "discarded" ? "is-active" : "")" data-panel="discarded">
-    <h2 class="app-group-head">You skipped</h2>
-    @{ Bucket("shelved", Model.Shelved, true, false, "You haven't skipped anything."); }
-    <h2 class="app-group-head">Skipped automatically — not a fit</h2>
-    @{ Bucket("autoskip", Model.AutoSkipped, true, false, "Nothing was skipped automatically."); }
-  </section>
+  @if (Model.OlderUnreviewedCount > 0)
+  {
+    <p class="cz-older">+ @Model.OlderUnreviewedCount older @(Model.OlderUnreviewedCount == 1 ? "lead" : "leads") waiting · <a href="/app/history">see them in History →</a></p>
+  }
 
   <dialog id="move-error" class="lead-modal" aria-labelledby="move-error-title">
     <form method="dialog" class="lead-modal-card">

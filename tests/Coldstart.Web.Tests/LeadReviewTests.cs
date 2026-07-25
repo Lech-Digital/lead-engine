@@ -3,6 +3,7 @@ using Coldstart.Domain;
 using Coldstart.Infrastructure;
 using Coldstart.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using FluentAssertions;
 using Xunit;
@@ -12,210 +13,101 @@ namespace Coldstart.Web.Tests;
 public class LeadReviewTests(ColdstartWebFactory factory) : IClassFixture<ColdstartWebFactory>
 {
     [Fact]
-    public async Task Index_DefaultTab_ShowsNewLeadsAndTabHeaders()
+    public async Task Index_RendersBriefingQueue_WithoutTabs()
     {
         // Arrange
         var client = factory.CreateClient();
-        var email = $"review-{Guid.NewGuid():N}@test.com";
+        var email = $"rev-{Guid.NewGuid():N}@test.com";
         await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
-        await AddLeadForUserAsync(email, "Pending Co", "fp-" + Guid.NewGuid().ToString("N"), LeadStatus.PendingReview);
+        await AddLeadForUserAsync(email, "Pending Co", "fp-" + Guid.NewGuid().ToString("N"));
 
         // Act
         var html = await client.GetStringAsync("/app");
 
         // Assert
         html.Should().Contain("Pending Co");
-        html.Should().Contain("app-tabs");
-        html.Should().Contain("data-tab=\"new\" href=\"/app?tab=new\">To review <span class=\"app-tab-count\">1</span>");
-        html.Should().Contain("data-tab=\"accepted\" href=\"/app?tab=accepted\">Approved <span class=\"app-tab-count\">0</span>");
-        html.Should().Contain("data-tab=\"discarded\" href=\"/app?tab=discarded\">Skipped <span class=\"app-tab-count\">0</span>");
-    }
-
-    [Fact]
-    public async Task Index_NewTab_RendersCompactRow_WithWhyNowAndSubject()
-    {
-        // Arrange — AddLeadForUserAsync seeds via Lead.CreateHarvested with matchedSignals "outbound"
-        // and subject "subj", so the compact row's why-now + subject markup can be asserted directly.
-        var client = factory.CreateClient();
-        var email = $"row-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
-        await AddLeadForUserAsync(email, "Pending Co", "fp-" + Guid.NewGuid().ToString("N"), LeadStatus.PendingReview);
-
-        // Act
-        var html = await client.GetStringAsync("/app?tab=new");
-
-        // Assert — compact row shows company, subject, and the why-now signal
         html.Should().Contain("lead-row");
-        html.Should().Contain("Pending Co");
-        html.Should().Contain("data-lead-id");
-        html.Should().Contain("lead-row-why");
-        html.Should().Contain("outbound");
-        html.Should().Contain("subj");
+        html.Should().NotContain("app-tabs");
+        html.Should().NotContain("?tab=");
+        html.Should().NotContain("data-panel");
     }
 
     [Fact]
-    public async Task Index_DiscardedTab_ShowsShelvedAndAutoSkippedGroups()
+    public async Task Index_QueueShowsNewest15Unfinished_RestGoToOlderCount()
     {
         // Arrange
         var client = factory.CreateClient();
-        var email = $"review2-{Guid.NewGuid():N}@test.com";
+        var email = $"rev-cap-{Guid.NewGuid():N}@test.com";
         await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
-        await AddLeadForUserAsync(email, "Shelved Co", "fp-" + Guid.NewGuid().ToString("N"), LeadStatus.Shelved);
-        await AddLeadForUserAsync(email, "Autoskip Co", "fp-" + Guid.NewGuid().ToString("N"), LeadStatus.Rejected);
+        for (var i = 0; i < 18; i++)
+            await AddLeadForUserAsync(email, $"Co{i:D2}", "fp-" + Guid.NewGuid().ToString("N"));
 
         // Act
-        var html = await client.GetStringAsync("/app?tab=discarded");
+        var html = await client.GetStringAsync("/app");
 
-        // Assert
-        html.Should().Contain("Shelved Co");
-        html.Should().Contain("Autoskip Co");
-        html.Should().Contain("Skipped automatically");
-        // Tab-count spans come straight from the New/Accepted/Discarded partition logic, so these
-        // prove both leads were routed into the Discarded buckets (Shelved + Rejected), not New/Accepted.
-        html.Should().Contain("data-tab=\"discarded\" href=\"/app?tab=discarded\">Skipped <span class=\"app-tab-count\">2</span>");
-        html.Should().Contain("data-tab=\"new\" href=\"/app?tab=new\">To review <span class=\"app-tab-count\">0</span>");
+        // Assert — 15 rows shown, backlog line names the remaining 3.
+        // NB: match the exact class="lead-row" (trailing quote) so lead-row-head/-why/-subj don't inflate the count.
+        System.Text.RegularExpressions.Regex.Matches(html, "class=\"lead-row\"").Count.Should().Be(15);
+        html.Should().Contain("3 older leads");
+        html.Should().Contain("/app/history");
     }
 
     [Fact]
-    public async Task Index_RoutesAcceptedAndSentToAcceptedTab_WithDragFlags()
+    public async Task Index_ApprovedNotSentLead_CountsAsUnfinished_AndShowsInQueue()
     {
         // Arrange
         var client = factory.CreateClient();
-        var email = $"review3-{Guid.NewGuid():N}@test.com";
+        var email = $"rev-appr-{Guid.NewGuid():N}@test.com";
         await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
-        await AddLeadForUserAsync(email, "Ready Co", "fp-" + Guid.NewGuid().ToString("N"), LeadStatus.Approved);
-        await AddLeadForUserAsync(email, "Gone Co", "fp-" + Guid.NewGuid().ToString("N"), LeadStatus.Sent);
-
-        // Act
-        var html = await client.GetStringAsync("/app?tab=accepted");
-
-        // Assert
-        // Tab-count spans come straight from the New/Accepted/Discarded partition logic, so these
-        // prove both leads were routed into the Accepted bucket (Approved + Sent), not New/Discarded.
-        html.Should().Contain("data-tab=\"accepted\" href=\"/app?tab=accepted\">Approved <span class=\"app-tab-count\">2</span>");
-        html.Should().Contain("data-tab=\"new\" href=\"/app?tab=new\">To review <span class=\"app-tab-count\">0</span>");
-        html.Should().Contain("data-tab=\"discarded\" href=\"/app?tab=discarded\">Skipped <span class=\"app-tab-count\">0</span>");
-        html.Should().Contain("Ready Co");
-        html.Should().Contain("Gone Co");
-        // Only Sent cards are non-draggable; Approved (Ready) cards are draggable.
-        html.Should().Contain("draggable=\"false\"");
-        html.Should().Contain("draggable=\"true\"");
-    }
-
-    [Fact]
-    public async Task Index_NewTabPanel_ShowsActionButtons_ButAcceptedAndDiscardedPanelsDoNot()
-    {
-        // Arrange
-        var client = factory.CreateClient();
-        var email = $"actions-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
-        await AddLeadForUserAsync(email, "New Co", "fp-" + Guid.NewGuid().ToString("N"), LeadStatus.PendingReview);
-        await AddLeadForUserAsync(email, "Ready Co", "fp-" + Guid.NewGuid().ToString("N"), LeadStatus.Approved);
-        await AddLeadForUserAsync(email, "Shelved Co", "fp-" + Guid.NewGuid().ToString("N"), LeadStatus.Shelved);
+        await AddLeadForUserAsync(email, "Approved Co", "fp-" + Guid.NewGuid().ToString("N"), LeadStatus.Approved);
 
         // Act
         var html = await client.GetStringAsync("/app");
 
         // Assert
-        var newPanel = ExtractPanel(html, "new");
-        var acceptedPanel = ExtractPanel(html, "accepted");
-        var discardedPanel = ExtractPanel(html, "discarded");
-        newPanel.Should().Contain("data-move=\"accepted\"");
-        newPanel.Should().Contain("data-move=\"discarded\"");
-        acceptedPanel.Should().NotContain("data-move=");
-        discardedPanel.Should().NotContain("data-move=");
-    }
-
-    // Extracts the markup for a single <section data-panel="..."> ... </section> block, since
-    // Index.cshtml renders all three panels on every request regardless of the active tab.
-    private static string ExtractPanel(string html, string panel)
-    {
-        var marker = $"data-panel=\"{panel}\"";
-        var start = html.IndexOf(marker, StringComparison.Ordinal);
-        var end = html.IndexOf("</section>", start, StringComparison.Ordinal);
-        return html[start..end];
+        html.Should().Contain("Approved Co");
     }
 
     [Fact]
-    public async Task Move_ToDiscarded_ShelvesLeadAndReturnsOk()
+    public async Task Skip_MovesLeadOutOfQueue_ToSkipped()
     {
         // Arrange
         var client = factory.CreateClient();
-        var email = $"move-{Guid.NewGuid():N}@test.com";
+        var email = $"rev-skip-{Guid.NewGuid():N}@test.com";
         await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
-        var id = await AddLeadIdForUserAsync(email, "Move Co", "fp-" + Guid.NewGuid().ToString("N"));
-        var token = await AntiforgeryToken(client, "/app");
+        await AddLeadForUserAsync(email, "Move Co", "fp-" + Guid.NewGuid().ToString("N"));
+        var id = await LeadIdForAsync(email, "Move Co");
+        var form = await AntiforgeryForm(client, "/app", new() { ["id"] = id.ToString() });
 
         // Act
-        var req = new HttpRequestMessage(HttpMethod.Post, "/app?handler=Move");
-        req.Headers.Add("RequestVerificationToken", token);
-        req.Content = new FormUrlEncodedContent(new Dictionary<string, string> { ["id"] = id.ToString(), ["tab"] = "discarded" });
-        var resp = await client.SendAsync(req);
+        var post = await client.PostAsync("/app?handler=Skip", new FormUrlEncodedContent(form));
+        var briefing = await client.GetStringAsync("/app");
 
         // Assert
-        resp.StatusCode.Should().Be(HttpStatusCode.OK);
-        (await resp.Content.ReadAsStringAsync()).Should().Contain("\"ok\":true");
-        var discarded = await client.GetStringAsync("/app?tab=discarded");
-        discarded.Should().Contain("Move Co");
-        // Tab-count spans come straight from the New/Accepted/Discarded partition logic, so these
-        // prove the lead actually moved into Discarded (not just that "Move Co" appears somewhere
-        // on the page, since Index.cshtml renders all three panels on every request).
-        discarded.Should().Contain("data-tab=\"discarded\" href=\"/app?tab=discarded\">Skipped <span class=\"app-tab-count\">1</span>");
-        discarded.Should().Contain("data-tab=\"new\" href=\"/app?tab=new\">To review <span class=\"app-tab-count\">0</span>");
+        post.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Redirect);
+        briefing.Should().NotContain("Move Co");   // gone from the queue
     }
 
-    [Fact]
-    public async Task Move_ToAccepted_ApprovesLeadAndReturnsOk()
-    {
-        // Arrange
-        var client = factory.CreateClient();
-        var email = $"move2-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
-        var id = await AddLeadIdForUserAsync(email, "Accept Co", "fp-" + Guid.NewGuid().ToString("N"));
-        var token = await AntiforgeryToken(client, "/app");
-
-        // Act
-        var req = new HttpRequestMessage(HttpMethod.Post, "/app?handler=Move");
-        req.Headers.Add("RequestVerificationToken", token);
-        req.Content = new FormUrlEncodedContent(new Dictionary<string, string> { ["id"] = id.ToString(), ["tab"] = "accepted" });
-        var resp = await client.SendAsync(req);
-
-        // Assert
-        resp.StatusCode.Should().Be(HttpStatusCode.OK);
-        (await resp.Content.ReadAsStringAsync()).Should().Contain("\"ok\":true");
-        var accepted = await client.GetStringAsync("/app?tab=accepted");
-        accepted.Should().Contain("Accept Co");
-        // Tab-count spans prove the lead actually moved into Accepted (not just that "Accept Co"
-        // appears somewhere on the page, since Index.cshtml renders all three panels on every request).
-        accepted.Should().Contain("data-tab=\"accepted\" href=\"/app?tab=accepted\">Approved <span class=\"app-tab-count\">1</span>");
-        accepted.Should().Contain("data-tab=\"new\" href=\"/app?tab=new\">To review <span class=\"app-tab-count\">0</span>");
-    }
-
-    // Returns the created lead's id (PendingReview).
-    private async Task<Guid> AddLeadIdForUserAsync(string email, string company, string fingerprint)
+    private async Task<Guid> LeadIdForAsync(string email, string company)
     {
         using var scope = factory.Services.CreateScope();
         var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var db = scope.ServiceProvider.GetRequiredService<ColdstartDbContext>();
         var user = await users.FindByEmailAsync(email);
-        var lead = Lead.CreateHarvested(new CustomerId(user!.CustomerId!.Value), company, Fit.Yes,
-            "subj", "body", "hackernews", "https://x/1", fingerprint, 0.7, "outbound", DateTimeOffset.UtcNow);
-        db.Leads.Add(lead);
-        await db.SaveChangesAsync();
-        return lead.Id.Value;
+        return db.Leads.IgnoreQueryFilters().First(l => l.CustomerId == new CustomerId(user!.CustomerId!.Value) && l.Company == company).Id.Value;
     }
 
-    private static async Task<string> AntiforgeryToken(HttpClient client, string path)
+    private static async Task<Dictionary<string,string>> AntiforgeryForm(HttpClient client, string path, Dictionary<string,string> fields)
     {
         var html = await client.GetStringAsync(path);
         var marker = "name=\"__RequestVerificationToken\" type=\"hidden\" value=\"";
-        var start = html.IndexOf(marker, StringComparison.Ordinal) + marker.Length;
-        var end = html.IndexOf('"', start);
-        return html[start..end];
+        var start = html.IndexOf(marker, StringComparison.Ordinal);
+        if (start >= 0) { start += marker.Length; var end = html.IndexOf('"', start); fields["__RequestVerificationToken"] = html[start..end]; }
+        return fields;
     }
 
     // Inserts a lead in a specific status for the given registered user's customer.
-    private async Task AddLeadForUserAsync(string email, string company, string fingerprint, LeadStatus status)
+    private async Task AddLeadForUserAsync(string email, string company, string fingerprint, LeadStatus status = LeadStatus.PendingReview)
     {
         using var scope = factory.Services.CreateScope();
         var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();

@@ -15,12 +15,14 @@ public sealed class IndexModel(UserManager<ApplicationUser> users, IGetLeadInbox
     public string CustomerName { get; private set; } = "—";
     public CompanyProfileView Profile { get; private set; } = new(null, null, null, null, null, null, null);
 
-    public string Tab { get; private set; } = "new";
-    public IReadOnlyList<LeadSummary> New { get; private set; } = [];
-    public IReadOnlyList<LeadSummary> AcceptedReady { get; private set; } = [];
-    public IReadOnlyList<LeadSummary> Sent { get; private set; } = [];
-    public IReadOnlyList<LeadSummary> Shelved { get; private set; } = [];
-    public IReadOnlyList<LeadSummary> AutoSkipped { get; private set; } = [];
+    private const int QueueCap = 15;
+
+    public IReadOnlyList<LeadSummary> Queue { get; private set; } = [];
+    public int OlderUnreviewedCount { get; private set; }
+    public int OvernightCount { get; private set; }
+    public int SentTodayCount { get; private set; }
+    public int HistoryCount { get; private set; }
+    public DateTimeOffset? LatestFound { get; private set; }
 
     public Hint? ActiveHint { get; private set; }
 
@@ -29,14 +31,8 @@ public sealed class IndexModel(UserManager<ApplicationUser> users, IGetLeadInbox
     public int LockedCount { get; private set; }
     public int TotalLeads { get; private set; }
 
-    public int NewCount => New.Count;
-    public int AcceptedCount => AcceptedReady.Count + Sent.Count;
-    public int DiscardedCount => Shelved.Count + AutoSkipped.Count;
-
-    public async Task OnGetAsync(string? tab, CancellationToken ct)
+    public async Task OnGetAsync(CancellationToken ct)
     {
-        Tab = tab is "accepted" or "discarded" ? tab : "new";
-
         var user = await users.GetUserAsync(User);
         if (user?.CustomerId is null) return;
 
@@ -57,27 +53,25 @@ public sealed class IndexModel(UserManager<ApplicationUser> users, IGetLeadInbox
         TotalLeads = result.Leads.Count;
         Profile = await profiles.ForCustomerAsync(user.CustomerId.Value, ct);
 
-        New = result.Leads.Where(l => l.Status == "PendingReview").ToList();
-        AcceptedReady = result.Leads.Where(l => l.Status == "Approved").ToList();
-        Sent = result.Leads.Where(l => l.Status == "Sent").ToList();
-        Shelved = result.Leads.Where(l => l.Status == "Shelved").ToList();
-        AutoSkipped = result.Leads.Where(l => l.Status == "Rejected").ToList();
+        var unfinished = result.Leads
+            .Where(l => l.Status is "PendingReview" or "Approved")
+            .OrderByDescending(l => l.CreatedAt).ToList();
+        Queue = unfinished.Take(QueueCap).ToList();
+        OlderUnreviewedCount = Math.Max(0, unfinished.Count - QueueCap);
+
+        var todayUtc = DateTime.UtcNow.Date;
+        OvernightCount = unfinished.Count(l => l.CreatedAt.UtcDateTime.Date == todayUtc);
+        LatestFound = unfinished.Count > 0 ? unfinished.Max(l => l.CreatedAt) : null;
+        SentTodayCount = result.Leads.Count(l => l.Status == "Sent" && l.CreatedAt.UtcDateTime.Date == todayUtc);
+        HistoryCount = result.Leads.Count(l => l.Status is "Sent" or "Shelved" or "Rejected") + OlderUnreviewedCount;
     }
 
-    public async Task<IActionResult> OnPostMoveAsync(Guid id, string tab, CancellationToken ct)
+    public async Task<IActionResult> OnPostSkipAsync(Guid id, CancellationToken ct)
     {
         var user = await users.GetUserAsync(User);
-        if (user?.CustomerId is null) return new JsonResult(new { ok = false, message = "Not signed in." });
-        var cid = user.CustomerId.Value;
-
-        var result = tab switch
-        {
-            "new" => await workflow.ReopenAsync(cid, id, ct),
-            "accepted" => await workflow.ApproveAsync(cid, id, ct),
-            "discarded" => await workflow.DiscardAsync(cid, id, ct),
-            _ => LeadActionResult.Invalid("Unknown tab."),
-        };
-        return new JsonResult(new { ok = result.IsOk, status = result.Status.ToString(), message = result.Message });
+        if (user?.CustomerId is null) return RedirectToPage("/Index", new { area = "App" });
+        await workflow.DiscardAsync(user.CustomerId.Value, id, ct);
+        return RedirectToPage("/Index", new { area = "App" });
     }
 
     public async Task<IActionResult> OnPostDismissHintAsync(string key, CancellationToken ct)
