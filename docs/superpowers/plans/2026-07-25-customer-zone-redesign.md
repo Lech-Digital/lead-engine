@@ -96,8 +96,9 @@ public async Task Index_QueueShowsNewest15Unfinished_RestGoToOlderCount()
     // Act
     var html = await client.GetStringAsync("/app");
 
-    // Assert — 15 rows shown, backlog line names the remaining 3
-    System.Text.RegularExpressions.Regex.Matches(html, "class=\"lead-row").Count.Should().Be(15);
+    // Assert — 15 rows shown, backlog line names the remaining 3.
+    // NB: match the exact class="lead-row" (trailing quote) so lead-row-head/-why/-subj don't inflate the count.
+    System.Text.RegularExpressions.Regex.Matches(html, "class=\"lead-row\"").Count.Should().Be(15);
     html.Should().Contain("3 older leads");
     html.Should().Contain("/app/history");
 }
