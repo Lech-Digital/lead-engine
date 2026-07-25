@@ -346,6 +346,9 @@
   .app-nav { display: flex; align-items: center; gap: 16px; }
   .app-nav a { font-family: var(--mono); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--body-subtle); text-decoration: none; }
   .app-nav a:hover { color: var(--ink); }
+  .app-nav .cz-id { display: inline-flex; align-items: center; gap: 8px; font-family: var(--body); text-transform: none; letter-spacing: normal; font-weight: 700; color: var(--ink); background: #fff; border: 1px solid var(--line-soft); border-radius: 999px; padding: 7px 14px; font-size: 0.9rem; cursor: pointer; text-decoration: none; }
+  .app-nav .cz-id:hover { color: var(--ink); }
+  .app-nav .cz-id .cz-chev { color: var(--body-subtle); font-size: 0.7rem; }
   .app-profile { margin: 24px 0 8px; }
   .app-profile-empty { display: flex; align-items: center; justify-content: space-between; gap: 16px; background: #fff; border: 1.5px dashed var(--line-soft); border-radius: 12px; padding: 20px 22px; }
   .app-profile-empty p { margin: 4px 0 0; color: var(--body-muted); font-size: 0.9rem; }

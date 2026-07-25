@@ -109,26 +109,27 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
     }
 
     [Fact]
-    public async Task App_ShowsEmptyProfilePrompt_ForFreshCustomer()
+    public async Task App_ShowsCompanyChip_LinkingToProfile_NotTheFullCard()
     {
         // Arrange
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"prof-{Guid.NewGuid():N}@test.com", "Passw0rd!");
+        var email = $"chip-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
 
         // Act
         var html = await client.GetStringAsync("/app");
 
-        // Assert
-        html.Should().Contain("Add your company details");   // empty-profile prompt
-        html.Should().Contain("app-bar");                     // dashboard shell
+        // Assert — a compact chip links to the profile page; the full card is NOT on /app
+        html.Should().Contain("href=\"/app/profile\"");
+        html.Should().NotContain("Add your company details");   // moved to the profile page
     }
 
     [Fact]
-    public async Task ProfilePost_PersistsAndRendersOnZone()
+    public async Task ProfilePost_PersistsAndRendersOnProfilePage()
     {
         // Arrange
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"prof2-{Guid.NewGuid():N}@test.com", "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, $"prof-{Guid.NewGuid():N}@test.com", "Passw0rd!");
         var form = await AntiforgeryForm(client, "/app/profile", new()
         {
             ["Input.CompanyName"] = "Acme Ltd", ["Input.VatNumber"] = "NL999",
@@ -137,13 +138,12 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         });
 
         // Act
-        var post = await client.PostAsync("/app/profile", new FormUrlEncodedContent(form));
-        var zoneHtml = await client.GetStringAsync("/app");
+        await client.PostAsync("/app/profile", new FormUrlEncodedContent(form));
+        var profile = await client.GetStringAsync("/app/profile");
 
         // Assert
-        post.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Redirect);
-        zoneHtml.Should().Contain("Acme Ltd");
-        zoneHtml.Should().Contain("NL999");
+        profile.Should().Contain("Acme Ltd");
+        profile.Should().Contain("NL999");
     }
 
     [Fact]

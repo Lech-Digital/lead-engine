@@ -8,7 +8,7 @@
 <header class="app-bar">
   <a class="wordmark" href="/">coldstart<i>*</i></a>
   <nav class="app-nav">
-    <a href="/app/profile">Company profile</a>
+    <a class="cz-id" href="/app/profile">@(string.IsNullOrWhiteSpace(Model.Profile.CompanyName) ? Model.CustomerName : Model.Profile.CompanyName) <span class="cz-chev">▾</span></a>
     <form method="post" asp-page="/Account/Logout" asp-area="Identity"><button class="btn btn-ghost" type="submit">Log out</button></form>
   </nav>
 </header>
@@ -60,33 +60,6 @@
       </form>
     </aside>
   }
-
-  <section class="app-profile">
-    @if (Model.Profile.IsEmpty)
-    {
-      <div class="app-profile-empty">
-        <div><strong>Add your company details</strong><p>Address, VAT, KvK, niche — shown on your account.</p></div>
-        <a class="btn btn-primary" href="/app/profile">Add details →</a>
-      </div>
-    }
-    else
-    {
-      <div class="app-profile-card">
-        <h2>@(string.IsNullOrWhiteSpace(Model.Profile.CompanyName) ? Model.CustomerName : Model.Profile.CompanyName)</h2>
-        <dl>
-          @if (!string.IsNullOrWhiteSpace(Model.Profile.Address)) { <div><dt>Address</dt><dd>@Model.Profile.Address</dd></div> }
-          @if (!string.IsNullOrWhiteSpace(Model.Profile.VatNumber)) { <div><dt>VAT</dt><dd>@Model.Profile.VatNumber</dd></div> }
-          @if (!string.IsNullOrWhiteSpace(Model.Profile.KvkNumber)) { <div><dt>KvK</dt><dd>@Model.Profile.KvkNumber</dd></div> }
-          @if (!string.IsNullOrWhiteSpace(Model.Profile.Niche)) { <div><dt>Niche</dt><dd>@Model.Profile.Niche</dd></div> }
-          @if (!string.IsNullOrWhiteSpace(Model.Profile.Website)) { <div><dt>Website</dt><dd>@Model.Profile.Website</dd></div> }
-          @if (!string.IsNullOrWhiteSpace(Model.Profile.ContactEmail)) { <div><dt>Contact</dt><dd>@Model.Profile.ContactEmail</dd></div> }
-        </dl>
-        <a class="app-edit-link" href="/app/profile">Edit</a>
-      </div>
-    }
-  </section>
-
-  <p class="app-sub">@Model.CustomerName</p>
 
   @if (Model.Queue.Count == 0)
   {
