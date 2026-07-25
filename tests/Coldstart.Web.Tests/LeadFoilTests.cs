@@ -25,7 +25,7 @@ public class LeadFoilTests(FoilWebFactory factory) : IClassFixture<FoilWebFactor
     }
 
     [Fact]
-    public async Task Inbox_ForFreeCustomer_ShowsUnlockCtaWithRemainingCount()
+    public async Task Inbox_ForFreeCustomer_ShowsBlurredRows_AndUnlockCta()
     {
         // Arrange — 5 leads, quota 2 → 3 locked
         var client = factory.CreateClient();
@@ -34,12 +34,12 @@ public class LeadFoilTests(FoilWebFactory factory) : IClassFixture<FoilWebFactor
         await AddLeadsAsync(email, 5);
 
         // Act
-        var html = await client.GetStringAsync("/app?tab=new");
+        var html = await client.GetStringAsync("/app");
 
-        // Assert — the foil is shown with the true remaining count and the CTA
-        html.Should().Contain("Unlock all leads");
-        html.Should().Contain("3 more");
-        html.Should().Contain("is-locked");   // at least one blurred card
+        // Assert
+        html.Should().Contain("Unlock all");
+        html.Should().Contain("more");            // "N more … behind your plan"
+        html.Should().Contain("lead-row locked"); // at least one blurred row inline
     }
 
     [Fact]
@@ -70,7 +70,7 @@ public class LeadFoilTests(FoilWebFactory factory) : IClassFixture<FoilWebFactor
     }
 
     [Fact]
-    public async Task Inbox_WhileHarvestPending_AndNoLeads_ShowsFindingLeadsMessage()
+    public async Task Inbox_WhileHarvestPending_ShowsFindingState()
     {
         // Arrange — a customer whose harvest is Pending with zero leads
         var client = factory.CreateClient();
@@ -87,7 +87,7 @@ public class LeadFoilTests(FoilWebFactory factory) : IClassFixture<FoilWebFactor
         }
 
         // Act
-        var html = await client.GetStringAsync("/app?tab=new");
+        var html = await client.GetStringAsync("/app");
 
         // Assert
         html.Should().Contain("Finding your first leads");

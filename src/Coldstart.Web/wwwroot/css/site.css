@@ -418,7 +418,8 @@
   .cz-list { display: flex; flex-direction: column; gap: 0; border-top: 1px solid var(--line-soft); margin: 18px 0 0; }
   .lead-row-wrap { display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--line-soft); padding: 14px 4px; }
   .lead-row-wrap:hover { background: var(--daylight); }
-  .lead-row { flex: 1; min-width: 0; text-decoration: none; color: inherit; display: block; }
+  .lead-row { flex: 1; min-width: 0; text-decoration: none; color: inherit; display: block; position: relative; }
+  .lead-row-main { min-width: 0; }
   .lead-row-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
   .lead-row-co { font-family: var(--display); font-weight: 800; font-size: 0.98rem; color: var(--ink); }
   .lead-row:hover .lead-row-co { color: var(--sunrise-deep); }
@@ -433,6 +434,12 @@
 
   .app-foil { margin: 16px 0; padding: 16px 20px; border: 1px dashed var(--line-soft); border-radius: 12px; background: #FBF8F1; text-align: center; }
   .app-foil p { margin: 0 0 10px; color: var(--body-muted); }
+
+  /* locked / foil rows — blurred inline preview of leads beyond the free quota */
+  .lead-row.locked { cursor: pointer; }
+  .lead-row.locked .lead-row-main { filter: blur(4.5px); user-select: none; }
+  .cz-lock { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: inline-flex; align-items: center; gap: 6px; font-size: 0.74rem; font-weight: 600; color: var(--ink); background: rgba(255,255,255,.86); border: 1px solid var(--line-soft); border-radius: 999px; padding: 5px 12px; backdrop-filter: blur(1px); }
+  .cz-foilcta { text-align: center; margin-top: 4px; }
   /* ===== end daily briefing queue ===== */
 
   /* move-blocked modal (/app) — namespaced to avoid the landing-page .modal component */

@@ -88,14 +88,6 @@
 
   <p class="app-sub">@Model.CustomerName</p>
 
-  @if (Model.LockedCount > 0)
-  {
-    <div class="app-foil">
-      <p><strong>@Model.LockedCount more @(Model.LockedCount == 1 ? "lead" : "leads")</strong> ready behind your free plan.</p>
-      <button class="btn btn-primary" type="button" onclick="document.getElementById('upgrade').showModal()">Unlock all leads</button>
-    </div>
-  }
-
   @if (Model.Queue.Count == 0)
   {
     <p class="app-group-empty">Nothing to review yet — the engine hunts again tonight.</p>
@@ -105,23 +97,47 @@
     <div class="cz-list">
       @foreach (var lead in Model.Queue)
       {
-        <div class="lead-row-wrap">
-          <a class="lead-row" href="/app/leads/@lead.Id">
-            <div class="lead-row-head">
-              <span class="lead-row-co">@lead.Company</span>
-              <span class="fit fit-@lead.Fit.ToLower()">@lead.Fit</span>
-              @if (!string.IsNullOrWhiteSpace(lead.MatchedSignals))
-              {
-                <span class="lead-row-why">⚡ @lead.MatchedSignals.Split(',')[0].Trim()</span>
-              }
+        @if (lead.Locked)
+        {
+          <div class="lead-row-wrap">
+            <div class="lead-row locked" onclick="document.getElementById('upgrade').showModal()">
+              <div class="lead-row-main">
+                <div class="lead-row-head">
+                  <span class="lead-row-co">@lead.Company</span>
+                  <span class="fit fit-@lead.Fit.ToLower()">@lead.Fit</span>
+                  @if (!string.IsNullOrWhiteSpace(lead.MatchedSignals))
+                  {
+                    <span class="lead-row-why">⚡ @lead.MatchedSignals.Split(',')[0].Trim()</span>
+                  }
+                </div>
+                <div class="lead-row-subj">@lead.Subject</div>
+              </div>
+              <span class="cz-lock">🔒 Unlock</span>
             </div>
-            <div class="lead-row-subj">@lead.Subject</div>
-          </a>
-          <form method="post" asp-page-handler="Skip" class="lead-skip-form">
-            <input type="hidden" name="id" value="@lead.Id">
-            <button class="cz-skip" type="submit" title="Skip">✕</button>
-          </form>
-        </div>
+          </div>
+        }
+        else
+        {
+          <div class="lead-row-wrap">
+            <a class="lead-row" href="/app/leads/@lead.Id">
+              <div class="lead-row-main">
+                <div class="lead-row-head">
+                  <span class="lead-row-co">@lead.Company</span>
+                  <span class="fit fit-@lead.Fit.ToLower()">@lead.Fit</span>
+                  @if (!string.IsNullOrWhiteSpace(lead.MatchedSignals))
+                  {
+                    <span class="lead-row-why">⚡ @lead.MatchedSignals.Split(',')[0].Trim()</span>
+                  }
+                </div>
+                <div class="lead-row-subj">@lead.Subject</div>
+              </div>
+            </a>
+            <form method="post" asp-page-handler="Skip" class="lead-skip-form">
+              <input type="hidden" name="id" value="@lead.Id">
+              <button class="cz-skip" type="submit" title="Skip">✕</button>
+            </form>
+          </div>
+        }
       }
     </div>
   }
@@ -129,6 +145,16 @@
   @if (Model.OlderUnreviewedCount > 0)
   {
     <p class="cz-older">+ @Model.OlderUnreviewedCount older @(Model.OlderUnreviewedCount == 1 ? "lead" : "leads") waiting · <a href="/app/history">see them in History →</a></p>
+  }
+
+  @if (Model.LockedCount > 0)
+  {
+    <div class="app-foil">
+      <p>@Model.LockedCount more @(Model.LockedCount == 1 ? "lead" : "leads") behind your plan.</p>
+      <div class="cz-foilcta">
+        <button class="btn btn-primary" type="button" onclick="document.getElementById('upgrade').showModal()">Unlock all @Model.LockedCount @(Model.LockedCount == 1 ? "lead" : "leads")</button>
+      </div>
+    </div>
   }
 
   <dialog id="move-error" class="lead-modal" aria-labelledby="move-error-title">
