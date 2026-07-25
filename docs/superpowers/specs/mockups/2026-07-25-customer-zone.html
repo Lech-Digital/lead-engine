@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coldstart · customer zone redesign</title>
+<!-- Reuse the real product's design system (fonts, colours, buttons, chips) -->
+<link rel="stylesheet" href="http://localhost:5178/css/site.css">
+<style>
+  :root { --cz-line: #EBE6DA; --cz-line-soft: #F0ECE2; --cz-muted: #6C6A62; --cz-faint: #93908650; }
+  body { background: var(--daylight); }
+
+  /* --- mockup chrome (not part of the product) --- */
+  .mock-switch { position: sticky; top: 0; z-index: 40; display: flex; gap: 6px; justify-content: center;
+    padding: 10px; background: #16192B; }
+  .mock-switch button { font: 600 0.82rem/1 var(--body, system-ui); color: #B9B5C6; background: transparent;
+    border: 1px solid #33374F; border-radius: 999px; padding: 8px 16px; cursor: pointer; letter-spacing: .01em; }
+  .mock-switch button.on { color: #16192B; background: #FDFBF7; border-color: #FDFBF7; }
+  .mock-note { text-align: center; font-size: 0.72rem; color: #6E7290; padding: 6px 10px 0; }
+  .screen { display: none; }
+  .screen.on { display: block; }
+
+  /* --- app bar --- */
+  .cz-bar { display: flex; align-items: center; justify-content: space-between;
+    max-width: 820px; margin: 0 auto; padding: 22px 24px 0; }
+  .cz-id { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; color: var(--ink);
+    background: #fff; border: 1px solid var(--cz-line); border-radius: 999px; padding: 7px 14px;
+    font-size: 0.9rem; cursor: pointer; text-decoration: none; }
+  .cz-id .cz-chev { color: var(--cz-muted); font-size: 0.7rem; }
+  .cz-barnav { display: flex; align-items: center; gap: 14px; }
+  .cz-barnav a { color: var(--cz-muted); font-size: 0.86rem; text-decoration: none; }
+
+  /* --- shared wrap --- */
+  .cz { max-width: 820px; margin: 0 auto; padding: 22px 24px 80px; }
+
+  /* --- briefing greeting --- */
+  .cz-greet { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px;
+    margin: 18px 0 4px; }
+  .cz-greet h1 { font-family: var(--display, var(--body)); font-size: 1.9rem; line-height: 1.08;
+    letter-spacing: -0.02em; margin: 0; color: var(--ink); max-width: 30rem; text-wrap: balance; }
+  .cz-greet .btn { white-space: nowrap; }
+  .cz-stat { font-size: 0.82rem; color: var(--cz-muted); margin: 0 0 22px;
+    font-variant-numeric: tabular-nums; }
+  .cz-stat b { color: var(--ink); font-weight: 700; }
+
+  /* --- lead list --- */
+  .cz-list { display: flex; flex-direction: column; gap: 0; border-top: 1px solid var(--cz-line-soft); }
+  .cz-row { display: grid; grid-template-columns: 10px 1fr auto; align-items: start; gap: 14px;
+    padding: 16px 8px 16px 4px; border-bottom: 1px solid var(--cz-line-soft); position: relative;
+    text-decoration: none; color: inherit; cursor: pointer; transition: background .12s ease; }
+  .cz-row:hover { background: #FBF8F1; }
+  .cz-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--sunrise); margin-top: 7px; }
+  .cz-row.read .cz-dot { background: #D8D3C6; }
+  .cz-main { min-width: 0; }
+  .cz-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+  .cz-co { font-weight: 700; color: var(--ink); font-size: 1.02rem; }
+  .cz-why { font-size: 0.72rem; color: var(--sunrise-deep, #E85A2E); font-weight: 600;
+    text-transform: uppercase; letter-spacing: .04em; }
+  .cz-subj { color: var(--cz-muted); font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; }
+  .cz-skip { align-self: center; background: transparent; border: 1px solid var(--cz-line); color: var(--cz-muted);
+    border-radius: 999px; width: 30px; height: 30px; font-size: 0.9rem; cursor: pointer; flex: none;
+    transition: all .12s ease; }
+  .cz-skip:hover { border-color: #D9A08C; color: var(--sunrise-deep, #E85A2E); background: #fff; }
+
+  /* fit chip reuse via .fit .fit-high etc from site.css; fallback tint */
+  .fit { font-size: 0.68rem; font-weight: 800; letter-spacing: .05em; padding: 2px 7px; border-radius: 5px; }
+  .fit-high { background: #FFE7DC; color: #C64A22; }
+  .fit-medium { background: #EFEADD; color: #7A7458; }
+
+  /* --- locked / foil rows --- */
+  .cz-row.locked { cursor: pointer; }
+  .cz-row.locked .cz-main { filter: blur(4.5px); user-select: none; }
+  .cz-lock { position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    display: inline-flex; align-items: center; gap: 6px; font-size: 0.74rem; font-weight: 600;
+    color: var(--ink); background: rgba(255,255,255,.86); border: 1px solid var(--cz-line);
+    border-radius: 999px; padding: 5px 12px; backdrop-filter: blur(1px); }
+  .cz-foilcta { text-align: center; margin-top: 16px; }
+
+  .cz-older { text-align: center; font-size: 0.82rem; color: var(--cz-muted); padding: 20px 0 4px; }
+  .cz-older a { color: var(--sunrise-deep, #E85A2E); font-weight: 600; text-decoration: none; }
+
+  /* --- focused review --- */
+  .cz-back { display: inline-block; font-size: 0.85rem; color: var(--cz-muted); text-decoration: none;
+    margin-bottom: 18px; }
+  .cz-runbar { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    background: #F4F0E7; border: 1px solid var(--cz-line); border-radius: 10px; padding: 10px 14px;
+    font-size: 0.84rem; color: var(--cz-muted); margin-bottom: 20px; }
+  .cz-runbar b { color: var(--ink); }
+  .cz-review-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+  .cz-review-head h1 { font-family: var(--display, var(--body)); font-size: 1.7rem; margin: 0;
+    letter-spacing: -0.02em; color: var(--ink); }
+  .cz-review-why { color: var(--cz-muted); font-size: 0.9rem; margin: 0 0 22px; }
+  .cz-review-why b { color: var(--ink); font-weight: 600; }
+  .cz-field { margin-bottom: 16px; }
+  .cz-field label { display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--cz-muted); margin-bottom: 6px; font-weight: 700; }
+  .cz-field input, .cz-field textarea { width: 100%; box-sizing: border-box; font: inherit; color: var(--ink);
+    background: #fff; border: 1px solid var(--cz-line); border-radius: 10px; padding: 12px 14px; }
+  .cz-field textarea { line-height: 1.6; resize: vertical; }
+  .cz-field input:focus, .cz-field textarea:focus { outline: 2px solid var(--sunrise); outline-offset: 1px;
+    border-color: transparent; }
+  .cz-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+  .cz-actions .spacer { flex: 1; }
+  .cz-sent-note { font-size: 0.78rem; color: var(--cz-muted); margin-top: 8px; }
+  .cz-sendbox { margin-top: 22px; border-top: 1px solid var(--cz-line); padding-top: 20px; }
+  .cz-sendhead { font-size: 0.94rem; color: var(--cz-muted); margin: 0 0 14px; }
+  .cz-sendhead b { color: var(--ink); font-weight: 700; }
+  .cz-sendrow { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+
+  /* --- history --- */
+  .cz-h1 { font-family: var(--display, var(--body)); font-size: 1.7rem; margin: 6px 0 16px;
+    letter-spacing: -0.02em; color: var(--ink); }
+  .cz-filters { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+  .cz-chip { font-size: 0.82rem; color: var(--cz-muted); background: #fff; border: 1px solid var(--cz-line);
+    border-radius: 999px; padding: 7px 14px; cursor: pointer; }
+  .cz-chip.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .cz-search { margin-left: auto; }
+  .cz-search input { font: inherit; font-size: 0.86rem; border: 1px solid var(--cz-line); border-radius: 999px;
+    padding: 8px 14px; width: 180px; background: #fff; }
+  .cz-stbadge { font-size: 0.68rem; font-weight: 700; letter-spacing: .04em; padding: 3px 9px; border-radius: 999px;
+    white-space: nowrap; }
+  .st-sent { background: #E4F0E6; color: #2F7D46; }
+  .st-skip { background: #EDEAE2; color: #77726A; }
+  .st-old  { background: #FBEEDD; color: #9A6C2E; }
+
+  /* --- modal --- */
+  dialog.cz-modal { border: none; border-radius: 16px; padding: 0; max-width: 420px; width: calc(100% - 40px);
+    box-shadow: 0 24px 70px rgba(20,16,32,.28); }
+  dialog.cz-modal::backdrop { background: rgba(20,18,30,.42); }
+  .cz-modal-card { padding: 26px 26px 22px; }
+  .cz-modal-card .ey { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--sunrise-deep, #E85A2E); font-weight: 700; margin: 0 0 8px; }
+  .cz-modal-card h2 { font-family: var(--display, var(--body)); margin: 0 0 10px; font-size: 1.35rem; color: var(--ink); }
+  .cz-modal-card p { color: var(--cz-muted); margin: 0 0 18px; font-size: 0.94rem; line-height: 1.55; }
+
+  @media (max-width: 620px) {
+    .cz-greet { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .cz-greet h1 { font-size: 1.55rem; }
+    .cz-subj { white-space: normal; }
+  }
+</style>
+</head>
+<body>
+
+<div class="mock-switch" role="tablist" aria-label="Mockup screens">
+  <button class="on" data-screen="brief" role="tab">Briefing</button>
+  <button data-screen="review" role="tab">Focused review</button>
+  <button data-screen="history" role="tab">History</button>
+</div>
+<p class="mock-note">Mockup · reuses the real Coldstart styles · click rows, chips, Skip and Unlock to try the flow</p>
+
+<!-- ============ SCREEN 1 · BRIEFING ============ -->
+<section class="screen on" id="brief">
+  <div class="cz-bar">
+    <a class="wordmark" href="#">coldstart<i>*</i></a>
+    <div class="cz-barnav">
+      <a class="cz-id" data-screen="history-noop" title="Opens your company profile">Acme&nbsp;BV <span class="cz-chev">▾</span></a>
+      <a href="#">Log out</a>
+    </div>
+  </div>
+
+  <main class="cz">
+    <div class="cz-greet">
+      <h1>Good morning — 7 found overnight</h1>
+      <button class="btn btn-primary" data-goto="review">Review all →</button>
+    </div>
+    <p class="cz-stat">latest <b>06:58</b> UTC · <b>3</b> sent today · <b>24</b> in history</p>
+
+    <div class="cz-list">
+      <a class="cz-row" data-goto="review">
+        <span class="cz-dot"></span>
+        <div class="cz-main">
+          <div class="cz-head"><span class="cz-co">Patronus AI</span><span class="fit fit-high">HIGH</span><span class="cz-why">⚡ $50M funding</span></div>
+          <div class="cz-subj">Scaling headcount with AI efficiency</div>
+        </div>
+        <button class="cz-skip" title="Skip" onclick="skipRow(event)">✕</button>
+      </a>
+
+      <a class="cz-row" data-goto="review">
+        <span class="cz-dot"></span>
+        <div class="cz-main">
+          <div class="cz-head"><span class="cz-co">Ramp</span><span class="fit fit-high">HIGH</span><span class="cz-why">⚡ new RevOps hire</span></div>
+          <div class="cz-subj">Your first RevOps hire just landed — here's the next one</div>
+        </div>
+        <button class="cz-skip" title="Skip" onclick="skipRow(event)">✕</button>
+      </a>
+
+      <a class="cz-row" data-goto="review">
+        <span class="cz-dot"></span>
+        <div class="cz-main">
+          <div class="cz-head"><span class="cz-co">Vercel</span><span class="fit fit-high">HIGH</span><span class="cz-why">⚡ Series D</span></div>
+          <div class="cz-subj">Series D usually means a hiring sprint</div>
+        </div>
+        <button class="cz-skip" title="Skip" onclick="skipRow(event)">✕</button>
+      </a>
+
+      <a class="cz-row read" data-goto="review">
+        <span class="cz-dot"></span>
+        <div class="cz-main">
+          <div class="cz-head"><span class="cz-co">Retool</span><span class="fit fit-medium">MED</span><span class="cz-why">⚡ new NYC office</span></div>
+          <div class="cz-subj">Staffing the new New York office</div>
+        </div>
+        <button class="cz-skip" title="Skip" onclick="skipRow(event)">✕</button>
+      </a>
+
+      <a class="cz-row read" data-goto="review">
+        <span class="cz-dot"></span>
+        <div class="cz-main">
+          <div class="cz-head"><span class="cz-co">Linear</span><span class="fit fit-medium">MED</span><span class="cz-why">⚡ tool switch</span></div>
+          <div class="cz-subj">Moving fast without the hiring drag</div>
+        </div>
+        <button class="cz-skip" title="Skip" onclick="skipRow(event)">✕</button>
+      </a>
+
+      <!-- locked / foil rows (free plan) -->
+      <div class="cz-row locked" onclick="unlock()">
+        <span class="cz-dot"></span>
+        <div class="cz-main">
+          <div class="cz-head"><span class="cz-co">Northwind Trading</span><span class="fit fit-high">HIGH</span><span class="cz-why">⚡ expansion</span></div>
+          <div class="cz-subj">Opening three markets this quarter — hiring follows</div>
+        </div>
+        <span class="cz-lock">🔒 Unlock</span>
+      </div>
+      <div class="cz-row locked" onclick="unlock()">
+        <span class="cz-dot"></span>
+        <div class="cz-main">
+          <div class="cz-head"><span class="cz-co">Globex Corp</span><span class="fit fit-high">HIGH</span><span class="cz-why">⚡ new sales lead</span></div>
+          <div class="cz-subj">Your new VP Sales will want a team fast</div>
+        </div>
+        <span class="cz-lock">🔒 Unlock</span>
+      </div>
+    </div>
+
+    <p class="cz-older">+ 9 older leads waiting · <a data-goto="history">see them in History →</a></p>
+
+    <div class="cz-foilcta">
+      <button class="btn btn-primary" onclick="unlock()">Unlock all 40 leads</button>
+    </div>
+  </main>
+</section>
+
+<!-- ============ SCREEN 2 · FOCUSED REVIEW ============ -->
+<section class="screen" id="review">
+  <div class="cz-bar">
+    <a class="wordmark" href="#">coldstart<i>*</i></a>
+    <div class="cz-barnav">
+      <a class="cz-id">Acme&nbsp;BV <span class="cz-chev">▾</span></a>
+      <a href="#">Log out</a>
+    </div>
+  </div>
+
+  <main class="cz" style="max-width:720px">
+    <a class="cz-back" data-goto="brief">← Back to briefing</a>
+
+    <div class="cz-runbar">
+      <span>Reviewing <b>1 of 7</b> from this morning</span>
+      <button class="btn btn-ghost btn-sm" data-goto="brief">Skip → next</button>
+    </div>
+
+    <div class="cz-review-head">
+      <h1>Patronus AI</h1>
+      <span class="fit fit-high">HIGH</span>
+    </div>
+    <p class="cz-review-why">⚡ Announced a <b>$50M round</b> amid "nearly insatiable demand" · found 06:58 UTC · decision-maker: <b>VP People</b> (link)</p>
+
+    <div class="cz-field">
+      <label>Subject</label>
+      <input value="Scaling headcount with AI efficiency">
+    </div>
+    <div class="cz-field">
+      <label>Draft — edit anything before it goes</label>
+      <textarea rows="9">Patronus AI's nearly insatiable demand is a strong indicator the company is about to scale headcount, which can strain HR teams. AI-screened candidate shortlists can cut time-to-hire by 40%, letting HR focus on more strategic tasks. As you invest in new tooling, how are you planning to optimize hiring to keep up with demand?</textarea>
+    </div>
+    <div class="cz-field">
+      <label>Send to</label>
+      <input value="talent@patronus.ai">
+      <p class="cz-sent-note">Each lead comes with a link to find the real decision-maker — drop their address in.</p>
+    </div>
+
+    <div class="cz-actions">
+      <button class="btn btn-ghost" data-goto="brief">Skip</button>
+      <button class="btn btn-ghost">Save draft</button>
+    </div>
+
+    <div class="cz-sendbox">
+      <p class="cz-sendhead">Send it from your own inbox — <b>Patronus AI sees you, never Coldstart.</b></p>
+      <div class="cz-sendrow">
+        <button class="btn btn-ghost">✉ Open in Gmail</button>
+        <button class="btn btn-ghost">✉ Open in email app</button>
+        <button class="btn btn-ghost">⧉ Copy email</button>
+      </div>
+      <button class="btn btn-primary" onclick="alert('Mockup: marks this sent and loads the next lead.')">Mark as sent ✓ → next</button>
+    </div>
+  </main>
+</section>
+
+<!-- ============ SCREEN 3 · HISTORY ============ -->
+<section class="screen" id="history">
+  <div class="cz-bar">
+    <a class="wordmark" href="#">coldstart<i>*</i></a>
+    <div class="cz-barnav">
+      <a class="cz-id">Acme&nbsp;BV <span class="cz-chev">▾</span></a>
+      <a href="#">Log out</a>
+    </div>
+  </div>
+
+  <main class="cz">
+    <a class="cz-back" data-goto="brief">← Back to briefing</a>
+    <h1 class="cz-h1">History</h1>
+
+    <div class="cz-filters">
+      <button class="cz-chip on">All <span style="opacity:.6">31</span></button>
+      <button class="cz-chip">Sent <span style="opacity:.6">18</span></button>
+      <button class="cz-chip">Skipped <span style="opacity:.6">4</span></button>
+      <button class="cz-chip">Older unreviewed <span style="opacity:.6">9</span></button>
+      <span class="cz-search"><input placeholder="Search company…"></span>
+    </div>
+
+    <div class="cz-list" style="margin-top:16px">
+      <div class="cz-row read" style="cursor:default">
+        <span class="cz-dot"></span>
+        <div class="cz-main">
+          <div class="cz-head"><span class="cz-co">Patronus AI</span><span class="cz-stbadge st-sent">SENT · 21 Jul</span></div>
+          <div class="cz-subj">Scaling headcount with AI efficiency</div>
+        </div>
+      </div>
+      <div class="cz-row read" style="cursor:default">
+        <span class="cz-dot"></span>
+        <div class="cz-main">
+          <div class="cz-head"><span class="cz-co">Ramp</span><span class="cz-stbadge st-sent">SENT · 21 Jul</span></div>
+          <div class="cz-subj">Your first RevOps hire just landed</div>
+        </div>
+      </div>
+      <div class="cz-row read" style="cursor:default">
+        <span class="cz-dot"></span>
+        <div class="cz-main">
+          <div class="cz-head"><span class="cz-co">Notion</span><span class="cz-stbadge st-skip">SKIPPED · you</span></div>
+          <div class="cz-subj">Already a customer — not a fit</div>
+        </div>
+      </div>
+      <div class="cz-row" style="cursor:pointer" data-goto="review">
+        <span class="cz-dot"></span>
+        <div class="cz-main">
+          <div class="cz-head"><span class="cz-co">Figma</span><span class="cz-stbadge st-old">OLDER · 17 Jul</span><span class="cz-why">reopen →</span></div>
+          <div class="cz-subj">Design team doubling — still worth a note?</div>
+        </div>
+      </div>
+      <div class="cz-row read" style="cursor:default">
+        <span class="cz-dot"></span>
+        <div class="cz-main">
+          <div class="cz-head"><span class="cz-co">Brex</span><span class="cz-stbadge st-skip">SKIPPED · not a fit</span></div>
+          <div class="cz-subj">Competitor overlap — auto-filtered</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</section>
+
+<!-- unlock modal -->
+<dialog class="cz-modal" id="unlockModal">
+  <div class="cz-modal-card">
+    <p class="ey">Free plan</p>
+    <h2>Unlock every lead</h2>
+    <p>Your free plan shows a sample each morning. To see and send every lead the engine finds, upgrade your plan — email <a href="mailto:andrzej@getcoldstart.nl">andrzej@getcoldstart.nl</a> and we'll set it up. Self-serve subscriptions are coming soon.</p>
+    <div style="display:flex;justify-content:flex-end;gap:10px">
+      <button class="btn btn-ghost" onclick="document.getElementById('unlockModal').close()">Not now</button>
+      <button class="btn btn-primary" onclick="document.getElementById('unlockModal').close()">Got it</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  function show(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id));
+    document.querySelectorAll('.mock-switch button').forEach(b => b.classList.toggle('on', b.dataset.screen === id));
+    window.scrollTo(0, 0);
+  }
+  document.querySelectorAll('.mock-switch button').forEach(b => b.addEventListener('click', () => show(b.dataset.screen)));
+  document.querySelectorAll('[data-goto]').forEach(el => el.addEventListener('click', e => {
+    if (e.target.closest('.cz-skip')) return;      // skip button handled separately
+    e.preventDefault(); show(el.dataset.goto);
+  }));
+  function skipRow(e) {
+    e.preventDefault(); e.stopPropagation();
+    const row = e.target.closest('.cz-row');
+    row.style.transition = 'opacity .2s ease, transform .2s ease';
+    row.style.opacity = '0'; row.style.transform = 'translateX(20px)';
+    setTimeout(() => row.style.display = 'none', 200);
+  }
+  function unlock() { document.getElementById('unlockModal').showModal(); }
+  // allow #review / #history deep-links for previews
+  if (location.hash) { var h = location.hash.slice(1); if (document.getElementById(h)) show(h); }
+</script>
+</body>
+</html>
