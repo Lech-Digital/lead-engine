@@ -43,7 +43,9 @@
 .lp p { color: var(--body-muted); }
 .wrap { max-width: 1080px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 56px); }
 .wrap-narrow { max-width: 720px; }
-.lp-hero { padding: 28px 0 44px; background: var(--daylight); }
+/* No solid fill — the continuous .page-sky gradient flows through the hero so the descent
+   from daylight into dusk is one uninterrupted ramp (no hard edge at the hero's bottom). */
+.lp-hero { padding: 28px 0 44px; background: transparent; }
 .lp-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 72px; }
 .lp-login { font-size: 0.9rem; color: var(--body-muted); text-decoration: none; }
 .lp-login:hover { color: var(--ink); }
