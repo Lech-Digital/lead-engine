@@ -10,7 +10,6 @@ namespace Coldstart.Web.Areas.App.Pages;
 [Authorize]
 public sealed class HistoryModel(UserManager<ApplicationUser> users, IGetLeadInbox inbox, ILeadWorkflow workflow) : PageModel
 {
-    private const int QueueCap = 15;   // must match IndexModel.QueueCap — kept in sync by hand, the two page models are separate
     public string CustomerName { get; private set; } = "—";
     public string Filter { get; private set; } = "all";
     public string? Query { get; private set; }
@@ -31,7 +30,7 @@ public sealed class HistoryModel(UserManager<ApplicationUser> users, IGetLeadInb
 
         var unfinished = result.Leads.Where(l => l.Status is "PendingReview" or "Approved")
             .OrderByDescending(l => l.CreatedAt).ToList();
-        var older = unfinished.Skip(QueueCap).ToList();                       // beyond the queue cap
+        var older = unfinished.Skip(LeadBriefing.QueueCap).ToList();          // beyond the queue cap
         var sent = result.Leads.Where(l => l.Status == "Sent").ToList();
         var skipped = result.Leads.Where(l => l.Status is "Shelved" or "Rejected").ToList();
 

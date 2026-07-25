@@ -15,8 +15,6 @@ public sealed class IndexModel(UserManager<ApplicationUser> users, IGetLeadInbox
     public string CustomerName { get; private set; } = "—";
     public CompanyProfileView Profile { get; private set; } = new(null, null, null, null, null, null, null);
 
-    private const int QueueCap = 15;
-
     public IReadOnlyList<LeadSummary> Queue { get; private set; } = [];
     public int OlderUnreviewedCount { get; private set; }
     public int OvernightCount { get; private set; }
@@ -56,8 +54,8 @@ public sealed class IndexModel(UserManager<ApplicationUser> users, IGetLeadInbox
         var unfinished = result.Leads
             .Where(l => l.Status is "PendingReview" or "Approved")
             .OrderByDescending(l => l.CreatedAt).ToList();
-        Queue = unfinished.Take(QueueCap).ToList();
-        OlderUnreviewedCount = Math.Max(0, unfinished.Count - QueueCap);
+        Queue = unfinished.Take(LeadBriefing.QueueCap).ToList();
+        OlderUnreviewedCount = Math.Max(0, unfinished.Count - LeadBriefing.QueueCap);
 
         var todayUtc = DateTime.UtcNow.Date;
         OvernightCount = unfinished.Count(l => l.CreatedAt.UtcDateTime.Date == todayUtc);

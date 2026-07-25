@@ -88,6 +88,30 @@ public class CustomerHistoryTests(ColdstartWebFactory factory) : IClassFixture<C
     }
 
     [Fact]
+    public async Task History_OlderFilter_ShowsOnlyUnfinishedLeadsBeyondTheQueueCap()
+    {
+        // Arrange — 17 unfinished (PendingReview) leads: newest 15 stay in the briefing queue,
+        // the 2 oldest spill into History's "older" set.
+        var client = factory.CreateClient();
+        var email = $"hist-older-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        var baseTime = new DateTimeOffset(2026, 1, 1, 8, 0, 0, TimeSpan.Zero);
+        for (var i = 0; i < 17; i++)
+            await AddLeadAtAsync(email, $"Older{i:D2} Co", baseTime.AddMinutes(i)); // i=0 oldest, i=16 newest
+
+        // Act
+        var older = await client.GetStringAsync("/app/history?filter=older");
+        var briefing = await client.GetStringAsync("/app");
+
+        // Assert — the 2 oldest are in History/older and NOT in the briefing queue; a newer one is the inverse.
+        older.Should().Contain("Older00 Co");
+        older.Should().Contain("Older01 Co");
+        older.Should().NotContain("Older16 Co");   // newest stays in the queue, not "older"
+        briefing.Should().Contain("Older16 Co");
+        briefing.Should().NotContain("Older00 Co"); // oldest dropped from the queue
+    }
+
+    [Fact]
     public async Task GetHistory_WhenNotAuthenticated_RedirectsToLogin()
     {
         // Arrange
@@ -117,6 +141,21 @@ public class CustomerHistoryTests(ColdstartWebFactory factory) : IClassFixture<C
         else if (status == LeadStatus.Shelved) lead.Discard();
         else if (status == LeadStatus.Rejected) lead.Reject();
         else if (status == LeadStatus.Sent) { lead.Approve(new EmailAddress("ceo@x.com")); lead.MarkSent(DateTimeOffset.UtcNow); }
+        db.Leads.Add(lead);
+        await db.SaveChangesAsync();
+    }
+
+    // Seeds a PendingReview harvested lead with an explicit CreatedAt, so ordering (newest-first,
+    // queue cap / "older" spillover) is deterministic. Left PendingReview — no approve/discard.
+    private async Task AddLeadAtAsync(string email, string company, DateTimeOffset createdAt)
+    {
+        using var scope = factory.Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var db = scope.ServiceProvider.GetRequiredService<ColdstartDbContext>();
+        var user = await users.FindByEmailAsync(email);
+        var lead = Lead.CreateHarvested(new CustomerId(user!.CustomerId!.Value), company, Fit.Yes,
+            "subj", "body", "hackernews", "https://x/1", "fp-" + Guid.NewGuid().ToString("N"), 0.7, "outbound",
+            createdAt);
         db.Leads.Add(lead);
         await db.SaveChangesAsync();
     }
