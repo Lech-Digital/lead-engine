@@ -582,6 +582,18 @@
 @media (max-width: 900px) { .ld-grid { grid-template-columns: 1fr; } }
 /* ===== end lead detail ===== */
 
+/* ===== Focused review (/app/leads/{id}) ===== */
+.cz-runbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--daylight); border: 1px solid var(--line-soft); border-radius: 10px; padding: 10px 14px; font-size: 0.84rem; color: var(--body-subtle); margin-bottom: 20px; }
+.cz-runbar b { color: var(--ink); }
+.cz-review-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+.cz-review-why { color: var(--body-subtle); font-size: 0.9rem; margin: 0 0 22px; }
+.cz-review-why b { color: var(--ink); font-weight: 600; }
+.cz-sendbox { margin-top: 4px; }
+.cz-sendhead { font-size: 0.9rem; color: var(--body-muted); margin: 0 0 12px; }
+.cz-sendhead b { color: var(--ink); font-weight: 700; }
+.cz-sendrow { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; align-items: center; }
+/* ===== end focused review ===== */
+
 /* ===== Lead notes ===== */
 .ld-notes { background: #FCFAF4; }
 .ld-note-list { list-style: none; padding: 0; margin: 0 0 12px; display: flex; flex-direction: column; gap: 10px; }

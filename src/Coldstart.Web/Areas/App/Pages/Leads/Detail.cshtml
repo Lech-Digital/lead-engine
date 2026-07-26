@@ -11,6 +11,7 @@
     var sent = status == "Sent";
     var skipped = status is "Shelved" or "Rejected";
     var hasRecipient = !string.IsNullOrWhiteSpace(lead.RecipientEmail);
+    var decisionMaker = lead.ContactLinks.Count > 0 ? lead.ContactLinks[0] : null;
 }
 @functions {
     // Only http(s) URLs are safe to render as a href — everything else (javascript:, data:, etc.)
@@ -27,14 +28,36 @@
 </header>
 
 <main class="wrap app-zone lead-detail">
-  <p class="auth-alt"><a href="/app">← Back to your briefing</a></p>
+  <p class="auth-alt cz-back"><a href="/app">← Back to your briefing</a></p>
 
-  <div class="ld-head">
-    <div><h1 class="ld-co">@lead.Company</h1> <span class="fit fit-@lead.Fit.ToLower()">@lead.Fit</span></div>
-    <div class="ld-status ts">
-      @(pending ? "To review" : approved ? "Approved" : sent ? $"Sent{(lead.SentAt is null ? "" : " on " + lead.SentAt.Value.ToString("dd MMM yyyy", System.Globalization.CultureInfo.InvariantCulture))}" : "Skipped")
+  @if (Model.Run)
+  {
+    <div class="cz-runbar">
+      <span>Reviewing <b>@Model.RunPosition of @Model.RunTotal</b> from this morning</span>
+      <button class="btn btn-ghost btn-sm" type="submit" form="lead-edit" asp-page-handler="Discard">Skip → next</button>
     </div>
+  }
+
+  <div class="cz-review-head">
+    <h1 class="ld-co">@lead.Company</h1>
+    <span class="fit fit-@lead.Fit.ToLower()">@lead.Fit</span>
   </div>
+  <p class="cz-review-why">
+    @if (!string.IsNullOrWhiteSpace(lead.MatchedSignals))
+    {
+      <span>⚡ <b>@lead.MatchedSignals.Split(',')[0].Trim()</b> · </span>
+    }
+    @(pending ? "to review" : approved ? "approved" : sent ? $"sent{(lead.SentAt is null ? "" : " on " + lead.SentAt.Value.ToString("dd MMM yyyy", System.Globalization.CultureInfo.InvariantCulture))}" : "skipped")
+    @if (decisionMaker is not null)
+    {
+      <span> · decision-maker: <b>
+        @if (IsSafeHttpUrl(decisionMaker.Url))
+        { <a class="lnk" href="@decisionMaker.Url" target="_blank" rel="noopener">@decisionMaker.Label</a> }
+        else
+        { @decisionMaker.Label }
+      </b></span>
+    }
+  </p>
 
   <div asp-validation-summary="All" class="field-error"></div>
   @if (Model.Notice is not null) { <p class="mail-flash">@Model.Notice</p> }
@@ -45,18 +68,18 @@
       <section class="panel">
         <h4>The email</h4>
         <form method="post" id="lead-edit">
-          <div class="field"><label for="lead-recipient">Recipient</label>
+          @if (Model.Run) { <input type="hidden" name="run" value="1"> }
+          <div class="field"><label for="lead-recipient">Send to</label>
             <input asp-for="Input.Recipient" id="lead-recipient" type="email" placeholder="name@company.com — set before sending" disabled="@sent"></div>
           <div class="field"><label for="lead-subject">Subject</label>
             <input asp-for="Input.Subject" id="lead-subject" disabled="@sent"></div>
-          <div class="field"><label for="lead-body">Body</label>
+          <div class="field"><label for="lead-body">Draft — edit anything before it goes</label>
             <textarea asp-for="Input.Draft" id="lead-body" rows="8" disabled="@sent"></textarea></div>
 
           @if (!sent)
           {
             <div class="ld-actions">
               <button class="btn btn-ghost" type="submit" asp-page-handler="Save">Save draft</button>
-              @if (pending || skipped) { <button class="btn btn-primary" type="submit" asp-page-handler="Accept">Approve →</button> }
               @if (approved || skipped) { <button class="btn btn-ghost" type="submit" asp-page-handler="Reopen">Move back to review</button> }
               @if (!skipped) { <button class="btn btn-ghost" type="submit" asp-page-handler="Discard">Skip</button> }
             </div>
@@ -65,12 +88,12 @@
         </form>
       </section>
 
-      @if (approved)
+      @if (!sent)
       {
-        <section class="panel ld-send">
+        <section class="panel ld-send cz-sendbox">
           <h4>Send from your own inbox</h4>
-          <p class="ld-send-note">It goes out from <b>your</b> address, not ours. Open your mail with the draft ready, then mark it sent.</p>
-          <div class="ld-send-btns">
+          <p class="cz-sendhead">Send it from your own inbox — <b>@lead.Company sees you, never Coldstart.</b></p>
+          <div class="ld-send-btns cz-sendrow">
             <a class="btn btn-ghost" id="handoff-gmail" target="_blank" rel="noopener">✉ Open in Gmail</a>
             <a class="btn btn-ghost" id="handoff-mailto">✉ Open in email app</a>
             <button class="btn btn-ghost" id="handoff-copy" type="button">⧉ Copy email</button>
@@ -79,7 +102,7 @@
           @* These submit the email form above (form="lead-edit"), so they send/mark what's currently
              on screen — the server saves the fields first, then acts. *@
           <div class="ld-marksent">
-            <button class="btn btn-primary" type="submit" form="lead-edit" asp-page-handler="MarkSent" id="btn-marksent" disabled="@(!hasRecipient)">Mark as sent ✓</button>
+            <button class="btn btn-primary" type="submit" form="lead-edit" asp-page-handler="MarkSent" id="btn-marksent" disabled="@(!hasRecipient)">Mark as sent ✓@(Model.Run ? " → next" : "")</button>
             <span class="ts" id="need-recipient" @(hasRecipient ? "hidden" : null)>Add a recipient first.</span>
           </div>
           @if (User.IsInRole(ColdstartRoles.SuperAdmin))

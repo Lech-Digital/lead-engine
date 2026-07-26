@@ -30,28 +30,6 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
     }
 
     [Fact]
-    public async Task Accept_PersistsApprovedStatus()
-    {
-        // Arrange
-        var client = factory.CreateClient();
-        var email = $"detail2-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
-        var id = await AddLeadForUserAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"));
-        var form = await AntiforgeryForm(client, $"/app/leads/{id}", new()
-        {
-            ["Input.Subject"] = "s", ["Input.Draft"] = "b", ["Input.Recipient"] = "ceo@acme.com",
-        });
-
-        // Act
-        var post = await client.PostAsync($"/app/leads/{id}?handler=Accept", new FormUrlEncodedContent(form));
-
-        // Assert
-        post.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Redirect);
-        var accepted = await client.GetStringAsync("/app?tab=accepted");
-        accepted.Should().Contain("Acme Co");
-    }
-
-    [Fact]
     public async Task Detail_ForAnotherCustomersLead_RedirectsToApp()
     {
         // Arrange — owner creates a lead
@@ -73,20 +51,58 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
     }
 
     [Fact]
-    public async Task Detail_ForPendingLead_ShowsApprove_AndHidesMarkSent()
+    public async Task Detail_ForPendingLead_ShowsOwnInboxSend_WithoutSeparateApprove()
     {
         // Arrange
         var client = factory.CreateClient();
-        var email = $"detail-pending-{Guid.NewGuid():N}@test.com";
+        var email = $"det-{Guid.NewGuid():N}@test.com";
         await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
-        var id = await AddLeadForUserAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"));
+        var id = await AddPendingLeadWithRecipientAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"), "ceo@acme.com");
 
         // Act
         var html = await client.GetStringAsync($"/app/leads/{id}");
 
+        // Assert — customer sends from their own inbox; no exposed "Send from Coldstart"
+        html.Should().Contain("Send from your own inbox");
+        html.Should().Contain("handoff-gmail");
+        html.Should().NotContain("Send from Coldstart");
+    }
+
+    [Fact]
+    public async Task MarkSent_FoldsApprove_ThenLeadLandsInHistorySent()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var email = $"det-sent-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        var id = await AddPendingLeadWithRecipientAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"), "ceo@acme.com");
+        var form = await AntiforgeryForm(client, $"/app/leads/{id}", new() {
+            ["Input.Subject"] = "Hi", ["Input.Draft"] = "Body", ["Input.Recipient"] = "ceo@acme.com",
+        });
+
+        // Act
+        var post = await client.PostAsync($"/app/leads/{id}?handler=MarkSent", new FormUrlEncodedContent(form));
+        var history = await client.GetStringAsync("/app/history?filter=sent");
+
         // Assert
-        html.Should().Contain("handler=Accept");
-        html.Should().NotContain("handler=MarkSent");
+        post.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Redirect);
+        history.Should().Contain("Acme Co");
+    }
+
+    [Fact]
+    public async Task Detail_RunMode_ShowsRunBar()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var email = $"det-run-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        var id = await AddPendingLeadWithRecipientAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"), "ceo@acme.com");
+
+        // Act
+        var html = await client.GetStringAsync($"/app/leads/{id}?run=1");
+
+        // Assert
+        html.Should().Contain("Reviewing");   // run bar present
     }
 
     [Fact]
@@ -135,7 +151,7 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         post.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Redirect);
         factory.Outreach.LastSent.Should().NotBeNull();
         factory.Outreach.LastSent!.To.Should().Be("ceo@acme.com");
-        var sent = await client.GetStringAsync("/app?tab=sent");
+        var sent = await client.GetStringAsync("/app/history?filter=sent");
         sent.Should().Contain("Acme Co");
     }
 
@@ -354,6 +370,22 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         var lead = Lead.CreateHarvested(new CustomerId(user!.CustomerId!.Value), company, Fit.Yes,
             "subj", "body", "hackernews", "https://x/1", fingerprint, 0.7, "outbound", DateTimeOffset.UtcNow);
         lead.Approve(new EmailAddress(recipient));
+        db.Leads.Add(lead);
+        await db.SaveChangesAsync();
+        return lead.Id.Value;
+    }
+
+    private async Task<Guid> AddPendingLeadWithRecipientAsync(string email, string company, string fingerprint, string recipient)
+    {
+        // Same rationale as AddApprovedLeadWithRecipientAsync: built straight through the domain so
+        // this tenant-less setup scope doesn't need to go through the tenant-filtered repository.
+        using var scope = factory.Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var db = scope.ServiceProvider.GetRequiredService<ColdstartDbContext>();
+        var user = await users.FindByEmailAsync(email);
+        var lead = Lead.CreateHarvested(new CustomerId(user!.CustomerId!.Value), company, Fit.Yes,
+            "subj", "body", "hackernews", "https://x/1", fingerprint, 0.7, "outbound", DateTimeOffset.UtcNow);
+        lead.SetRecipient(new EmailAddress(recipient));
         db.Leads.Add(lead);
         await db.SaveChangesAsync();
         return lead.Id.Value;
