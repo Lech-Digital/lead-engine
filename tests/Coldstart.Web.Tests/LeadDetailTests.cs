@@ -133,6 +133,35 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
     }
 
     [Fact]
+    public async Task MarkSent_InRunMode_AdvancesToNewestRemainingLead()
+    {
+        // Arrange — three PendingReview leads with recipients and distinct CreatedAt, so that after
+        // "acted" is sent, two candidates remain ("middle" and "newest"). Only a genuine newest-first
+        // ordering picks "newest" here — oldest-first or unordered would wrongly land on "middle".
+        var client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        var email = $"run-marksent-newest-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        var acted = await AddPendingLeadWithRecipientAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"),
+            "ceo@acme.com", DateTimeOffset.UtcNow.AddMinutes(-10));
+        var middle = await AddPendingLeadWithRecipientAsync(email, "Beta Co", "fp-" + Guid.NewGuid().ToString("N"),
+            "ceo@beta.com", DateTimeOffset.UtcNow.AddMinutes(-5));
+        var newest = await AddPendingLeadWithRecipientAsync(email, "Gamma Co", "fp-" + Guid.NewGuid().ToString("N"),
+            "ceo@gamma.com", DateTimeOffset.UtcNow);
+        var form = await AntiforgeryForm(client, $"/app/leads/{acted}?run=1", new() {
+            ["run"] = "1", ["Input.Subject"] = "Hi", ["Input.Draft"] = "Body", ["Input.Recipient"] = "ceo@acme.com",
+        });
+
+        // Act
+        var post = await client.PostAsync($"/app/leads/{acted}?handler=MarkSent", new FormUrlEncodedContent(form));
+
+        // Assert — hops to the newest of the two remaining unfinished leads, not the merely-older one
+        post.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        post.Headers.Location!.OriginalString.Should().Contain(newest.ToString());
+        post.Headers.Location!.OriginalString.Should().Contain("run=1");
+        post.Headers.Location!.OriginalString.Should().NotContain(middle.ToString());
+    }
+
+    [Fact]
     public async Task MarkSent_InRunMode_WhenNoMoreLeads_RedirectsToApp()
     {
         // Arrange — a single PendingReview lead, nothing left in the queue once it's sent
