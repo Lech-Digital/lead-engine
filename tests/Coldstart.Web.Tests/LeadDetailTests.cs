@@ -106,6 +106,76 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
     }
 
     [Fact]
+    public async Task MarkSent_InRunMode_RedirectsToNextUnfinishedLead()
+    {
+        // Arrange — two PendingReview leads with recipients, deterministic newest-first ordering
+        var client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        var email = $"run-marksent-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        var older = await AddPendingLeadWithRecipientAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"),
+            "ceo@acme.com", DateTimeOffset.UtcNow.AddMinutes(-5));
+        var newer = await AddPendingLeadWithRecipientAsync(email, "Beta Co", "fp-" + Guid.NewGuid().ToString("N"),
+            "ceo@beta.com", DateTimeOffset.UtcNow);
+        // The run flag is threaded on POST via the hidden <input name="run" value="1"> inside the
+        // email form (Detail.cshtml), not a query-string suffix on the form action — so the
+        // antiforgery GET and the POST both carry it as a plain form field, same as the real form.
+        var form = await AntiforgeryForm(client, $"/app/leads/{older}?run=1", new() {
+            ["run"] = "1", ["Input.Subject"] = "Hi", ["Input.Draft"] = "Body", ["Input.Recipient"] = "ceo@acme.com",
+        });
+
+        // Act
+        var post = await client.PostAsync($"/app/leads/{older}?handler=MarkSent", new FormUrlEncodedContent(form));
+
+        // Assert — hops straight to the other (still-unfinished) lead, still in run mode
+        post.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        post.Headers.Location!.OriginalString.Should().Contain(newer.ToString());
+        post.Headers.Location!.OriginalString.Should().Contain("run=1");
+    }
+
+    [Fact]
+    public async Task MarkSent_InRunMode_WhenNoMoreLeads_RedirectsToApp()
+    {
+        // Arrange — a single PendingReview lead, nothing left in the queue once it's sent
+        var client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        var email = $"run-marksent-last-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        var id = await AddPendingLeadWithRecipientAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"), "ceo@acme.com");
+        var form = await AntiforgeryForm(client, $"/app/leads/{id}?run=1", new() {
+            ["run"] = "1", ["Input.Subject"] = "Hi", ["Input.Draft"] = "Body", ["Input.Recipient"] = "ceo@acme.com",
+        });
+
+        // Act
+        var post = await client.PostAsync($"/app/leads/{id}?handler=MarkSent", new FormUrlEncodedContent(form));
+
+        // Assert — falls back to the briefing, not another lead detail page
+        post.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        post.Headers.Location!.OriginalString.Should().Contain("/app");
+        post.Headers.Location!.OriginalString.Should().NotContain("/app/leads/");
+    }
+
+    [Fact]
+    public async Task Skip_InRunMode_RedirectsToNextUnfinishedLead()
+    {
+        // Arrange — two PendingReview leads with recipients, deterministic newest-first ordering
+        var client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        var email = $"run-skip-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        var older = await AddPendingLeadWithRecipientAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"),
+            "ceo@acme.com", DateTimeOffset.UtcNow.AddMinutes(-5));
+        var newer = await AddPendingLeadWithRecipientAsync(email, "Beta Co", "fp-" + Guid.NewGuid().ToString("N"),
+            "ceo@beta.com", DateTimeOffset.UtcNow);
+        var form = await AntiforgeryForm(client, $"/app/leads/{older}?run=1", new() { ["run"] = "1" });
+
+        // Act
+        var post = await client.PostAsync($"/app/leads/{older}?handler=Discard", new FormUrlEncodedContent(form));
+
+        // Assert — skip advances to the other (still-unfinished) lead, still in run mode
+        post.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        post.Headers.Location!.OriginalString.Should().Contain(newer.ToString());
+        post.Headers.Location!.OriginalString.Should().Contain("run=1");
+    }
+
+    [Fact]
     public async Task Detail_ForApprovedLeadWithRecipient_ShowsMarkSentAndHandoff()
     {
         // Arrange
@@ -375,16 +445,19 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         return lead.Id.Value;
     }
 
-    private async Task<Guid> AddPendingLeadWithRecipientAsync(string email, string company, string fingerprint, string recipient)
+    private async Task<Guid> AddPendingLeadWithRecipientAsync(string email, string company, string fingerprint, string recipient,
+        DateTimeOffset? createdAt = null)
     {
         // Same rationale as AddApprovedLeadWithRecipientAsync: built straight through the domain so
         // this tenant-less setup scope doesn't need to go through the tenant-filtered repository.
+        // createdAt is overridable so run-mode "next unfinished lead" ordering tests can seed a
+        // deterministic newest-first order rather than relying on wall-clock timing.
         using var scope = factory.Services.CreateScope();
         var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var db = scope.ServiceProvider.GetRequiredService<ColdstartDbContext>();
         var user = await users.FindByEmailAsync(email);
         var lead = Lead.CreateHarvested(new CustomerId(user!.CustomerId!.Value), company, Fit.Yes,
-            "subj", "body", "hackernews", "https://x/1", fingerprint, 0.7, "outbound", DateTimeOffset.UtcNow);
+            "subj", "body", "hackernews", "https://x/1", fingerprint, 0.7, "outbound", createdAt ?? DateTimeOffset.UtcNow);
         lead.SetRecipient(new EmailAddress(recipient));
         db.Leads.Add(lead);
         await db.SaveChangesAsync();
