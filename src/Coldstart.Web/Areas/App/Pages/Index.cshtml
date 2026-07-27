@@ -8,6 +8,7 @@
 <header class="app-bar">
   <a class="wordmark" href="/">coldstart<i>*</i></a>
   <nav class="app-nav">
+    <a class="app-navlink" href="/app/history">History</a>
     <a class="cz-id" href="/app/profile">@(string.IsNullOrWhiteSpace(Model.Profile.CompanyName) ? Model.CustomerName : Model.Profile.CompanyName) <span class="cz-chev">▾</span></a>
     <form method="post" asp-page="/Account/Logout" asp-area="Identity"><button class="btn btn-ghost" type="submit">Log out</button></form>
   </nav>
@@ -103,9 +104,9 @@
                 <div class="lead-row-subj">@lead.Subject</div>
               </div>
             </a>
-            <form method="post" asp-page-handler="Skip" class="lead-skip-form">
+            <form method="post" asp-page-handler="Skip" class="lead-skip-form" data-skip-co="@lead.Company">
               <input type="hidden" name="id" value="@lead.Id">
-              <button class="cz-skip" type="submit" title="Skip">✕</button>
+              <button class="cz-skip" type="submit" title="Skip" aria-label="Skip @lead.Company">✕</button>
             </form>
           </div>
         }
@@ -127,6 +128,18 @@
       </div>
     </div>
   }
+
+  <dialog id="skip-confirm" class="lead-modal" aria-labelledby="skip-confirm-title">
+    <div class="lead-modal-card">
+      <p class="lead-modal-eyebrow">Skip lead</p>
+      <h2 class="lead-modal-title" id="skip-confirm-title">Skip <span id="skip-confirm-co">this lead</span>?</h2>
+      <p class="lead-modal-detail">It moves to History under “Skipped” — you can reopen it anytime.</p>
+      <div class="lead-modal-actions">
+        <button type="button" class="btn btn-ghost" id="skip-confirm-cancel">Keep it</button>
+        <button type="button" class="btn btn-primary" id="skip-confirm-ok" autofocus>Skip lead</button>
+      </div>
+    </div>
+  </dialog>
 
   <dialog id="upgrade" class="lead-modal" aria-labelledby="upgrade-title">
     <form method="dialog" class="lead-modal-card">

@@ -33,6 +33,42 @@ public class LeadReviewTests(ColdstartWebFactory factory) : IClassFixture<Coldst
     }
 
     [Fact]
+    public async Task Index_AppBar_HasPersistentHistoryLink_EvenWithNoBacklog()
+    {
+        // Arrange — a single lead means no "older leads" line, so the only History link
+        // is the persistent app-bar one (how a user reaches their skipped/sent leads).
+        var client = factory.CreateClient();
+        var email = $"rev-hist-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await AddLeadForUserAsync(email, "Solo Co", "fp-" + Guid.NewGuid().ToString("N"));
+
+        // Act
+        var html = await client.GetStringAsync("/app");
+
+        // Assert
+        html.Should().Contain("app-navlink");
+        html.Should().Contain("href=\"/app/history\"");
+        html.Should().NotContain("older lead");   // no backlog line in this case
+    }
+
+    [Fact]
+    public async Task Index_SkipControl_HasConfirmationDialog()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var email = $"rev-confirm-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await AddLeadForUserAsync(email, "Confirm Co", "fp-" + Guid.NewGuid().ToString("N"));
+
+        // Act
+        var html = await client.GetStringAsync("/app");
+
+        // Assert — a confirmation dialog exists and each skip form carries the company label for it
+        html.Should().Contain("id=\"skip-confirm\"");
+        html.Should().Contain("data-skip-co=\"Confirm Co\"");
+    }
+
+    [Fact]
     public async Task Index_QueueShowsNewest15Unfinished_RestGoToOlderCount()
     {
         // Arrange

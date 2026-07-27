@@ -1,34 +1,35 @@
-// Progressive enhancement for the briefing queue (/app):
-//  - the Skip form works with plain HTML (POST -> redirect -> reload);
-//  - here we intercept the submit, POST it in the background, and animate the
-//    row away on success — falling back to a normal submit on any failure.
+// Progressive enhancement for the briefing queue (/app): a Skip confirmation.
+//  - Each .lead-skip-form posts natively (POST -> redirect -> reload) with no JS.
+//  - With JS + <dialog> support, we intercept the submit, ask for confirmation,
+//    and on confirm submit the form for real. The reload keeps every count
+//    (e.g. "N in history") in sync — no client-side patching that can drift.
 (function () {
-  if (!window.fetch) return; // no fetch: let every .lead-skip-form post natively
+  var dlg = document.getElementById('skip-confirm');
+  if (!dlg || typeof dlg.showModal !== 'function') return; // no dialog support: native submit, no confirm
 
-  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  function removeRow(form) {
-    var row = form.closest('.lead-row-wrap');
-    if (!row) { return; }
-    if (reduceMotion) {
-      row.remove();
-      return;
-    }
-    row.style.transition = 'opacity .18s ease, transform .18s ease';
-    row.style.transform = 'translateX(12px)';
-    row.style.opacity = '0';
-    row.addEventListener('transitionend', function () { row.remove(); }, { once: true });
-  }
+  var coEl = document.getElementById('skip-confirm-co');
+  var okBtn = document.getElementById('skip-confirm-ok');
+  var cancelBtn = document.getElementById('skip-confirm-cancel');
+  var pending = null;
 
   document.querySelectorAll('.lead-skip-form').forEach(function (form) {
     form.addEventListener('submit', function (e) {
       e.preventDefault();
-      fetch(form.action, { method: 'POST', body: new FormData(form) })
-        .then(function (response) {
-          if (response.ok) { removeRow(form); }
-          else { form.submit(); }
-        })
-        .catch(function () { form.submit(); });
+      pending = form;
+      if (coEl) { coEl.textContent = form.getAttribute('data-skip-co') || 'this lead'; }
+      dlg.showModal();
     });
+  });
+
+  okBtn.addEventListener('click', function () {
+    var form = pending;
+    pending = null;
+    dlg.close();
+    if (form) { form.submit(); } // native submit -> server redirect -> reload (counts refresh)
+  });
+
+  cancelBtn.addEventListener('click', function () {
+    pending = null;
+    dlg.close();
   });
 })();
