@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.RegularExpressions;
 using Coldstart.Domain;
 using Coldstart.Infrastructure;
 using Coldstart.Infrastructure.Identity;
@@ -109,6 +110,38 @@ public class CustomerHistoryTests(ColdstartWebFactory factory) : IClassFixture<C
         older.Should().NotContain("Older16 Co");   // newest stays in the queue, not "older"
         briefing.Should().Contain("Older16 Co");
         briefing.Should().NotContain("Older00 Co"); // oldest dropped from the queue
+    }
+
+    [Fact]
+    public async Task Queue_And_OlderHistory_ArePartitioned_EvenWithTiedTimestamps()
+    {
+        // Arrange — 16 PendingReview leads sharing the exact same CreatedAt: without a deterministic
+        // secondary sort, the queue (Take 15) and History/older (Skip 15) — each a separate re-query/
+        // re-order — could disagree on which lead is the 16th, letting it appear in both or neither.
+        var client = factory.CreateClient();
+        var email = $"hist-tie-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        var tiedAt = new DateTimeOffset(2026, 1, 1, 8, 0, 0, TimeSpan.Zero);
+        var names = Enumerable.Range(0, 16).Select(i => $"Tie{i:D2} Co").ToList();
+        foreach (var name in names)
+            await AddLeadAtAsync(email, name, tiedAt);
+
+        // Act
+        var briefing = await client.GetStringAsync("/app");
+        var older = await client.GetStringAsync("/app/history?filter=older");
+
+        // Assert — exactly 15 lead rows in the briefing queue, exactly 1 in History/older,
+        // and every one of the 16 names appears in exactly one of the two pages (no overlap, none missing).
+        var queueRowCount = Regex.Matches(briefing, "class=\"lead-row\"").Count;
+        queueRowCount.Should().Be(15);
+
+        var inBriefing = names.Where(n => briefing.Contains(n)).ToList();
+        var inOlder = names.Where(n => older.Contains(n)).ToList();
+
+        inBriefing.Should().HaveCount(15);
+        inOlder.Should().HaveCount(1);
+        inBriefing.Intersect(inOlder).Should().BeEmpty();
+        inBriefing.Union(inOlder).Should().BeEquivalentTo(names);
     }
 
     [Fact]

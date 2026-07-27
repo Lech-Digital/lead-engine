@@ -10,6 +10,7 @@ internal sealed class LeadRepository(ColdstartDbContext db) : ILeadRepository
         await db.Leads
             .Where(l => l.CustomerId == customerId)
             .OrderByDescending(l => l.CreatedAt)
+            .ThenByDescending(l => l.Id)
             .ToListAsync(ct);
 
     public async Task AddAsync(Lead lead, CancellationToken ct)

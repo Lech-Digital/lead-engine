@@ -14,8 +14,6 @@
 </header>
 
 <main class="wrap app-zone">
-  @Html.AntiForgeryToken()
-
   <div class="cz-greet">
     @if (Model.TotalLeads == 0 && Model.HarvestStatus is Coldstart.Domain.HarvestStatus.Pending or Coldstart.Domain.HarvestStatus.Running)
     {
