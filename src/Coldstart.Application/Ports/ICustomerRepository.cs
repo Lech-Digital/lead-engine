@@ -10,4 +10,8 @@ public interface ICustomerRepository
     Task<Customer?> GetAsync(CustomerId id, CancellationToken ct);
     Task UpdateAsync(Customer customer, CancellationToken ct);
     Task DeleteAsync(CustomerId id, CancellationToken ct);
+
+    // System-level (no tenant context): ids of Full-plan customers that are not mid-harvest and have
+    // fewer than `threshold` unfinished (PendingReview/Approved) leads — i.e. have room for a top-up.
+    Task<IReadOnlyList<Guid>> IdsDueForHarvestAsync(int threshold, CancellationToken ct);
 }

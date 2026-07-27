@@ -37,4 +37,16 @@ internal sealed class CustomerRepository(ColdstartDbContext db) : ICustomerRepos
         if (customer is not null) db.Customers.Remove(customer);
         await db.SaveChangesAsync(ct);
     }
+
+    public async Task<IReadOnlyList<Guid>> IdsDueForHarvestAsync(int threshold, CancellationToken ct)
+    {
+        // Cross-customer system read → bypass the fail-closed tenant filter (like AllAsync/DeleteAsync).
+        var due = await db.Customers.IgnoreQueryFilters()
+            .Where(c => c.Plan == CustomerPlan.Full && c.HarvestStatus != HarvestStatus.Running)
+            .Where(c => db.Leads.IgnoreQueryFilters()
+                .Count(l => l.CustomerId == c.Id
+                            && (l.Status == LeadStatus.PendingReview || l.Status == LeadStatus.Approved)) < threshold)
+            .ToListAsync(ct);   // materialize, then map the value-object id in memory (avoids .Id.Value translation)
+        return due.Select(c => c.Id.Value).ToList();
+    }
 }
