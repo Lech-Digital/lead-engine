@@ -54,6 +54,48 @@ public class NightlyHarvestTests(ColdstartWebFactory factory) : IClassFixture<Co
         due.Should().NotContain(id);
     }
 
+    [Theory]
+    [InlineData(3, 0, 4, 0)]     // now 03:00, run 04:00 → 1h
+    [InlineData(4, 0, 4, 0)]     // now exactly 04:00 → fire now-ish (0), not +24h
+    [InlineData(5, 0, 4, 0)]     // now 05:00, run 04:00 → 23h (tomorrow)
+    public void NextRunDelay_ComputesDelayToNextRunAt(int nowH, int nowM, int runH, int runM)
+    {
+        // Arrange
+        var now = new DateTime(2026, 1, 1, nowH, nowM, 0, DateTimeKind.Utc);
+        var runAt = new TimeSpan(runH, runM, 0);
+
+        // Act
+        var delay = Coldstart.Infrastructure.Harvest.NightlyHarvestScheduler.NextRunDelay(runAt, now);
+
+        // Assert — always in [0, 24h), and lands exactly on the next runAt instant
+        delay.Should().BeGreaterThanOrEqualTo(TimeSpan.Zero).And.BeLessThan(TimeSpan.FromHours(24));
+        (now + delay).TimeOfDay.Should().Be(runAt);
+    }
+
+    // The shared FakeHarvestQueue also picks up the ambient "Coldstart" dogfood tenant (Full plan,
+    // <5 unfinished leads), so we assert Contain/NotContain rather than an exact set — same
+    // convention as the repository test above.
+    [Fact]
+    public async Task EnqueueDueAsync_EnqueuesExactlyTheDueCustomers()
+    {
+        // Arrange
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ColdstartDbContext>();
+        var dueId = await SeedAsync(db, "sched-due", CustomerPlan.Full, HarvestStatus.Done, pending: 0);
+        var overId = await SeedAsync(db, "sched-full", CustomerPlan.Full, HarvestStatus.Done, pending: 9);   // over threshold
+        var freeId = await SeedAsync(db, "sched-free", CustomerPlan.Free, HarvestStatus.Done, pending: 0);  // free
+        factory.HarvestQueue.Jobs.Clear();
+
+        // Act
+        var count = await Coldstart.Infrastructure.Harvest.NightlyHarvestScheduler.EnqueueDueAsync(scope.ServiceProvider, 5, default);
+
+        // Assert — the due customer was enqueued; the over-threshold and free ones were not
+        var enqueued = factory.HarvestQueue.Jobs.Select(j => j.CustomerId).ToList();
+        enqueued.Should().Contain(dueId);
+        enqueued.Should().NotContain(new[] { overId, freeId });
+        count.Should().Be(enqueued.Count);
+    }
+
     // Seeds a customer (plan + harvest status) and the requested number of leads in each status.
     private static async Task<Guid> SeedAsync(ColdstartDbContext db, string name, CustomerPlan plan,
         HarvestStatus status, int pending = 0, int approved = 0, int sent = 0)

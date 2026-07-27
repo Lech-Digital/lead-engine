@@ -31,6 +31,7 @@ public class ColdstartWebFactory : WebApplicationFactory<Program>, IAsyncLifetim
         builder.UseSetting("Authentication:Google:ClientSecret", "");
         builder.UseSetting("ConnectionStrings:Coldstart", _db.GetConnectionString());
         builder.UseSetting("Quota:FreeLeadCount", "100000");   // effectively no foil for the shared factory
+        builder.UseSetting("HarvestSchedule:Enabled", "false"); // hosted scheduler must never fire during the suite
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<IEmailSender>();

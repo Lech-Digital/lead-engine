@@ -47,6 +47,7 @@ public static class DependencyInjection
         services.AddSingleton<Harvest.HarvestQueue>();
         services.AddSingleton<Application.Harvest.IHarvestQueue>(sp => sp.GetRequiredService<Harvest.HarvestQueue>());
         services.AddHostedService<Harvest.HarvestQueueService>();
+        services.AddHostedService<Harvest.NightlyHarvestScheduler>();
         return services;
     }
 }
