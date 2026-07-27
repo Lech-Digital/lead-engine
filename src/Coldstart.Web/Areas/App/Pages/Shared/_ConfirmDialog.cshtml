@@ -1,0 +1,16 @@
+@* Shared confirmation dialog for destructive actions. Any submit button with a
+   data-confirm attribute (+ optional data-confirm-title / data-confirm-ok) is
+   intercepted by app-confirm.js, which shows this dialog and, on confirm, submits
+   the button's form. Without JS the button posts immediately (confirm is an
+   enhancement, never a gate that breaks the action). *@
+<dialog id="confirm-dialog" class="lead-modal" aria-labelledby="confirm-dialog-title">
+  <div class="lead-modal-card">
+    <p class="lead-modal-eyebrow">Confirm</p>
+    <h2 class="lead-modal-title" id="confirm-dialog-title">Are you sure?</h2>
+    <p class="lead-modal-detail" id="confirm-dialog-body"></p>
+    <div class="lead-modal-actions">
+      <button type="button" class="btn btn-ghost" id="confirm-dialog-cancel">Cancel</button>
+      <button type="button" class="btn btn-primary" id="confirm-dialog-ok" autofocus>Confirm</button>
+    </div>
+  </div>
+</dialog>

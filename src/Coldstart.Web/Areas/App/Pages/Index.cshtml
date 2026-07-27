@@ -104,9 +104,11 @@
                 <div class="lead-row-subj">@lead.Subject</div>
               </div>
             </a>
-            <form method="post" asp-page-handler="Skip" class="lead-skip-form" data-skip-co="@lead.Company">
+            <form method="post" asp-page-handler="Skip" class="lead-skip-form">
               <input type="hidden" name="id" value="@lead.Id">
-              <button class="cz-skip" type="submit" title="Skip" aria-label="Skip @lead.Company">✕</button>
+              <button class="cz-skip" type="submit" title="Skip" aria-label="Skip @lead.Company"
+                      data-confirm="It moves to History under “Skipped” — you can reopen it anytime."
+                      data-confirm-title="Skip @lead.Company?" data-confirm-ok="Skip lead">✕</button>
             </form>
           </div>
         }
@@ -129,17 +131,7 @@
     </div>
   }
 
-  <dialog id="skip-confirm" class="lead-modal" aria-labelledby="skip-confirm-title">
-    <div class="lead-modal-card">
-      <p class="lead-modal-eyebrow">Skip lead</p>
-      <h2 class="lead-modal-title" id="skip-confirm-title">Skip <span id="skip-confirm-co">this lead</span>?</h2>
-      <p class="lead-modal-detail">It moves to History under “Skipped” — you can reopen it anytime.</p>
-      <div class="lead-modal-actions">
-        <button type="button" class="btn btn-ghost" id="skip-confirm-cancel">Keep it</button>
-        <button type="button" class="btn btn-primary" id="skip-confirm-ok" autofocus>Skip lead</button>
-      </div>
-    </div>
-  </dialog>
+  <partial name="_ConfirmDialog" />
 
   <dialog id="upgrade" class="lead-modal" aria-labelledby="upgrade-title">
     <form method="dialog" class="lead-modal-card">
@@ -150,4 +142,4 @@
     </form>
   </dialog>
 </main>
-<script src="~/js/app-leads.js" defer></script>
+<script src="~/js/app-confirm.js" defer></script>

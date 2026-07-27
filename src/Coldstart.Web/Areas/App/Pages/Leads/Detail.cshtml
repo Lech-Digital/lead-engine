@@ -24,7 +24,7 @@
 
 <header class="app-bar">
   <a class="wordmark" href="/">coldstart<i>*</i></a>
-  <nav class="app-nav"><a href="/app">Your briefing</a></nav>
+  <nav class="app-nav"><a href="/app">Your briefing</a><a class="app-navlink" href="/app/history">History</a></nav>
 </header>
 
 <main class="wrap app-zone lead-detail">
@@ -34,7 +34,9 @@
   {
     <div class="cz-runbar">
       <span>Reviewing <b>@Model.RunPosition of @Model.RunTotal</b> from this morning</span>
-      <button class="btn btn-ghost btn-sm" type="submit" form="lead-edit" asp-page-handler="Discard">Skip → next</button>
+      <button class="btn btn-ghost btn-sm" type="submit" form="lead-edit" asp-page-handler="Discard"
+              data-confirm="It moves to History under “Skipped” — you can reopen it anytime."
+              data-confirm-title="Skip @lead.Company?" data-confirm-ok="Skip lead">Skip → next</button>
     </div>
   }
 
@@ -81,7 +83,7 @@
             <div class="ld-actions">
               <button class="btn btn-ghost" type="submit" asp-page-handler="Save">Save draft</button>
               @if (approved || skipped) { <button class="btn btn-ghost" type="submit" asp-page-handler="Reopen">Move back to review</button> }
-              @if (!skipped) { <button class="btn btn-ghost" type="submit" asp-page-handler="Discard">Skip</button> }
+              @if (!skipped) { <button class="btn btn-ghost" type="submit" asp-page-handler="Discard" data-confirm="It moves to History under “Skipped” — you can reopen it anytime." data-confirm-title="Skip @lead.Company?" data-confirm-ok="Skip lead">Skip</button> }
             </div>
           }
           else { <p class="app-sub">This lead was sent and is read-only.</p> }
@@ -102,13 +104,15 @@
           @* These submit the email form above (form="lead-edit"), so they send/mark what's currently
              on screen — the server saves the fields first, then acts. *@
           <div class="ld-marksent">
-            <button class="btn btn-primary" type="submit" form="lead-edit" asp-page-handler="MarkSent" id="btn-marksent" disabled="@(!hasRecipient)">Mark as sent ✓@(Model.Run ? " → next" : "")</button>
+            <button class="btn btn-primary" type="submit" form="lead-edit" asp-page-handler="MarkSent" id="btn-marksent" disabled="@(!hasRecipient)"
+                    data-confirm="This marks the lead as sent and locks it — you won't be able to edit it afterward." data-confirm-title="Mark as sent?" data-confirm-ok="Mark as sent">Mark as sent ✓@(Model.Run ? " → next" : "")</button>
             <span class="ts" id="need-recipient" @(hasRecipient ? "hidden" : null)>Add a recipient first.</span>
           </div>
           @if (User.IsInRole(ColdstartRoles.SuperAdmin))
           {
             <div class="ld-marksent">
-              <button class="btn btn-primary" type="submit" form="lead-edit" asp-page-handler="SendFromColdstart" id="btn-sendcoldstart" disabled="@(!hasRecipient)">Send from Coldstart ✓</button>
+              <button class="btn btn-primary" type="submit" form="lead-edit" asp-page-handler="SendFromColdstart" id="btn-sendcoldstart" disabled="@(!hasRecipient)"
+                      data-confirm="Coldstart will send this email now, from your address. This can't be undone." data-confirm-title="Send this email now?" data-confirm-ok="Send email">Send from Coldstart ✓</button>
               <span class="ts">Sends the current draft from your Coldstart address, branded.</span>
             </div>
           }
@@ -153,7 +157,7 @@
                   <span class="ts">@((note.UpdatedAt ?? note.CreatedAt).ToString("dd MMM · HH:mm", System.Globalization.CultureInfo.InvariantCulture))</span>
                   <form method="post" asp-page-handler="RemoveNote" class="ld-note-del">
                     <input type="hidden" asp-for="Input.NoteId" value="@note.Id">
-                    <button type="submit" class="ld-note-x" aria-label="Delete note">Delete</button>
+                    <button type="submit" class="ld-note-x" aria-label="Delete note" data-confirm="This permanently deletes the note." data-confirm-title="Delete note?" data-confirm-ok="Delete">Delete</button>
                   </form>
                 </div>
               </li>
@@ -167,5 +171,8 @@
       </section>
     </div>
   </div>
+
+  <partial name="_ConfirmDialog" />
 </main>
 <script src="~/js/lead-detail.js" defer></script>
+<script src="~/js/app-confirm.js" defer></script>

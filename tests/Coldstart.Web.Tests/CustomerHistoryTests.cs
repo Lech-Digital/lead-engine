@@ -14,6 +14,25 @@ namespace Coldstart.Web.Tests;
 public class CustomerHistoryTests(ColdstartWebFactory factory) : IClassFixture<ColdstartWebFactory>
 {
     [Fact]
+    public async Task History_SearchInput_HasLiveFilterHooks()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var email = $"hist-live-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await AddLeadAsync(email, "Sent Co", LeadStatus.Sent);
+
+        // Act
+        var html = await client.GetStringAsync("/app/history");
+
+        // Assert — the hooks the as-you-type filter binds to, plus the script that drives it.
+        // (The <form method="get"> still works on Enter / without JS.)
+        html.Should().Contain("id=\"history-search\"");
+        html.Should().Contain("id=\"history-list\"");
+        html.Should().Contain("app-history.js");
+    }
+
+    [Fact]
     public async Task History_All_ShowsSentSkippedAndOlderUnreviewed()
     {
         // Arrange

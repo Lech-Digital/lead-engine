@@ -24,7 +24,7 @@
     <a class="cz-chip @(Model.Filter == "older" ? "on" : "")" href="/app/history?filter=older">Older unreviewed <span style="opacity:.6">@Model.OlderCount</span></a>
     <form method="get" class="cz-search">
       <input type="hidden" name="filter" value="@Model.Filter">
-      <input type="text" name="q" value="@Model.Query" placeholder="Search company…" aria-label="Search company">
+      <input type="text" id="history-search" name="q" value="@Model.Query" placeholder="Search company…" aria-label="Search company" autocomplete="off">
     </form>
   </div>
 
@@ -34,7 +34,7 @@
   }
   else
   {
-    <div class="cz-list" style="margin-top:16px">
+    <div class="cz-list" id="history-list" style="margin-top:16px">
       @foreach (var lead in Model.Rows)
       {
         var isOlder = lead.Status is "PendingReview" or "Approved";
@@ -65,5 +65,7 @@
         </div>
       }
     </div>
+    <p class="app-group-empty" id="history-nomatch" hidden>No companies match your search.</p>
   }
 </main>
+<script src="~/js/app-history.js" defer></script>

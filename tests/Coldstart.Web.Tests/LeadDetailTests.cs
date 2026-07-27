@@ -69,6 +69,24 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
     }
 
     [Fact]
+    public async Task Detail_DestructiveActions_RequireConfirmation()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var email = $"det-confirm-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        var id = await AddPendingLeadWithRecipientAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"), "ceo@acme.com");
+
+        // Act
+        var html = await client.GetStringAsync($"/app/leads/{id}");
+
+        // Assert — the shared confirm dialog exists, and Skip + Mark-as-sent opt into it.
+        html.Should().Contain("id=\"confirm-dialog\"");
+        html.Should().Contain("data-confirm-title=\"Mark as sent?\"");
+        html.Should().Contain("data-confirm-title=\"Skip Acme Co?\"");
+    }
+
+    [Fact]
     public async Task MarkSent_FoldsApprove_ThenLeadLandsInHistorySent()
     {
         // Arrange

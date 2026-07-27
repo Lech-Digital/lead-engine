@@ -63,9 +63,10 @@ public class LeadReviewTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Act
         var html = await client.GetStringAsync("/app");
 
-        // Assert — a confirmation dialog exists and each skip form carries the company label for it
-        html.Should().Contain("id=\"skip-confirm\"");
-        html.Should().Contain("data-skip-co=\"Confirm Co\"");
+        // Assert — the shared confirm dialog exists and the skip button opts into it
+        html.Should().Contain("id=\"confirm-dialog\"");
+        html.Should().Contain("data-confirm");
+        html.Should().Contain("data-confirm-title=\"Skip Confirm Co?\"");
     }
 
     [Fact]
