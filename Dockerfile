@@ -25,6 +25,10 @@ ENV ASPNETCORE_URLS=http://+:8080 \
     ASPNETCORE_ENVIRONMENT=Production
 EXPOSE 8080
 
+# curl exists only for the container healthcheck below.
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 # Data Protection keys live on a mounted volume so invite/reset tokens and
 # auth cookies survive redeploys. Make the dir owned by the non-root app user
 # so the first-time named-volume mount inherits that ownership.
@@ -32,4 +36,6 @@ RUN mkdir -p /app/keys && chown -R $APP_UID /app/keys
 
 COPY --from=build /app ./
 USER $APP_UID
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD curl -fsS http://localhost:8080/health || exit 1
 ENTRYPOINT ["dotnet", "Coldstart.Web.dll"]

@@ -46,10 +46,48 @@ services:
       # "Polish with AI" (Groq). Soft-degrade: no hard-fail guard — until this is set
       # in deploy/.env.prod the button just shows "Couldn't polish just now".
       Llm__ApiKey: ${LLM_API_KEY:-}
+      # Stripe billing. Soft-degrade: with these unset, checkout/portal redirect back
+      # to /app with a notice and the webhook rejects everything (bad signature).
+      Stripe__SecretKey: ${STRIPE_SECRET_KEY:-}
+      Stripe__WebhookSecret: ${STRIPE_WEBHOOK_SECRET:-}
+      Stripe__PriceMonthlyId: ${STRIPE_PRICE_MONTHLY_ID:-}
+      Stripe__PriceSetupId: ${STRIPE_PRICE_SETUP_ID:-}
+      # Branded "Send from Coldstart" (admin-only outreach send). Soft-degrade: unset →
+      # the send fails with a notice; draft/handoff sending is unaffected.
+      OutreachMailbox__Host: ${OUTREACH_HOST:-}
+      OutreachMailbox__Username: ${OUTREACH_USERNAME:-}
+      OutreachMailbox__Password: ${OUTREACH_PASSWORD:-}
     volumes:
       - coldstart-dpkeys:/app/keys
     expose:
       - "8080"
+
+  db-backup:
+    image: postgres:17
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+    volumes:
+      # Host-bound so dumps sit as plain files, easy to copy off the server.
+      - ./backups:/backups
+    entrypoint:
+      - bash
+      - -c
+      - |
+        while true; do
+          ts=$$(date -u +%F-%H%M)
+          if pg_dump -h db -U coldstart -d coldstart -Fc -f "/backups/coldstart-$$ts.dump"; then
+            echo "backup ok: coldstart-$$ts.dump"
+            find /backups -name 'coldstart-*.dump' -mtime "+$$RETENTION_DAYS" -delete
+          else
+            echo "backup FAILED at $$ts" >&2
+          fi
+          sleep 86400
+        done
 
   caddy:
     image: caddy:2

@@ -21,6 +21,7 @@ builder.Services.Configure<Coldstart.Infrastructure.Harvest.LlmOptions>(builder.
 builder.Services.Configure<Coldstart.Infrastructure.Outreach.OutreachMailboxOptions>(builder.Configuration.GetSection("OutreachMailbox"));
 builder.Services.Configure<Coldstart.Infrastructure.Harvest.HarvestScheduleOptions>(builder.Configuration.GetSection("HarvestSchedule"));
 builder.Services.Configure<Coldstart.Infrastructure.Billing.StripeOptions>(builder.Configuration.GetSection("Stripe"));
+builder.Services.AddHealthChecks().AddCheck<Coldstart.Web.Health.DbHealthCheck>("db");
 
 builder.Services.AddSingleton(_ =>
 {
@@ -85,6 +86,7 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapRazorPages();
+app.MapHealthChecks("/health");
 
 // Anonymous by design: authenticated by the Stripe signature inside Parse. Plan flips
 // happen ONLY here — never from the browser's success_url redirect.

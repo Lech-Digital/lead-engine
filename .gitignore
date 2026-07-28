@@ -12,8 +12,9 @@ bin/
 obj/
 src/Coldstart.Web/appsettings.Development.json
 
-# Deploy secrets
+# Deploy secrets + local backup dumps
 deploy/.env.prod
+backups/
 
 # Local tool/session artifacts
 .superpowers/
