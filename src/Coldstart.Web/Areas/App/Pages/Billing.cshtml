@@ -1,0 +1,39 @@
+@page "/app/billing"
+@model Coldstart.Web.Areas.App.Pages.BillingModel
+@{
+    ViewData["Title"] = "Billing";
+    Layout = "/Pages/Shared/_Layout.cshtml";
+}
+
+<header class="app-bar">
+  <a class="wordmark" href="/">coldstart<i>*</i></a>
+  <nav class="app-nav">
+    <a class="app-navlink" href="/app">Briefing</a>
+    <form method="post" asp-page="/Account/Logout" asp-area="Identity"><button class="btn btn-ghost" type="submit">Log out</button></form>
+  </nav>
+</header>
+
+<main class="wrap app-zone">
+  <div class="cz-greet">
+    <h1>Billing</h1>
+  </div>
+
+  @if (Model.Plan == Coldstart.Domain.CustomerPlan.Full)
+  {
+    <p>You're on the <b>Full</b> plan@(Model.RenewsAt is { } renews ? $" — renews {renews:d MMMM yyyy}" : "").</p>
+    @if (Model.HasStripeCustomer)
+    {
+      <form method="post" asp-page-handler="Portal">
+        <button class="btn btn-primary" type="submit">Manage billing</button>
+      </form>
+    }
+  }
+  else
+  {
+    <p>You're on the <b>Free</b> plan — a sample of the leads we find.</p>
+    <p>Full plan: every lead, every morning. €750/mo + €350 one-time setup, cancel anytime.</p>
+    <form method="post" asp-page-handler="Checkout">
+      <button class="btn btn-primary" type="submit">Subscribe — unlock every lead</button>
+    </form>
+  }
+</main>

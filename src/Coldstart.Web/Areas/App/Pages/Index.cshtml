@@ -9,6 +9,10 @@
   <a class="wordmark" href="/">coldstart<i>*</i></a>
   <nav class="app-nav">
     <a class="app-navlink" href="/app/history">History</a>
+    @if (Model.Plan == Coldstart.Domain.CustomerPlan.Full)
+    {
+      <a class="app-navlink" href="/app/billing">Billing</a>
+    }
     <a class="cz-id" href="/app/profile">@(string.IsNullOrWhiteSpace(Model.Profile.CompanyName) ? Model.CustomerName : Model.Profile.CompanyName) <span class="cz-chev">▾</span></a>
     <form method="post" asp-page="/Account/Logout" asp-area="Identity"><button class="btn btn-ghost" type="submit">Log out</button></form>
   </nav>
@@ -47,6 +51,11 @@
   @if (statParts.Count > 0)
   {
     <p class="cz-stat">@Html.Raw(string.Join(" · ", statParts))</p>
+  }
+
+  @if (!string.IsNullOrEmpty(Model.StatusMessage))
+  {
+    <aside class="app-explainer"><p>@Model.StatusMessage</p></aside>
   }
 
   @if (Model.ActiveHint is { } hint)
@@ -126,7 +135,9 @@
     <div class="app-foil">
       <p>@Model.LockedCount more @(Model.LockedCount == 1 ? "lead" : "leads") behind your plan.</p>
       <div class="cz-foilcta">
-        <button class="btn btn-primary" type="button" onclick="document.getElementById('upgrade').showModal()">Unlock all @Model.LockedCount @(Model.LockedCount == 1 ? "lead" : "leads")</button>
+        <form method="post" asp-page="/Billing" asp-area="App" asp-page-handler="Checkout">
+          <button class="btn btn-primary" type="submit">Unlock all @Model.LockedCount @(Model.LockedCount == 1 ? "lead" : "leads")</button>
+        </form>
       </div>
     </div>
   }
@@ -134,12 +145,17 @@
   <partial name="_ConfirmDialog" />
 
   <dialog id="upgrade" class="lead-modal" aria-labelledby="upgrade-title">
-    <form method="dialog" class="lead-modal-card">
+    <div class="lead-modal-card">
       <p class="lead-modal-eyebrow">Free plan</p>
       <h2 class="lead-modal-title" id="upgrade-title">Unlock every lead</h2>
-      <p class="lead-modal-detail">Your free plan shows a sample. To see and send every lead we find, upgrade your plan — email <a href="mailto:andrzej@getcoldstart.nl">andrzej@getcoldstart.nl</a> and we'll set it up. (Self-serve subscriptions are coming soon.)</p>
-      <div class="lead-modal-actions"><button class="btn btn-primary" value="ok" autofocus>Got it</button></div>
-    </form>
+      <p class="lead-modal-detail">Your free plan shows a sample. The Full plan gives you every lead we find, every morning — €750/mo + €350 one-time setup, cancel anytime.</p>
+      <div class="lead-modal-actions">
+        <form method="post" asp-page="/Billing" asp-area="App" asp-page-handler="Checkout">
+          <button class="btn btn-primary" type="submit" autofocus>Subscribe — unlock every lead</button>
+        </form>
+        <form method="dialog"><button class="btn btn-ghost" value="cancel">Not now</button></form>
+      </div>
+    </div>
   </dialog>
 </main>
 <script src="~/js/app-confirm.js" defer></script>

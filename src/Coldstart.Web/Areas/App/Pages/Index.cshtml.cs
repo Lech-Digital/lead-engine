@@ -12,6 +12,8 @@ namespace Coldstart.Web.Areas.App.Pages;
 [Authorize]
 public sealed class IndexModel(UserManager<ApplicationUser> users, IGetLeadInbox inbox, IGetCompanyProfile profiles, ILeadWorkflow workflow) : PageModel
 {
+    [TempData] public string? StatusMessage { get; set; }
+
     public string CustomerName { get; private set; } = "—";
     public CompanyProfileView Profile { get; private set; } = new(null, null, null, null, null, null, null);
 
