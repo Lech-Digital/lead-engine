@@ -17,6 +17,7 @@ internal sealed class InquiryConfiguration : IEntityTypeConfiguration<Inquiry>
         builder.Property(i => i.Email)
             .HasConversion(e => e.Value, v => new EmailAddress(v))
             .IsRequired();
+        builder.Property(i => i.Company);
         builder.Property(i => i.Niche);
         builder.Property(i => i.WhatYouSell);
         builder.Property(i => i.Message);

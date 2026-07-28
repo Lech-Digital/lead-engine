@@ -9,8 +9,10 @@ internal sealed class GroqBriefPolisher(HttpClient http, IOptions<LlmOptions> op
 {
     private const string System =
         "You tighten a founder's rough notes about their own company into a crisp 2-3 sentence " +
-        "third-person brief usable as context in a cold outreach email. Never invent facts, " +
-        "numbers, or claims not present in the input. Return ONLY the brief — no preamble, no quotes.";
+        "brief written in the company's own voice — first-person plural (\"we sell…\", \"we help…\"), " +
+        "never third person (\"they\", \"their company\"). It is used as sender context in a cold " +
+        "outreach email. Never invent facts, numbers, or claims not present in the input. " +
+        "Return ONLY the brief — no preamble, no quotes.";
 
     private readonly LlmOptions _o = options.Value;
 

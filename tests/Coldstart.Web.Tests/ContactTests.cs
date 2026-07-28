@@ -33,6 +33,41 @@ public class ContactTests(ColdstartWebFactory factory) : IClassFixture<Coldstart
     }
 
     [Fact]
+    public async Task PostContact_WithCompany_StoresCompanyName()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var name = $"Sam-{Guid.NewGuid():N}";
+        var form = await AntiforgeryForm(client, new()
+        {
+            ["Name"] = name, ["Email"] = "sam@acme.com", ["Company"] = "Acme B.V.",
+            ["Niche"] = "B2B SaaS", ["WhatYouSell"] = "scheduling", ["website"] = ""
+        });
+
+        // Act
+        var response = await client.PostAsync("/Contact", new FormUrlEncodedContent(form));
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ColdstartDbContext>();
+        (await db.Set<Inquiry>().SingleAsync(i => i.Name == name)).Company.Should().Be("Acme B.V.");
+    }
+
+    [Fact]
+    public async Task LandingSampleForm_HasCompanyField()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+
+        // Act
+        var html = await client.GetStringAsync("/");
+
+        // Assert
+        html.Should().Contain("name=\"Company\"");
+    }
+
+    [Fact]
     public async Task PostContact_HoneypotFilled_DoesNotStoreOrNotify()
     {
         // Arrange

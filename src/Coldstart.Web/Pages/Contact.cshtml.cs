@@ -10,6 +10,7 @@ public sealed class ContactModel(ISubmitInquiry submit) : PageModel
     [BindProperty] public string Email { get; set; } = "";
     [BindProperty] public string Niche { get; set; } = "";
     [BindProperty] public string WhatYouSell { get; set; } = "";
+    [BindProperty] public string? Company { get; set; }
     [BindProperty] public string? Message { get; set; }
     [BindProperty] public string? Website { get; set; } // honeypot — must stay empty
 
@@ -22,7 +23,7 @@ public sealed class ContactModel(ISubmitInquiry submit) : PageModel
         if (string.IsNullOrWhiteSpace(Name) || string.IsNullOrWhiteSpace(Email) || !Email.Contains('@'))
             return BadRequest("Name and a valid email are required.");
 
-        await submit.SubmitAsync(new SubmitInquiryRequest(Name, Email, Niche, WhatYouSell, Message), ct);
+        await submit.SubmitAsync(new SubmitInquiryRequest(Name, Email, Niche, WhatYouSell, Message, Company), ct);
         return new OkResult();
     }
 }
