@@ -18,9 +18,10 @@ public class LeadFoilTests(FoilWebFactory factory) : IClassFixture<FoilWebFactor
         var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var db = scope.ServiceProvider.GetRequiredService<ColdstartDbContext>();
         var cid = new CustomerId((await users.FindByEmailAsync(email))!.CustomerId!.Value);
+        // Staggered timestamps: higher i = newer but LOWER score (so the newest leads are the locked ones).
         for (var i = 0; i < count; i++)
             db.Leads.Add(Lead.CreateHarvested(cid, $"Co{i}", Fit.Yes, $"subj{i}", "body",
-                "hackernews", "https://x/1", $"fp-{Guid.NewGuid():N}", 0.9 - i * 0.01, "outbound", DateTimeOffset.UtcNow));
+                "hackernews", "https://x/1", $"fp-{Guid.NewGuid():N}", 0.9 - i * 0.01, "outbound", DateTimeOffset.UtcNow.AddMinutes(i)));
         await db.SaveChangesAsync();
     }
 
@@ -40,6 +41,27 @@ public class LeadFoilTests(FoilWebFactory factory) : IClassFixture<FoilWebFactor
         html.Should().Contain("Unlock all");
         html.Should().Contain("more");            // "N more … behind your plan"
         html.Should().Contain("lead-row locked"); // at least one blurred row inline
+    }
+
+    [Fact]
+    public async Task Inbox_ForFreeCustomer_ShowsUnlockedLeadsBeforeLocked()
+    {
+        // Arrange — 5 leads, quota 2; the locked (lower-score) leads are the NEWEST,
+        // so a pure newest-first ordering would put them on top.
+        var client = factory.CreateClient();
+        var email = $"foil-order-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await AddLeadsAsync(email, 5);
+
+        // Act
+        var html = await client.GetStringAsync("/app");
+
+        // Assert — every unlocked row renders before the first locked row
+        var firstLocked = html.IndexOf("class=\"lead-row locked\"", StringComparison.Ordinal);
+        var lastUnlocked = html.LastIndexOf("class=\"lead-row\"", StringComparison.Ordinal);
+        firstLocked.Should().BeGreaterThan(0);
+        lastUnlocked.Should().BeGreaterThan(0);
+        lastUnlocked.Should().BeLessThan(firstLocked);
     }
 
     [Fact]

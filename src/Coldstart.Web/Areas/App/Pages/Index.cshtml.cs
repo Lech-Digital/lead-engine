@@ -55,7 +55,8 @@ public sealed class IndexModel(UserManager<ApplicationUser> users, IGetLeadInbox
 
         var unfinished = result.Leads
             .Where(l => l.Status is "PendingReview" or "Approved")
-            .OrderByDescending(l => l.CreatedAt).ToList();
+            .OrderBy(l => l.Locked)                     // unlocked (viewable) leads first, foil below
+            .ThenByDescending(l => l.CreatedAt).ToList();
         Queue = unfinished.Take(LeadBriefing.QueueCap).ToList();
         OlderUnreviewedCount = Math.Max(0, unfinished.Count - LeadBriefing.QueueCap);
 
