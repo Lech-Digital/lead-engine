@@ -21,6 +21,7 @@ public class ColdstartWebFactory : WebApplicationFactory<Program>, IAsyncLifetim
     public FakeHarvestQueue HarvestQueue { get; } = new();
     public FakeSearchProfileGenerator SearchProfiles { get; } = new();
     public FakeBillingGateway Billing { get; } = new();
+    public FakeStripeEventParser StripeEvents { get; } = new();
 
     public Task InitializeAsync() => _db.StartAsync();
 
@@ -49,6 +50,8 @@ public class ColdstartWebFactory : WebApplicationFactory<Program>, IAsyncLifetim
             services.AddSingleton<Coldstart.Application.Customers.ISearchProfileGenerator>(SearchProfiles);
             services.RemoveAll<Coldstart.Application.Billing.IBillingGateway>();
             services.AddSingleton<Coldstart.Application.Billing.IBillingGateway>(Billing);
+            services.RemoveAll<Coldstart.Application.Billing.IStripeEventParser>();
+            services.AddSingleton<Coldstart.Application.Billing.IStripeEventParser>(StripeEvents);
         });
     }
 }

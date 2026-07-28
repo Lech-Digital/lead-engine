@@ -14,7 +14,7 @@ public class ApplySubscriptionChangeTests
         // Arrange
         var customer = Customer.Create("Acme");
         var repo = new FakeRepo(customer);
-        var sut = new ApplySubscriptionChange(repo);
+        var sut = new ApplySubscriptionChange(repo, new FakeTenantScope());
         var renews = DateTimeOffset.UtcNow.AddDays(30);
 
         // Act — first event has no stored StripeCustomerId link yet; mapped via CustomerRef.
@@ -34,7 +34,7 @@ public class ApplySubscriptionChangeTests
         customer.LinkStripeCustomer("cus_1");
         customer.ActivateFull("sub_1", DateTimeOffset.UtcNow.AddDays(30));
         var repo = new FakeRepo(customer);
-        var sut = new ApplySubscriptionChange(repo);
+        var sut = new ApplySubscriptionChange(repo, new FakeTenantScope());
 
         // Act — mapped by stored StripeCustomerId, no CustomerRef needed.
         await sut.HandleAsync(new SubscriptionChange("cus_1", "sub_1", SubscriptionState.Canceled, null, null), default);
@@ -49,7 +49,7 @@ public class ApplySubscriptionChangeTests
         // Arrange
         var customer = Customer.Create("Acme");
         var repo = new FakeRepo(customer);
-        var sut = new ApplySubscriptionChange(repo);
+        var sut = new ApplySubscriptionChange(repo, new FakeTenantScope());
         var change = new SubscriptionChange("cus_1", "sub_1", SubscriptionState.Active, null, customer.Id.Value);
 
         // Act
@@ -66,13 +66,19 @@ public class ApplySubscriptionChangeTests
     {
         // Arrange
         var repo = new FakeRepo(null);
-        var sut = new ApplySubscriptionChange(repo);
+        var sut = new ApplySubscriptionChange(repo, new FakeTenantScope());
 
         // Act
         Func<Task> act = () => sut.HandleAsync(new SubscriptionChange("cus_x", "sub_x", SubscriptionState.Active, null, Guid.NewGuid()), default);
 
         // Assert — a stray event for an unknown customer must not throw (Stripe would retry forever).
         await act.Should().NotThrowAsync();
+    }
+
+    // No-op tenant scope: the unit fake repo has no tenant filter to open.
+    private sealed class FakeTenantScope : ITenantScope
+    {
+        public void SetCurrent(Guid customerId) { }
     }
 
     // Minimal fake: resolves by StripeCustomerId first, else by id (CustomerRef).
