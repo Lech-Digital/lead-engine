@@ -38,7 +38,12 @@ builder.Services.AddSingleton(_ =>
 builder.Services.AddHarvestQueue();
 
 builder.Services
-    .AddIdentity<ApplicationUser, IdentityRole>(o => { o.SignIn.RequireConfirmedAccount = false; })
+    .AddIdentity<ApplicationUser, IdentityRole>(o =>
+    {
+        o.SignIn.RequireConfirmedAccount = false;
+        o.Lockout.MaxFailedAccessAttempts = 5;
+        o.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+    })
     .AddEntityFrameworkStores<ColdstartDbContext>()
     .AddDefaultTokenProviders()
     .AddClaimsPrincipalFactory<AppUserClaimsPrincipalFactory>();

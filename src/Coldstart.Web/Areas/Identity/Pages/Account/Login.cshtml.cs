@@ -34,8 +34,14 @@ public sealed class LoginModel(SignInManager<ApplicationUser> signInManager, Use
             return Page();
 
         var result = await signInManager.PasswordSignInAsync(
-            Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+            Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: true);
 
+        if (result.IsLockedOut)
+        {
+            ErrorMessage = "This account is temporarily locked after too many failed attempts. " +
+                           "Wait 15 minutes and try again, or reset your password.";
+            return Page();
+        }
         if (!result.Succeeded)
         {
             ErrorMessage = "Invalid login attempt.";
