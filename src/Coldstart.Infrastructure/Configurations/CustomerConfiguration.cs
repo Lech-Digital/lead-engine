@@ -17,6 +17,9 @@ internal sealed class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         builder.Property(c => c.Plan).HasConversion<string>().HasMaxLength(16).HasDefaultValue(CustomerPlan.Free);
         builder.Property(c => c.HarvestStatus).HasConversion<string>().HasMaxLength(16).HasDefaultValue(HarvestStatus.None);
         builder.Property(c => c.LastHarvestAt);
+        builder.Property(c => c.StripeCustomerId).HasMaxLength(64);
+        builder.Property(c => c.StripeSubscriptionId).HasMaxLength(64);
+        builder.Property(c => c.PlanRenewsAt);
         builder.HasMany(c => c.Leads)
             .WithOne()
             .HasForeignKey(l => l.CustomerId)

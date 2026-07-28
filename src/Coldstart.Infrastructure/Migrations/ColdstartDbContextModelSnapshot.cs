@@ -48,6 +48,17 @@ namespace Coldstart.Infrastructure.Migrations
                         .HasColumnType("character varying(16)")
                         .HasDefaultValue("Free");
 
+                    b.Property<DateTimeOffset?>("PlanRenewsAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("StripeCustomerId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("StripeSubscriptionId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.HasKey("Id");
 
                     b.ToTable("customers", (string)null);

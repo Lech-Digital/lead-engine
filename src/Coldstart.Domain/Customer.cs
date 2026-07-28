@@ -10,6 +10,9 @@ public sealed class Customer
     public CustomerPlan Plan { get; private set; } = CustomerPlan.Free;
     public HarvestStatus HarvestStatus { get; private set; } = HarvestStatus.None;
     public DateTimeOffset? LastHarvestAt { get; private set; }
+    public string? StripeCustomerId { get; private set; }
+    public string? StripeSubscriptionId { get; private set; }
+    public DateTimeOffset? PlanRenewsAt { get; private set; }
     public IReadOnlyList<Lead> Leads => _leads.AsReadOnly();
 
     private Customer() { } // EF materialization
@@ -37,5 +40,22 @@ public sealed class Customer
         var lead = Lead.Create(Id, company, fit, subject, draft, createdAt);
         _leads.Add(lead);
         return lead;
+    }
+
+    public void LinkStripeCustomer(string stripeCustomerId) => StripeCustomerId = stripeCustomerId;
+
+    public void ActivateFull(string subscriptionId, DateTimeOffset? renewsAt)
+    {
+        Plan = CustomerPlan.Full;
+        StripeSubscriptionId = subscriptionId;
+        PlanRenewsAt = renewsAt;
+    }
+
+    public void DowngradeToFree()
+    {
+        Plan = CustomerPlan.Free;
+        StripeSubscriptionId = null;
+        PlanRenewsAt = null;
+        // StripeCustomerId intentionally retained.
     }
 }
