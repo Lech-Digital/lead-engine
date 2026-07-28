@@ -30,6 +30,8 @@ public static class DependencyInjection
         services.AddScoped<Application.Harvest.ILeadEnricher, Harvest.GroqLeadEnricher>();
         services.AddScoped<Application.Customers.ICompanyBriefPolisher, Harvest.GroqBriefPolisher>();
         services.AddScoped<Application.Customers.ISearchProfileGenerator, Harvest.GroqSearchProfileGenerator>();
+        services.AddScoped<Application.Billing.IBillingGateway, Billing.StripeBillingGateway>();
+        services.AddSingleton<Application.Billing.IStripeEventParser, Billing.StripeEventParser>();
         return services;
     }
 
