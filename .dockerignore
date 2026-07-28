@@ -16,7 +16,6 @@
 .venv/
 __pycache__/
 *.pyc
-leadengine/
 clients/
 docs/
 outreach/
