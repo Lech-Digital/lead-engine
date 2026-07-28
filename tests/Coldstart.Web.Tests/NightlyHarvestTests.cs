@@ -27,6 +27,7 @@ public class NightlyHarvestTests(ColdstartWebFactory factory) : IClassFixture<Co
         var atCap = await SeedAsync(db, "full-atcap", CustomerPlan.Full, HarvestStatus.Done, pending: 5);   // skip (== threshold)
         var over = await SeedAsync(db, "full-over", CustomerPlan.Full, HarvestStatus.Done, pending: 15);    // skip
         var running = await SeedAsync(db, "full-running", CustomerPlan.Full, HarvestStatus.Running, pending: 0); // skip (in-flight)
+        var pendingJob = await SeedAsync(db, "full-pending", CustomerPlan.Full, HarvestStatus.Pending, pending: 0); // skip (already queued)
         var free = await SeedAsync(db, "free-low", CustomerPlan.Free, HarvestStatus.Done, pending: 0);      // skip (free)
 
         // Act
@@ -34,7 +35,7 @@ public class NightlyHarvestTests(ColdstartWebFactory factory) : IClassFixture<Co
 
         // Assert
         due.Should().Contain(new[] { dueLow, dueEmpty, dueOnlySent });
-        due.Should().NotContain(new[] { atCap, over, running, free });
+        due.Should().NotContain(new[] { atCap, over, running, pendingJob, free });
     }
 
     // Approved-but-not-sent counts as unfinished too (same as the briefing), so it gates like Pending.

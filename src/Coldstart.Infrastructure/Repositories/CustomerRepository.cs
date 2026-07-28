@@ -41,8 +41,12 @@ internal sealed class CustomerRepository(ColdstartDbContext db) : ICustomerRepos
     public async Task<IReadOnlyList<Guid>> IdsDueForHarvestAsync(int threshold, CancellationToken ct)
     {
         // Cross-customer system read → bypass the fail-closed tenant filter (like AllAsync/DeleteAsync).
+        // Skip both Running AND Pending: Pending means a harvest is already queued (e.g. the initial
+        // invite job), so re-enqueuing would run it twice (dedup keeps data safe, but wastes Groq).
         var due = await db.Customers.IgnoreQueryFilters()
-            .Where(c => c.Plan == CustomerPlan.Full && c.HarvestStatus != HarvestStatus.Running)
+            .Where(c => c.Plan == CustomerPlan.Full
+                        && c.HarvestStatus != HarvestStatus.Running
+                        && c.HarvestStatus != HarvestStatus.Pending)
             .Where(c => db.Leads.IgnoreQueryFilters()
                 .Count(l => l.CustomerId == c.Id
                             && (l.Status == LeadStatus.PendingReview || l.Status == LeadStatus.Approved)) < threshold)
