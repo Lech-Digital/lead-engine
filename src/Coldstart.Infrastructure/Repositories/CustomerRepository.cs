@@ -56,4 +56,18 @@ internal sealed class CustomerRepository(ColdstartDbContext db) : ICustomerRepos
             .ToListAsync(ct);   // materialize, then map the value-object id in memory (avoids .Id.Value translation)
         return due.Select(c => c.Id.Value).ToList();
     }
+
+    public async Task<IReadOnlyDictionary<Guid, LeadCounts>> LeadCountsAsync(CancellationToken ct)
+    {
+        var grouped = await db.Leads.IgnoreQueryFilters()
+            .GroupBy(l => l.CustomerId)
+            .Select(g => new
+            {
+                Id = g.Key,
+                Total = g.Count(),
+                Pending = g.Count(l => l.Status == LeadStatus.PendingReview),
+            })
+            .ToListAsync(ct);
+        return grouped.ToDictionary(x => x.Id.Value, x => new LeadCounts(x.Total, x.Pending));
+    }
 }

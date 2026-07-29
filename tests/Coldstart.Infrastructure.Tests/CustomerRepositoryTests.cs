@@ -1,3 +1,4 @@
+using Coldstart.Application.Ports;
 using Coldstart.Domain;
 using Coldstart.Infrastructure.Repositories;
 using FluentAssertions;
@@ -146,5 +147,74 @@ public class CustomerRepositoryTests(PostgresFixture fixture) : IClassFixture<Po
         loaded.HarvestStatus.Should().Be(HarvestStatus.Done);
         loaded.Profile.TargetKeywords.Should().Be("dentist\nclinic");
         loaded.Profile.Offer.Should().Be("scheduling software");
+    }
+
+    [Fact]
+    public async Task LeadCountsAsync_WithLeadsAcrossCustomersAndStatuses_ShouldGroupPerCustomer()
+    {
+        // Arrange - create customers and leads
+        var now = DateTimeOffset.UtcNow;
+        Guid idA, idB;
+
+        await using (var db = fixture.NewDbContext())
+        {
+            var customers = new CustomerRepository(db);
+            var leads = new LeadRepository(db);
+
+            // Add customer A
+            var a = Customer.Create($"counts-a-{Guid.NewGuid()}");
+            idA = a.Id.Value;
+            db.Customers.Add(a);
+            await db.SaveChangesAsync();
+
+            // Add leads for customer A
+            var lead1 = Lead.Create(a.Id, "Acme", Fit.Yes, "s1", "d1", now);
+            var lead2 = Lead.Create(a.Id, "Beta", Fit.Yes, "s2", "d2", now);
+            var lead3 = Lead.Create(a.Id, "Gamma", Fit.Maybe, "s3", "d3", now);
+            lead3.Approve();
+            await leads.AddAsync(lead1, CancellationToken.None);
+            await leads.AddAsync(lead2, CancellationToken.None);
+            await leads.AddAsync(lead3, CancellationToken.None);
+        }
+
+        await using (var db = fixture.NewDbContext())
+        {
+            var customers = new CustomerRepository(db);
+            var leads = new LeadRepository(db);
+
+            // Add customer B
+            var b = Customer.Create($"counts-b-{Guid.NewGuid()}");
+            idB = b.Id.Value;
+            db.Customers.Add(b);
+            await db.SaveChangesAsync();
+
+            // Add lead for customer B
+            var lead4 = Lead.Create(b.Id, "Delta", Fit.Yes, "s4", "d4", now);
+            await leads.AddAsync(lead4, CancellationToken.None);
+        }
+
+        // Act
+        await using var readDb = fixture.NewDbContext();
+        var counts = await new CustomerRepository(readDb).LeadCountsAsync(CancellationToken.None);
+
+        // Assert
+        counts[idA].Should().Be(new LeadCounts(Total: 3, PendingReview: 2));
+        counts[idB].Should().Be(new LeadCounts(Total: 1, PendingReview: 1));
+    }
+
+    [Fact]
+    public async Task LeadCountsAsync_CustomerWithoutLeads_ShouldBeAbsentFromResult()
+    {
+        // Arrange
+        await using var db = fixture.NewDbContext();
+        var repo = new CustomerRepository(db);
+        var empty = Customer.Create($"counts-empty-{Guid.NewGuid()}");
+        await repo.AddAsync(empty, CancellationToken.None);
+
+        // Act
+        var counts = await repo.LeadCountsAsync(CancellationToken.None);
+
+        // Assert
+        counts.Should().NotContainKey(empty.Id.Value);
     }
 }

@@ -96,5 +96,6 @@ public class ApplySubscriptionChangeTests
         public Task<Customer?> GetByNameAsync(string n, CancellationToken ct) => throw new NotImplementedException();
         public Task DeleteAsync(CustomerId id, CancellationToken ct) => throw new NotImplementedException();
         public Task<IReadOnlyList<Guid>> IdsDueForHarvestAsync(int t, CancellationToken ct) => throw new NotImplementedException();
+        public Task<IReadOnlyDictionary<Guid, LeadCounts>> LeadCountsAsync(CancellationToken ct) => Task.FromResult<IReadOnlyDictionary<Guid, LeadCounts>>(new Dictionary<Guid, LeadCounts>());
     }
 }

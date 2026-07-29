@@ -17,4 +17,10 @@ public interface ICustomerRepository
     // System-level (no tenant context): ids of Full-plan customers that are not mid-harvest and have
     // fewer than `threshold` unfinished (PendingReview/Approved) leads — i.e. have room for a top-up.
     Task<IReadOnlyList<Guid>> IdsDueForHarvestAsync(int threshold, CancellationToken ct);
+
+    // System-level (no tenant context): per-customer lead totals for the admin overview.
+    // Customers with zero leads are absent from the dictionary.
+    Task<IReadOnlyDictionary<Guid, LeadCounts>> LeadCountsAsync(CancellationToken ct);
 }
+
+public sealed record LeadCounts(int Total, int PendingReview);
