@@ -30,6 +30,9 @@ services:
       ConnectionStrings__Coldstart: "Host=db;Port=5432;Database=coldstart;Username=coldstart;Password=${POSTGRES_PASSWORD}"
       # Persist Data Protection keys so invite/reset links + login cookies survive redeploys.
       DataProtection__KeyPath: /app/keys
+      # Admin API (/api/admin/* + coldstart CLI). Soft-degrade: unset → the admin
+      # API is off (404), the web app is unaffected.
+      AdminApi__Key: ${ADMIN_API_KEY:-}
       # Transactional email (Resend SMTP). Values come from deploy/.env.prod.
       Smtp__Host: ${SMTP_HOST:-smtp.resend.com}
       Smtp__Port: ${SMTP_PORT:-465}

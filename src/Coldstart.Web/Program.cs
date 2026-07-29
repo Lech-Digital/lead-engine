@@ -2,6 +2,7 @@ using Coldstart.Application;
 using Coldstart.Infrastructure;
 using Microsoft.AspNetCore.DataProtection;
 using Coldstart.Infrastructure.Identity;
+using Coldstart.Web.Api;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,6 +22,7 @@ builder.Services.Configure<Coldstart.Infrastructure.Harvest.LlmOptions>(builder.
 builder.Services.Configure<Coldstart.Infrastructure.Outreach.OutreachMailboxOptions>(builder.Configuration.GetSection("OutreachMailbox"));
 builder.Services.Configure<Coldstart.Infrastructure.Harvest.HarvestScheduleOptions>(builder.Configuration.GetSection("HarvestSchedule"));
 builder.Services.Configure<Coldstart.Infrastructure.Billing.StripeOptions>(builder.Configuration.GetSection("Stripe"));
+builder.Services.Configure<Coldstart.Web.Api.AdminApiOptions>(builder.Configuration.GetSection("AdminApi"));
 builder.Services.AddHealthChecks().AddCheck<Coldstart.Web.Health.DbHealthCheck>("db");
 
 builder.Services.AddSingleton(_ =>
@@ -92,6 +94,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapRazorPages();
 app.MapHealthChecks("/health");
+app.MapAdminApi();
 
 // Anonymous by design: authenticated by the Stripe signature inside Parse. Plan flips
 // happen ONLY here — never from the browser's success_url redirect.
