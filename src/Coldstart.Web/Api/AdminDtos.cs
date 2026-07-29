@@ -12,3 +12,5 @@ public sealed record AdminCustomerDto(
 public sealed record AdminStatsDto(
     string Database, int Customers, int Users, int PendingInvites, int BlockedUsers,
     Dictionary<string, int> HarvestStatuses);
+
+public sealed record InviteRequestDto(string? Email, string? Company, string? Niche, string? Info);

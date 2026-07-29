@@ -50,6 +50,46 @@ internal static class AdminEndpoints
                 all.GroupBy(c => c.HarvestStatus.ToString()).ToDictionary(g => g.Key, g => g.Count())));
         });
 
+        group.MapPost("/invites", async (InviteRequestDto body, AdminUserService admin, CancellationToken ct) =>
+        {
+            if (string.IsNullOrWhiteSpace(body.Email) || string.IsNullOrWhiteSpace(body.Company)
+                || string.IsNullOrWhiteSpace(body.Niche))
+                return Results.Problem(statusCode: 400, title: "email, company and niche are required.");
+
+            var result = await admin.InviteAsync(new InviteRequest(body.Email, body.Company, body.Niche, body.Info), ct);
+            return result.Succeeded
+                ? Results.Created("/api/admin/customers",
+                    new { customerId = result.CustomerId, setPasswordLink = result.SetPasswordLink, message = result.Message })
+                : ToProblem(result);
+        });
+
+        group.MapPost("/invites/{email}/resend", async (string email, AdminUserService admin, CancellationToken ct) =>
+            ToHttp(await admin.ResendAsync(email, ct)));
+
+        group.MapDelete("/invites/{email}", async (string email, AdminUserService admin, CancellationToken ct) =>
+            ToHttp(await admin.RevokeAsync(email, ct)));
+
+        group.MapPost("/users/{email}/block", async (string email, AdminUserService admin, CancellationToken ct) =>
+            ToHttp(await admin.BlockAsync(email, actorEmail: null, ct)));
+
+        group.MapPost("/users/{email}/unblock", async (string email, AdminUserService admin, CancellationToken ct) =>
+            ToHttp(await admin.UnblockAsync(email, actorEmail: null, ct)));
+
+        group.MapDelete("/users/{email}", async (string email, AdminUserService admin, CancellationToken ct) =>
+            ToHttp(await admin.RemoveAsync(email, actorEmail: null, ct)));
+
         return app;
     }
+
+    private static IResult ToHttp(AdminActionResult result) =>
+        result.Succeeded
+            ? Results.Ok(new { message = result.Message, setPasswordLink = result.SetPasswordLink })
+            : ToProblem(result);
+
+    private static IResult ToProblem(AdminActionResult result) => result.Outcome switch
+    {
+        AdminOutcome.NotFound => Results.Problem(statusCode: 404, title: result.Message),
+        AdminOutcome.Forbidden => Results.Problem(statusCode: 403, title: result.Message),
+        _ => Results.Problem(statusCode: 409, title: result.Message),
+    };
 }
