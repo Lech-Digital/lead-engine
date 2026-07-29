@@ -23,6 +23,8 @@ builder.Services.Configure<Coldstart.Infrastructure.Outreach.OutreachMailboxOpti
 builder.Services.Configure<Coldstart.Infrastructure.Harvest.HarvestScheduleOptions>(builder.Configuration.GetSection("HarvestSchedule"));
 builder.Services.Configure<Coldstart.Infrastructure.Billing.StripeOptions>(builder.Configuration.GetSection("Stripe"));
 builder.Services.Configure<Coldstart.Web.Api.AdminApiOptions>(builder.Configuration.GetSection("AdminApi"));
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<Coldstart.Web.Admin.AdminUserService>();
 builder.Services.AddHealthChecks().AddCheck<Coldstart.Web.Health.DbHealthCheck>("db");
 
 builder.Services.AddSingleton(_ =>
