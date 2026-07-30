@@ -45,9 +45,12 @@
         <textarea asp-for="Input.Brief" rows="4" placeholder="e.g. Acme helps dental clinics fill last-minute cancellations with automated waitlist texts." autofocus="@Model.JustPolished"></textarea>
         <button class="btn btn-ghost btn-sm profile-polish" type="submit" asp-page-handler="Polish">Polish with AI</button>
       </div>
-      <div class="field field-check">
-        <label><input asp-for="Input.MentionSourceTool" type="checkbox"> Mention leads were found via Coldstart</label>
-      </div>
+      @if (User.IsInRole(Coldstart.Web.ColdstartRoles.SuperAdmin))
+      {
+        <div class="field field-check">
+          <label><input asp-for="Input.MentionSourceTool" type="checkbox"> Mention leads were found via Coldstart</label>
+        </div>
+      }
     </section>
 
     <div class="profile-actions">

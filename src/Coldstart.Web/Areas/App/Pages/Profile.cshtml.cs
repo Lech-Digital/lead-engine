@@ -50,8 +50,14 @@ public sealed class ProfileModel(UserManager<ApplicationUser> users, IGetCompany
     {
         var user = await users.GetUserAsync(User);
         if (user?.CustomerId is null) return RedirectToPage("Index");
+        // The "found via Coldstart" mention is the operator's dogfooding line — it only makes
+        // sense when the sender sells Coldstart itself. Non-operators keep their stored value
+        // regardless of what the form posts.
+        var mentionSourceTool = User.IsInRole(ColdstartRoles.SuperAdmin)
+            ? Input.MentionSourceTool
+            : (await getProfile.ForCustomerAsync(user.CustomerId.Value, ct)).MentionSourceTool;
         await updateProfile.UpdateAsync(user.CustomerId.Value,
-            new CompanyProfileInput(Input.CompanyName, Input.Address, Input.VatNumber, Input.KvkNumber, Input.Niche, Input.Website, Input.ContactEmail, Input.Brief, Input.MentionSourceTool), ct);
+            new CompanyProfileInput(Input.CompanyName, Input.Address, Input.VatNumber, Input.KvkNumber, Input.Niche, Input.Website, Input.ContactEmail, Input.Brief, mentionSourceTool), ct);
         StatusMessage = "Company profile saved.";
         // PRG back to this page (not the briefing) with a fragment, so the confirmation shows here
         // and the browser lands on the form instead of jumping to the very top.

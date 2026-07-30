@@ -1,4 +1,5 @@
 using System.Net;
+using Coldstart.Application.Customers;
 using Coldstart.Domain;
 using Coldstart.Infrastructure;
 using Coldstart.Infrastructure.Identity;
@@ -147,11 +148,14 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
     }
 
     [Fact]
-    public async Task ProfilePost_PersistsBriefAndToggle()
+    public async Task ProfilePost_AsCustomer_IgnoresMentionSourceToolAndHidesCheckbox()
     {
-        // Arrange
+        // Arrange — the "found via Coldstart" line only makes sense when the sender IS
+        // selling Coldstart (the operator). Customers must not see or set the toggle,
+        // even by hand-crafting the form field.
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"prof-brief-{Guid.NewGuid():N}@test.com", "Passw0rd!");
+        var email = $"prof-brief-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
         var form = await AntiforgeryForm(client, "/app/profile", new()
         {
             ["Input.CompanyName"] = "Acme Ltd", ["Input.VatNumber"] = "", ["Input.Niche"] = "",
@@ -163,10 +167,43 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         await client.PostAsync("/app/profile", new FormUrlEncodedContent(form));
         var page = await client.GetStringAsync("/app/profile");
 
-        // Assert
+        // Assert — brief persists, the toggle is neither rendered nor persisted
         page.Should().Contain("We help dentists fill calendars.");
+        page.Should().NotContain("id=\"Input_MentionSourceTool\"");
+        using var scope = factory.Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var customerId = (await users.FindByEmailAsync(email))!.CustomerId!.Value;
+        var profile = await scope.ServiceProvider.GetRequiredService<IGetCompanyProfile>()
+            .ForCustomerAsync(customerId, CancellationToken.None);
+        profile.MentionSourceTool.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ProfilePost_AsSuperAdmin_PersistsMentionSourceTool()
+    {
+        // Arrange — the operator (SuperAdmin with a provisioned tenant, like the seeded
+        // Coldstart account) may enable the dogfooding line for their own outreach.
+        var client = factory.CreateClient();
+        var email = $"prof-admin-{Guid.NewGuid():N}@test.com";
+        await TestAuth.CreateUserAsync(factory, email, "Passw0rd!", ColdstartRoles.SuperAdmin, provisionTenant: true);
+        await TestAuth.PostFormAsync(client, "/Identity/Account/Login", new()
+        {
+            ["Input.Email"] = email, ["Input.Password"] = "Passw0rd!", ["Input.RememberMe"] = "false",
+        });
+        var form = await AntiforgeryForm(client, "/app/profile", new()
+        {
+            ["Input.CompanyName"] = "Coldstart", ["Input.VatNumber"] = "", ["Input.Niche"] = "",
+            ["Input.Address"] = "", ["Input.KvkNumber"] = "", ["Input.Website"] = "", ["Input.ContactEmail"] = "",
+            ["Input.MentionSourceTool"] = "true",
+        });
+
+        // Act
+        await client.PostAsync("/app/profile", new FormUrlEncodedContent(form));
+        var page = await client.GetStringAsync("/app/profile");
+
+        // Assert — the toggle renders for the operator and persisted as checked
         page.Should().Contain("id=\"Input_MentionSourceTool\"");
-        page.Should().Contain("checked=\"checked\""); // the toggle persisted as checked
+        page.Should().Contain("checked=\"checked\"");
     }
 
     [Fact]
