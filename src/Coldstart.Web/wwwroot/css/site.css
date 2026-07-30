@@ -689,8 +689,10 @@
   .cz-search input { width: 100%; font-size: 1rem; }
 }
 
-/* iPhone notch/safe areas: keep fixed-side padding out of the rounded corners. */
+/* iPhone notch/safe areas: never LESS than the normal side padding, never inside the notch.
+   (max() must include the base padding — max(0px, env()) computes to 0 on most phones and
+   would strip the .wrap padding entirely.) */
 @supports (padding: max(0px)) {
   .app-bar { padding-left: max(clamp(20px,5vw,56px), env(safe-area-inset-left)); padding-right: max(clamp(20px,5vw,56px), env(safe-area-inset-right)); }
-  .site-nav-row { padding-left: max(0px, env(safe-area-inset-left)); padding-right: max(0px, env(safe-area-inset-right)); }
+  .site-nav-row, .wrap { padding-left: max(clamp(20px, 5vw, 56px), env(safe-area-inset-left)); padding-right: max(clamp(20px, 5vw, 56px), env(safe-area-inset-right)); }
 }
