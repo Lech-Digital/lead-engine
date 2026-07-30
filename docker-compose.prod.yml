@@ -60,6 +60,7 @@ services:
       OutreachMailbox__Host: ${OUTREACH_HOST:-}
       OutreachMailbox__Username: ${OUTREACH_USERNAME:-}
       OutreachMailbox__Password: ${OUTREACH_PASSWORD:-}
+      OutreachMailbox__FromAddress: ${OUTREACH_FROM_ADDRESS:-}
     volumes:
       - coldstart-dpkeys:/app/keys
     expose:

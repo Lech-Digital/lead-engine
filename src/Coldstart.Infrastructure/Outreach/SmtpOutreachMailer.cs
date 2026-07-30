@@ -31,7 +31,8 @@ internal sealed class SmtpOutreachMailer(IOptions<OutreachMailboxOptions> option
     internal static MimeMessage BuildMessage(OutreachMailboxOptions o, OutreachEmail mail)
     {
         var msg = new MimeMessage();
-        msg.From.Add(new MailboxAddress(o.FromName, o.Username));
+        msg.From.Add(new MailboxAddress(o.FromName,
+            string.IsNullOrWhiteSpace(o.FromAddress) ? o.Username : o.FromAddress));
         msg.To.Add(MailboxAddress.Parse(mail.To));
         msg.Subject = mail.Subject;
 

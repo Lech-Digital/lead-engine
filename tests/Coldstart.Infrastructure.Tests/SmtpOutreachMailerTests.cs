@@ -29,6 +29,24 @@ public class SmtpOutreachMailerTests
     }
 
     [Fact]
+    public void BuildMessage_WithRelaySmtpAccount_UsesFromAddressNotUsername()
+    {
+        // Arrange — on a relay like Resend the SMTP username is a login token ("resend"),
+        // not a mailbox; the From address must come from its own setting.
+        var opts = Opts();
+        opts.Username = "resend";
+        opts.FromAddress = "andrzej@getcoldstart.nl";
+        var mail = new OutreachEmail("ceo@acme.com", "Subject", "Body.");
+
+        // Act
+        var msg = SmtpOutreachMailer.BuildMessage(opts, mail);
+
+        // Assert
+        msg.From.ToString().Should().Contain("andrzej@getcoldstart.nl");
+        msg.From.ToString().Should().NotContain("resend");
+    }
+
+    [Fact]
     public void BuildMessage_BrandsHtml_WithCssSignature_AndNoImages()
     {
         // Arrange
