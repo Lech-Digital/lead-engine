@@ -152,11 +152,15 @@
   .scene-stage .lp-hero-art svg { max-width: 360px; margin-inline: auto; }
   .beat { min-height: 0; margin-bottom: 28px; }
   .scene--night { padding: 56px 0; }
-  /* The scroll engine is off on narrow screens, so the night scene's sky never blooms to
-     dawn: its closing headline needs light text, and the acts after it would otherwise sit
-     on the document-height page-sky's orange band with grey text. The daybreak act carries
-     the night->dawn->day bloom itself — starting in the exact night navy so it fuses with
-     the sky above (no seam), pixel-anchored so the copy always starts on daylight. */
+  /* The scroll engine is off on narrow screens, and the night scene's sky is a 100vh
+     STICKY panel inside a much taller section — everything below it fell through to the
+     document-height page-sky (random orange bands behind the closing copy and robot).
+     Mobile gets a deterministic arc instead: the whole night section is solid navy with
+     light text (closing headline included), and the daybreak act carries the entire
+     night->dawn->day bloom itself — its top is the same navy, so the two fuse without a
+     seam, and the copy starts below the bloom on plain daylight. */
+  .scene--night .scene-sky { display: none; }
+  .scene--night { background: #1C1F33; }
   .scene--night h2 { color: #F2EEF8; }
   .lp-act--daybreak { padding-top: 300px;
     background: linear-gradient(180deg, #1C1F33 0px, #54425E 90px, #C96F4A 170px, #FF9E6B 225px, #FBE0CC 265px, #FDFBF7 300px); }
