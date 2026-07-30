@@ -9,7 +9,7 @@ namespace Coldstart.Infrastructure.Harvest;
 
 // Fires once per day at RunAtUtc: enqueues a harvest for every Full-plan customer that has room
 // (< TopUpThreshold unfinished leads). The existing HarvestQueueService drains them.
-internal sealed class NightlyHarvestScheduler(
+public sealed class NightlyHarvestScheduler(
     IServiceScopeFactory scopes,
     IOptions<HarvestScheduleOptions> options,
     ILogger<NightlyHarvestScheduler> log) : BackgroundService
