@@ -159,9 +159,13 @@
      light text (closing headline included), and the daybreak act carries the entire
      night->dawn->day bloom itself — its top is the same navy, so the two fuse without a
      seam, and the copy starts below the bloom on plain daylight. */
-  .scene--night .scene-sky { display: none; }
   .scene--night { background: #1C1F33; }
-  .scene--night h2 { color: #F2EEF8; }
+  /* Desktop inks the final beat for the bloomed dawn behind it; on mobile the section
+     stays night navy, so the closing beat keeps the light night palette. The beat-4
+     selectors must match the desktop rules' specificity to win. */
+  .scene--night h2, .scene--night .beat[data-beat="4"] h2 { color: #F2EEF8; }
+  .scene--night .beat[data-beat="4"] .lp-sunrise-sub { color: #CFC9DD; }
+  .scene--night .beat[data-beat="4"] .lp-time { color: #FBB988; }
   .lp-act--daybreak { padding-top: 300px;
     background: linear-gradient(180deg, #1C1F33 0px, #54425E 90px, #C96F4A 170px, #FF9E6B 225px, #FBE0CC 265px, #FDFBF7 300px); }
   .lp-act--daybreak ~ .lp-act { background: var(--daylight); }
