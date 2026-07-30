@@ -7,15 +7,17 @@ namespace Coldstart.Application.Harvest;
 //   {company-url}  — the same name URL-encoded, for query-string prefills
 public static class DraftComposer
 {
-    public static string Compose(string aiDraft, SenderContext sender, string company = "")
+    public static string Compose(string aiDraft, SenderContext sender, string company = "", string prospectNiche = "", string prospectSells = "")
     {
         if (!sender.HasFixedPitch) return aiDraft;
-        var blocks = new[] { aiDraft.Trim(), Fill(sender.PitchLine, company), Fill(sender.CtaLine, company) };
+        var blocks = new[] { aiDraft.Trim(), Fill(sender.PitchLine, company, prospectNiche, prospectSells), Fill(sender.CtaLine, company, prospectNiche, prospectSells) };
         return string.Join("\n\n", blocks.Where(b => !string.IsNullOrWhiteSpace(b)));
     }
 
-    private static string? Fill(string? block, string company) =>
+    private static string? Fill(string? block, string company, string prospectNiche, string prospectSells) =>
         block?.Trim()
             .Replace("{company}", company)
-            .Replace("{company-url}", Uri.EscapeDataString(company));
+            .Replace("{company-url}", Uri.EscapeDataString(company))
+            .Replace("{prospect-niche-url}", Uri.EscapeDataString(prospectNiche))
+            .Replace("{prospect-sells-url}", Uri.EscapeDataString(prospectSells));
 }

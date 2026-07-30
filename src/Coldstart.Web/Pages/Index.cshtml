@@ -248,11 +248,12 @@
     <p>Tell us what you sell. We'll run the engine for your niche and send you 3 real leads — with drafts — before you pay anything.</p>
     <form class="lp-form" id="sample-form" method="post" asp-page="/Contact">
       <input type="text" name="Website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
-      <div class="field"><label for="f-name">Your name</label><input id="f-name" name="Name" type="text" required></div>
-      <div class="field"><label for="f-email">Your email</label><input id="f-email" name="Email" type="email" required></div>
+      <div class="field"><label for="f-name">Your name</label><input id="f-name" name="Name" type="text" required value="@Model.PrefillName"></div>
+      <div class="field"><label for="f-email">Your email</label><input id="f-email" name="Email" type="email" required value="@Model.PrefillEmail"></div>
       <div class="field"><label for="f-company">Your company</label><input id="f-company" name="Company" type="text" placeholder="e.g. Acme B.V." value="@Model.PrefillCompany"></div>
-      <div class="field"><label for="f-niche">Who your customers are</label><input id="f-niche" name="Niche" type="text" placeholder="e.g. dental clinics in the Benelux"></div>
-      <div class="field"><label for="f-sell">What you sell them</label><input id="f-sell" name="WhatYouSell" type="text" placeholder="e.g. scheduling software"></div>
+      <div class="field"><label for="f-niche">Who your customers are</label><input id="f-niche" name="Niche" type="text" placeholder="e.g. dental clinics in the Benelux" value="@Model.PrefillNiche"></div>
+      <div class="field"><label for="f-sell">What you sell them</label><input id="f-sell" name="WhatYouSell" type="text" placeholder="e.g. scheduling software" value="@Model.PrefillSell"></div>
+      <div class="field field-check lp-consent"><label><input type="checkbox" name="Consent" value="true" required> I agree that Coldstart processes these details to find and email me sample leads. Withdraw any time via <a href="mailto:info@getcoldstart.nl">info@getcoldstart.nl</a> — see our <a href="/privacy">privacy policy</a>.</label></div>
       <p class="lp-form-status" id="form-status" role="status" aria-live="polite"></p>
       <button class="btn btn-primary" type="submit">Send me 3 sample leads →</button>
     </form>

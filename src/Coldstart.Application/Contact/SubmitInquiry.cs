@@ -10,7 +10,8 @@ internal sealed class SubmitInquiry(IInquiryRepository inquiries, IEmailSender e
     public async Task SubmitAsync(SubmitInquiryRequest request, CancellationToken ct)
     {
         var inquiry = Inquiry.Create(request.Name, new EmailAddress(request.Email),
-            request.Niche, request.WhatYouSell, request.Message, DateTimeOffset.UtcNow, request.Company);
+            request.Niche, request.WhatYouSell, request.Message, DateTimeOffset.UtcNow, request.Company,
+            request.ConsentGiven ? DateTimeOffset.UtcNow : null);
         await inquiries.AddAsync(inquiry, ct);
 
         var body = $"New Coldstart inquiry\n\nName: {inquiry.Name}\nEmail: {inquiry.Email}\n" +

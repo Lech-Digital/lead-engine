@@ -72,6 +72,9 @@ namespace Coldstart.Infrastructure.Migrations
                     b.Property<string>("Company")
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset?>("ConsentGivenAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 

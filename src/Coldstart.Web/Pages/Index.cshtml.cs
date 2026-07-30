@@ -9,4 +9,12 @@ public class IndexModel : PageModel
     // sample-leads form arrives pre-filled — the prospect only fills the gaps.
     [BindProperty(SupportsGet = true, Name = "company")]
     public string? PrefillCompany { get; set; }
+    [BindProperty(SupportsGet = true, Name = "name")]
+    public string? PrefillName { get; set; }
+    [BindProperty(SupportsGet = true, Name = "email")]
+    public string? PrefillEmail { get; set; }
+    [BindProperty(SupportsGet = true, Name = "niche")]
+    public string? PrefillNiche { get; set; }
+    [BindProperty(SupportsGet = true, Name = "sell")]
+    public string? PrefillSell { get; set; }
 }

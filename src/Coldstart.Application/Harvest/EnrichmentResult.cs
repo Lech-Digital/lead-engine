@@ -3,11 +3,12 @@ using Coldstart.Domain;
 
 namespace Coldstart.Application.Harvest;
 
-public sealed record EnrichmentResult(Fit Fit, string Summary, string Subject, string Draft, string Company);
+public sealed record EnrichmentResult(Fit Fit, string Summary, string Subject, string Draft, string Company,
+    string ProspectNiche = "", string ProspectSells = "");
 
 public static class EnrichmentParser
 {
-    private static readonly string[] Labels = ["FIT", "SUMMARY", "SUBJECT", "DRAFT", "COMPANY"];
+    private static readonly string[] Labels = ["FIT", "SUMMARY", "SUBJECT", "DRAFT", "COMPANY", "PROSPECT_NICHE", "PROSPECT_SELLS"];
 
     public static EnrichmentResult? Parse(string content)
     {
@@ -37,7 +38,9 @@ public static class EnrichmentParser
         Fit? fit = fitRaw.StartsWith("YES") ? Fit.Yes : fitRaw.StartsWith("MAYBE") ? Fit.Maybe : fitRaw.StartsWith("NO") ? Fit.No : null;
         if (fit is null) return null;   // no parseable FIT line → treat as failure
 
-        return new EnrichmentResult(fit.Value, Field("SUMMARY"), Field("SUBJECT"), Field("DRAFT"), Field("COMPANY"));
+        string Clean(string label) { var v = Field(label); return v == "-" ? "" : v; }
+        return new EnrichmentResult(fit.Value, Field("SUMMARY"), Field("SUBJECT"), Field("DRAFT"), Field("COMPANY"),
+            Clean("PROSPECT_NICHE"), Clean("PROSPECT_SELLS"));
     }
 
     private static Regex LabelRegex(string label) => new($@"^\s*{label}\s*:\s*", RegexOptions.IgnoreCase | RegexOptions.Multiline);

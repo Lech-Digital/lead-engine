@@ -128,7 +128,7 @@ internal sealed class GroqLeadEnricher : ILeadEnricher
 
         Pre-detected signals (keyword-level, may be noisy): {string.Join(", ", signal.Matched)}
 
-        Return EXACTLY these five sections, each on its own line with the label:
+        Return EXACTLY these seven sections, each starting on its own line with the label:
 
         FIT: YES | MAYBE | NO — would this specific person plausibly buy the offer? Be strict; default to NO if the content is off-topic, a job seeker, a competitor, or just noise.
         SUMMARY: one sentence — who they are and the concrete reason they do or don't fit.
@@ -148,6 +148,8 @@ internal sealed class GroqLeadEnricher : ILeadEnricher
         Welcoming and human, never salesy: short, clean sentences, one idea each — no comma splices, no filler, no marketing voice. No signature (one is added on send). Banned: "I hope this email finds you well", "I came across", "reaching out", "game-changer", "revolutionize", "synergy", "circle back", "touch base", "in today's fast-paced".
         """)}
         COMPANY: the real company/org name this is about, or "-" if it cannot be determined. Never guess.
+        PROSPECT_NICHE: who THEY sell to, as they would describe it themselves, 2-6 words (e.g. "dental clinics in the Benelux"), or "-" if unclear.
+        PROSPECT_SELLS: what THEY sell, 2-6 words (e.g. "scheduling software"), or "-" if unclear.
 
         If FIT is NO, still fill SUBJECT and DRAFT with "-".
         {(sender.MentionSourceTool && !sender.HasFixedPitch ? """

@@ -18,7 +18,7 @@ public class ContactTests(ColdstartWebFactory factory) : IClassFixture<Coldstart
         var form = await AntiforgeryForm(client, new()
         {
             ["Name"] = "Sam", ["Email"] = "sam@acme.com",
-            ["Niche"] = "B2B SaaS", ["WhatYouSell"] = "scheduling", ["Message"] = "hi", ["website"] = ""
+            ["Niche"] = "B2B SaaS", ["WhatYouSell"] = "scheduling", ["Message"] = "hi", ["website"] = "", ["Consent"] = "true"
         });
 
         // Act
@@ -41,7 +41,7 @@ public class ContactTests(ColdstartWebFactory factory) : IClassFixture<Coldstart
         var form = await AntiforgeryForm(client, new()
         {
             ["Name"] = name, ["Email"] = "sam@acme.com", ["Company"] = "Acme B.V.",
-            ["Niche"] = "B2B SaaS", ["WhatYouSell"] = "scheduling", ["website"] = ""
+            ["Niche"] = "B2B SaaS", ["WhatYouSell"] = "scheduling", ["website"] = "", ["Consent"] = "true"
         });
 
         // Act
@@ -75,7 +75,7 @@ public class ContactTests(ColdstartWebFactory factory) : IClassFixture<Coldstart
         var form = await AntiforgeryForm(client, new()
         {
             ["Name"] = "Bot", ["Email"] = "bot@spam.com",
-            ["Niche"] = "x", ["WhatYouSell"] = "y", ["website"] = "http://spam"
+            ["Niche"] = "x", ["WhatYouSell"] = "y", ["website"] = "http://spam", ["Consent"] = "true"
         });
         var before = factory.Email.Sent.Count;
 
@@ -103,5 +103,23 @@ public class ContactTests(ColdstartWebFactory factory) : IClassFixture<Coldstart
             fields["__RequestVerificationToken"] = html[start..end];
         }
         return fields;
+    }
+
+    [Fact]
+    public async Task Contact_WithoutConsent_IsRejectedAndStoresNothing()
+    {
+        // Arrange — GDPR: no ticked box, no processing.
+        var client = factory.CreateClient();
+        var form = await AntiforgeryForm(client, new()
+        {
+            ["Name"] = "Sam", ["Email"] = "noconsent@acme.com",
+            ["Niche"] = "B2B SaaS", ["WhatYouSell"] = "scheduling", ["website"] = ""
+        });
+
+        // Act
+        var response = await client.PostAsync("/Contact", new FormUrlEncodedContent(form));
+
+        // Assert
+        ((int)response.StatusCode).Should().Be(400);
     }
 }
