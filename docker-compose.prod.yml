@@ -49,6 +49,12 @@ services:
       # "Polish with AI" (Groq). Soft-degrade: no hard-fail guard — until this is set
       # in deploy/.env.prod the button just shows "Couldn't polish just now".
       Llm__ApiKey: ${LLM_API_KEY:-}
+      # Optional LLM provider override (defaults = Groq). Any OpenAI-compatible
+      # chat-completions endpoint works, e.g. Gemini AI Studio. Fallbacks mirror the
+      # code defaults — an empty string would override them and break the binder.
+      Llm__BaseUrl: ${LLM_BASE_URL:-https://api.groq.com/openai/v1/chat/completions}
+      Llm__Model: ${LLM_MODEL:-llama-3.3-70b-versatile}
+      Llm__RequestDelaySeconds: ${LLM_REQUEST_DELAY_SECONDS:-2}
       # Stripe billing. Soft-degrade: with these unset, checkout/portal redirect back
       # to /app with a notice and the webhook rejects everything (bad signature).
       Stripe__SecretKey: ${STRIPE_SECRET_KEY:-}
