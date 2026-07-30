@@ -180,6 +180,24 @@ public class GroqLeadEnricherTests
     }
 
     [Fact]
+    public async Task EnrichAsync_WithFixedPitch_AsksForHookOnlyAndSkipsSellingInstructions()
+    {
+        // Arrange — when the sender has hardcoded pitch/CTA blocks, the model writes ONLY
+        // the personalized hook; the selling copy is composed in code afterwards.
+        var handler = new CapturingHandler(ValidBody);
+        var sut = new GroqLeadEnricher(new HttpClient(handler), Opts(), (d, _) => Task.CompletedTask);
+        var sender = new SenderContext(Brief: null, MentionSourceTool: true, PitchLine: "I run Coldstart.", CtaLine: "3 free leads: link");
+
+        // Act
+        await sut.EnrichAsync(Item, Niche, Signal, sender, CancellationToken.None);
+
+        // Assert — hook-only instructions; no AI-written pitch/CTA/dogfood line
+        handler.SentBody.Should().Contain("ONLY the greeting and the hook");
+        handler.SentBody.Should().Contain("appended automatically");
+        handler.SentBody.Should().NotContain("the very tool this email offers");
+    }
+
+    [Fact]
     public async Task EnrichAsync_Always_PromptAsksForGreetingAndParagraphs()
     {
         // Arrange

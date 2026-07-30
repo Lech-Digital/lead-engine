@@ -30,6 +30,8 @@ public sealed class ProfileModel(UserManager<ApplicationUser> users, IGetCompany
         public string? ContactEmail { get; set; }
         [StringLength(2000)] public string? Brief { get; set; }
         public bool MentionSourceTool { get; set; }
+        public string? PitchLine { get; set; }
+        public string? CtaLine { get; set; }
     }
 
     public async Task<IActionResult> OnGetAsync(CancellationToken ct)
@@ -41,7 +43,7 @@ public sealed class ProfileModel(UserManager<ApplicationUser> users, IGetCompany
         {
             CompanyName = v.CompanyName, Address = v.Address, VatNumber = v.VatNumber, KvkNumber = v.KvkNumber,
             Niche = v.Niche, Website = v.Website, ContactEmail = v.ContactEmail,
-            Brief = v.Brief, MentionSourceTool = v.MentionSourceTool,
+            Brief = v.Brief, MentionSourceTool = v.MentionSourceTool, PitchLine = v.PitchLine, CtaLine = v.CtaLine,
         };
         return Page();
     }
@@ -57,7 +59,7 @@ public sealed class ProfileModel(UserManager<ApplicationUser> users, IGetCompany
             ? Input.MentionSourceTool
             : (await getProfile.ForCustomerAsync(user.CustomerId.Value, ct)).MentionSourceTool;
         await updateProfile.UpdateAsync(user.CustomerId.Value,
-            new CompanyProfileInput(Input.CompanyName, Input.Address, Input.VatNumber, Input.KvkNumber, Input.Niche, Input.Website, Input.ContactEmail, Input.Brief, mentionSourceTool), ct);
+            new CompanyProfileInput(Input.CompanyName, Input.Address, Input.VatNumber, Input.KvkNumber, Input.Niche, Input.Website, Input.ContactEmail, Input.Brief, mentionSourceTool, Input.PitchLine, Input.CtaLine), ct);
         StatusMessage = "Company profile saved.";
         // PRG back to this page (not the briefing) with a fragment, so the confirmation shows here
         // and the browser lands on the form instead of jumping to the very top.

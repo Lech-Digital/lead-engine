@@ -13,7 +13,9 @@ public sealed record CompanyProfile(
     string? Offer = null,
     string? TargetKeywords = null,
     string? BuyingSignals = null,
-    string? Disqualifiers = null)
+    string? Disqualifiers = null,
+    string? PitchLine = null,
+    string? CtaLine = null)
 {
     public static CompanyProfile Empty { get; } = new(null, null, null, null, null, null, null);
 }

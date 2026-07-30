@@ -17,7 +17,7 @@ namespace Coldstart.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.10")
+                .HasAnnotation("ProductVersion", "10.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -408,6 +408,10 @@ namespace Coldstart.Infrastructure.Migrations
                                 .HasColumnType("text")
                                 .HasColumnName("ProfileContactEmail");
 
+                            b1.Property<string>("CtaLine")
+                                .HasColumnType("text")
+                                .HasColumnName("ProfileCtaLine");
+
                             b1.Property<string>("Disqualifiers")
                                 .HasColumnType("text")
                                 .HasColumnName("ProfileDisqualifiers");
@@ -429,6 +433,10 @@ namespace Coldstart.Infrastructure.Migrations
                             b1.Property<string>("Offer")
                                 .HasColumnType("text")
                                 .HasColumnName("ProfileOffer");
+
+                            b1.Property<string>("PitchLine")
+                                .HasColumnType("text")
+                                .HasColumnName("ProfilePitchLine");
 
                             b1.Property<string>("TargetKeywords")
                                 .HasColumnType("text")

@@ -15,7 +15,8 @@ internal sealed class UpdateCompanyProfile(ICustomerRepository customers) : IUpd
         var existing = customer.Profile;
         customer.UpdateProfile(new CompanyProfile(input.CompanyName, input.Address, input.VatNumber,
             input.KvkNumber, input.Niche, input.Website, input.ContactEmail, input.Brief, input.MentionSourceTool,
-            existing.Offer, existing.TargetKeywords, existing.BuyingSignals, existing.Disqualifiers));
+            existing.Offer, existing.TargetKeywords, existing.BuyingSignals, existing.Disqualifiers,
+            input.PitchLine, input.CtaLine));
         await customers.UpdateAsync(customer, ct);
     }
 }

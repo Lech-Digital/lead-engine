@@ -45,6 +45,14 @@
         <textarea asp-for="Input.Brief" rows="4" placeholder="e.g. Acme helps dental clinics fill last-minute cancellations with automated waitlist texts." autofocus="@Model.JustPolished"></textarea>
         <button class="btn btn-ghost btn-sm profile-polish" type="submit" asp-page-handler="Polish">Polish with AI</button>
       </div>
+      <div class="field">
+        <label asp-for="Input.PitchLine">Pitch paragraph <span class="field-hint">— appended to every draft, word-for-word; the AI writes only the personal opener above it</span></label>
+        <textarea asp-for="Input.PitchLine" rows="3" placeholder="e.g. I run Acme — we fill last-minute dental cancellations automatically, so your chairs never sit empty."></textarea>
+      </div>
+      <div class="field">
+        <label asp-for="Input.CtaLine">Call-to-action paragraph <span class="field-hint">— the closing ask, appended after the pitch (offer, link, next step)</span></label>
+        <textarea asp-for="Input.CtaLine" rows="2" placeholder="e.g. Want to see it on your own clinic? Reply and I'll set up a free week."></textarea>
+      </div>
       @if (User.IsInRole(Coldstart.Web.ColdstartRoles.SuperAdmin))
       {
         <div class="field field-check">

@@ -27,7 +27,8 @@ internal sealed class HarvestLeads(
         var customer = await customers.GetAsync(cid, ct);
         var sender = customer is null
             ? SenderContext.None
-            : new SenderContext(customer.Profile.Brief, customer.Profile.MentionSourceTool);
+            : new SenderContext(customer.Profile.Brief, customer.Profile.MentionSourceTool,
+                customer.Profile.PitchLine, customer.Profile.CtaLine);
         return await RunPipelineAsync(cid, targeting, sender, ct);
     }
 
@@ -66,7 +67,9 @@ internal sealed class HarvestLeads(
             if (result is null) continue;         // LLM failed/empty → retried next run
             enriched++;
             var company = string.IsNullOrWhiteSpace(result.Company) || result.Company == "-" ? item.Author : result.Company;
-            var lead = Lead.CreateHarvested(cid, company, result.Fit, result.Subject, result.Draft,
+            // Real fits get the sender's hardcoded pitch/CTA appended; rejected drafts are "-".
+            var draft = result.Fit == Fit.No ? result.Draft : DraftComposer.Compose(result.Draft, sender);
+            var lead = Lead.CreateHarvested(cid, company, result.Fit, result.Subject, draft,
                 item.Source, item.Url, item.Fingerprint, signal.Score, string.Join(",", signal.Matched), DateTimeOffset.UtcNow);
             if (result.Fit == Fit.No)
             {
