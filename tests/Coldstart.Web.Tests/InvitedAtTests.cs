@@ -20,7 +20,7 @@ public class InvitedAtTests(ColdstartWebFactory factory) : IClassFixture<Coldsta
         {
             var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
             var user = new ApplicationUser { UserName = email, Email = email, InvitedAt = when };
-            await users.CreateAsync(user, "Passw0rd!");
+            await users.CreateAsync(user, "Passw0rd!long");
         }
 
         // Assert

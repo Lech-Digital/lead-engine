@@ -19,7 +19,7 @@ public class AdminInviteTests(ColdstartWebFactory factory) : IClassFixture<Colds
         // Arrange
         var client = factory.CreateClient(new() { AllowAutoRedirect = false });
         var email = $"plain-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");   // no role
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");   // no role
 
         // Act
         var response = await client.GetAsync("/admin");
@@ -35,7 +35,7 @@ public class AdminInviteTests(ColdstartWebFactory factory) : IClassFixture<Colds
         // Arrange
         var client = factory.CreateClient();
         var admin = $"boss-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, admin, "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, admin, "Passw0rd!long", ColdstartRoles.SuperAdmin);
         var invitee = $"founder-{Guid.NewGuid():N}@test.com";
         factory.Email.Sent.Clear();
 
@@ -69,9 +69,9 @@ public class AdminInviteTests(ColdstartWebFactory factory) : IClassFixture<Colds
         // Arrange
         var client = factory.CreateClient();
         var admin = $"boss2-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, admin, "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, admin, "Passw0rd!long", ColdstartRoles.SuperAdmin);
         var existing = $"dup-{Guid.NewGuid():N}@test.com";
-        await TestAuth.CreateUserAsync(factory, existing, "Passw0rd!");   // already registered
+        await TestAuth.CreateUserAsync(factory, existing, "Passw0rd!long");   // already registered
         factory.Email.Sent.Clear();
 
         // Act
@@ -91,7 +91,7 @@ public class AdminInviteTests(ColdstartWebFactory factory) : IClassFixture<Colds
         // Arrange
         var client = factory.CreateClient();
         var admin = $"boss3-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, admin, "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, admin, "Passw0rd!long", ColdstartRoles.SuperAdmin);
         var invitee = $"pending-{Guid.NewGuid():N}@test.com";
         await TestAuth.PostFormAsync(client, "/admin?handler=Invite", new()
         {
@@ -119,7 +119,7 @@ public class AdminInviteTests(ColdstartWebFactory factory) : IClassFixture<Colds
         // Arrange
         var client = factory.CreateClient();
         var admin = $"boss4-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, admin, "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, admin, "Passw0rd!long", ColdstartRoles.SuperAdmin);
         var invitee = $"revoke-{Guid.NewGuid():N}@test.com";
         await TestAuth.PostFormAsync(client, "/admin?handler=Invite", new()
         {

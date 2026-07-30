@@ -55,12 +55,12 @@ public class AuthFlowTests(ColdstartWebFactory factory) : IClassFixture<Coldstar
         // Arrange
         var client = factory.CreateClient(new() { AllowAutoRedirect = false });
         var email = $"sa-{Guid.NewGuid():N}@test.com";
-        await TestAuth.CreateUserAsync(factory, email, "Passw0rd!", ColdstartRoles.SuperAdmin, provisionTenant: false);
+        await TestAuth.CreateUserAsync(factory, email, "Passw0rd!long", ColdstartRoles.SuperAdmin, provisionTenant: false);
 
         // Act
         var response = await TestAuth.PostFormAsync(client, "/Identity/Account/Login", new()
         {
-            ["Input.Email"] = email, ["Input.Password"] = "Passw0rd!", ["Input.RememberMe"] = "false",
+            ["Input.Email"] = email, ["Input.Password"] = "Passw0rd!long", ["Input.RememberMe"] = "false",
         });
 
         // Assert

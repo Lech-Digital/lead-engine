@@ -18,7 +18,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Arrange
         var client = factory.CreateClient();
         var email = $"zone-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!"); // signs in; provisions a customer (no leads now)
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long"); // signs in; provisions a customer (no leads now)
         await AddLeadForUserAsync(email, "Patronus AI", "fp-zone-1");
 
         // Act
@@ -37,7 +37,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Arrange
         var client = factory.CreateClient();
         var email = $"zone-why-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         await AddLeadForUserAsync(email, "Patronus AI", "fp-zone-why-1"); // seeded with MatchedSignals "raised"
 
         // Act
@@ -54,7 +54,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Arrange
         var client = factory.CreateClient();
         var email = $"zone-empty-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!"); // provisions a customer with no leads
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long"); // provisions a customer with no leads
 
         // Act
         var html = await client.GetStringAsync("/app");
@@ -69,7 +69,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Arrange
         var client = factory.CreateClient();
         var email = $"zone-brief-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         await AddLeadForUserAsync(email, "Patronus AI", "fp-zone-brief-1");
 
         // Act
@@ -86,12 +86,12 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Arrange
         var clientA = factory.CreateClient();
         var emailA = $"zone-a-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, clientA, emailA, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, clientA, emailA, "Passw0rd!long");
         await AddLeadForUserAsync(emailA, "Acme A", "fp-zone-a");
 
         var clientB = factory.CreateClient();
         var emailB = $"zone-b-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, clientB, emailB, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, clientB, emailB, "Passw0rd!long");
         await AddLeadForUserAsync(emailB, "Acme B", "fp-zone-b");
 
         // Act
@@ -115,7 +115,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Arrange
         var client = factory.CreateClient();
         var email = $"chip-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
 
         // Act
         var html = await client.GetStringAsync("/app");
@@ -130,7 +130,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"prof-{Guid.NewGuid():N}@test.com", "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, $"prof-{Guid.NewGuid():N}@test.com", "Passw0rd!long");
         var form = await AntiforgeryForm(client, "/app/settings", new()
         {
             ["Input.CompanyName"] = "Acme Ltd", ["Input.VatNumber"] = "NL999",
@@ -155,7 +155,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // even by hand-crafting the form field.
         var client = factory.CreateClient();
         var email = $"prof-brief-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         var form = await AntiforgeryForm(client, "/app/settings", new()
         {
             ["Input.CompanyName"] = "Acme Ltd", ["Input.VatNumber"] = "", ["Input.Niche"] = "",
@@ -185,10 +185,10 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Coldstart account) may enable the dogfooding line for their own outreach.
         var client = factory.CreateClient();
         var email = $"prof-admin-{Guid.NewGuid():N}@test.com";
-        await TestAuth.CreateUserAsync(factory, email, "Passw0rd!", ColdstartRoles.SuperAdmin, provisionTenant: true);
+        await TestAuth.CreateUserAsync(factory, email, "Passw0rd!long", ColdstartRoles.SuperAdmin, provisionTenant: true);
         await TestAuth.PostFormAsync(client, "/Identity/Account/Login", new()
         {
-            ["Input.Email"] = email, ["Input.Password"] = "Passw0rd!", ["Input.RememberMe"] = "false",
+            ["Input.Email"] = email, ["Input.Password"] = "Passw0rd!long", ["Input.RememberMe"] = "false",
         });
         var form = await AntiforgeryForm(client, "/app/settings", new()
         {
@@ -211,7 +211,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange
         var client = factory.CreateClient(new() { AllowAutoRedirect = false });
-        await TestAuth.SignInAsync(factory, client, $"prof-save-redir-{Guid.NewGuid():N}@test.com", "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, $"prof-save-redir-{Guid.NewGuid():N}@test.com", "Passw0rd!long");
         var form = await AntiforgeryForm(client, "/app/settings", new()
         {
             ["Input.CompanyName"] = "Acme Ltd", ["Input.VatNumber"] = "", ["Input.Niche"] = "",
@@ -236,7 +236,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"prof-polish-{Guid.NewGuid():N}@test.com", "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, $"prof-polish-{Guid.NewGuid():N}@test.com", "Passw0rd!long");
         factory.BriefPolisher.Result = "POLISHED BRIEF";
         var saveForm = await AntiforgeryForm(client, "/app/settings", new()
         {
@@ -270,7 +270,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"prof-enter-{Guid.NewGuid():N}@test.com", "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, $"prof-enter-{Guid.NewGuid():N}@test.com", "Passw0rd!long");
 
         // Act
         var html = await client.GetStringAsync("/app/settings");
@@ -288,7 +288,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"prof-polish-fail-{Guid.NewGuid():N}@test.com", "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, $"prof-polish-fail-{Guid.NewGuid():N}@test.com", "Passw0rd!long");
         factory.BriefPolisher.Result = null;
         var polishForm = await AntiforgeryForm(client, "/app/settings", new()
         {
@@ -312,7 +312,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"prof-shell-{Guid.NewGuid():N}@test.com", "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, $"prof-shell-{Guid.NewGuid():N}@test.com", "Passw0rd!long");
 
         // Act
         var html = await client.GetStringAsync("/app/settings");
@@ -372,7 +372,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Arrange
         var client = factory.CreateClient();
         var email = $"notif-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         var form = await AntiforgeryForm(client, "/app/settings", new()
         {
             ["SlackWebhookUrl"] = "https://hooks.slack.com/services/T0/B0/secret",
@@ -397,7 +397,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange
         var client = factory.CreateClient(new() { AllowAutoRedirect = false });
-        await TestAuth.SignInAsync(factory, client, $"redir-{Guid.NewGuid():N}@test.com", "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, $"redir-{Guid.NewGuid():N}@test.com", "Passw0rd!long");
 
         // Act
         var response = await client.GetAsync("/app/profile");
@@ -405,5 +405,36 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Assert
         ((int)response.StatusCode).Should().Be(301);
         response.Headers.Location!.ToString().Should().StartWith("/app/settings");
+    }
+
+    [Fact]
+    public async Task PasswordPolicy_AcceptsLongGeneratedPasswordWithoutSpecialCharacters()
+    {
+        // Arrange — Chrome/Google generators emit long letter+digit passwords; the policy
+        // is length-based (NIST), so these must pass.
+        using var scope = factory.Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var user = new ApplicationUser { UserName = "gen-pw@test.com", Email = "gen-pw@test.com", EmailConfirmed = true };
+
+        // Act
+        var result = await users.CreateAsync(user, "kbT7wq2mNfR4Lx");
+
+        // Assert
+        result.Succeeded.Should().BeTrue(string.Join("; ", result.Errors.Select(e => e.Description)));
+    }
+
+    [Fact]
+    public async Task PasswordPolicy_RejectsShortPasswords()
+    {
+        // Arrange
+        using var scope = factory.Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var user = new ApplicationUser { UserName = "short-pw@test.com", Email = "short-pw@test.com" };
+
+        // Act
+        var result = await users.CreateAsync(user, "abc123");
+
+        // Assert
+        result.Succeeded.Should().BeFalse();
     }
 }

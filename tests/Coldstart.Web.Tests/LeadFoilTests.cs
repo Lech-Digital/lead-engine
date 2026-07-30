@@ -31,7 +31,7 @@ public class LeadFoilTests(FoilWebFactory factory) : IClassFixture<FoilWebFactor
         // Arrange — 5 leads, quota 2 → 3 locked
         var client = factory.CreateClient();
         var email = $"foil-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         await AddLeadsAsync(email, 5);
 
         // Act
@@ -50,7 +50,7 @@ public class LeadFoilTests(FoilWebFactory factory) : IClassFixture<FoilWebFactor
         // so a pure newest-first ordering would put them on top.
         var client = factory.CreateClient();
         var email = $"foil-order-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         await AddLeadsAsync(email, 5);
 
         // Act
@@ -70,7 +70,7 @@ public class LeadFoilTests(FoilWebFactory factory) : IClassFixture<FoilWebFactor
         // Arrange — find a locked lead's id (lowest-score of the 5)
         var client = factory.CreateClient(new() { AllowAutoRedirect = false });
         var email = $"foil-detail-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         await AddLeadsAsync(email, 5);
         Guid lockedId;
         using (var scope = factory.Services.CreateScope())
@@ -97,7 +97,7 @@ public class LeadFoilTests(FoilWebFactory factory) : IClassFixture<FoilWebFactor
         // Arrange — a customer whose harvest is Pending with zero leads
         var client = factory.CreateClient();
         var email = $"pending-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         using (var scope = factory.Services.CreateScope())
         {
             var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();

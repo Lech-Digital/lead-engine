@@ -49,6 +49,13 @@ builder.Services
         o.SignIn.RequireConfirmedAccount = false;
         o.Lockout.MaxFailedAccessAttempts = 5;
         o.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+        // Length beats composition rules (NIST 800-63B) — and password generators
+        // (Chrome/Google) don't reliably satisfy special-character demands.
+        o.Password.RequiredLength = 10;
+        o.Password.RequireNonAlphanumeric = false;
+        o.Password.RequireUppercase = false;
+        o.Password.RequireLowercase = false;
+        o.Password.RequireDigit = false;
     })
     .AddEntityFrameworkStores<ColdstartDbContext>()
     .AddDefaultTokenProviders()

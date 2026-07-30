@@ -15,7 +15,7 @@ public class TenantClaimTests(ColdstartWebFactory factory) : IClassFixture<Colds
         // Arrange
         var client = factory.CreateClient();
         var email = $"tenant-claim-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
 
         // Act
         var res = await client.GetAsync("/app");

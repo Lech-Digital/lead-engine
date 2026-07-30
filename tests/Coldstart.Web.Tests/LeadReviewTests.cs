@@ -18,7 +18,7 @@ public class LeadReviewTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Arrange
         var client = factory.CreateClient();
         var email = $"rev-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         await AddLeadForUserAsync(email, "Pending Co", "fp-" + Guid.NewGuid().ToString("N"));
 
         // Act
@@ -39,7 +39,7 @@ public class LeadReviewTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // is the persistent app-bar one (how a user reaches their skipped/sent leads).
         var client = factory.CreateClient();
         var email = $"rev-hist-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         await AddLeadForUserAsync(email, "Solo Co", "fp-" + Guid.NewGuid().ToString("N"));
 
         // Act
@@ -57,7 +57,7 @@ public class LeadReviewTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Arrange
         var client = factory.CreateClient();
         var email = $"rev-confirm-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         await AddLeadForUserAsync(email, "Confirm Co", "fp-" + Guid.NewGuid().ToString("N"));
 
         // Act
@@ -75,7 +75,7 @@ public class LeadReviewTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Arrange
         var client = factory.CreateClient();
         var email = $"rev-cap-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         for (var i = 0; i < 18; i++)
             await AddLeadForUserAsync(email, $"Co{i:D2}", "fp-" + Guid.NewGuid().ToString("N"));
 
@@ -95,7 +95,7 @@ public class LeadReviewTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Arrange
         var client = factory.CreateClient();
         var email = $"rev-appr-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         await AddLeadForUserAsync(email, "Approved Co", "fp-" + Guid.NewGuid().ToString("N"), LeadStatus.Approved);
 
         // Act
@@ -111,7 +111,7 @@ public class LeadReviewTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Arrange
         var client = factory.CreateClient();
         var email = $"rev-skip-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         await AddLeadForUserAsync(email, "Move Co", "fp-" + Guid.NewGuid().ToString("N"));
         var id = await LeadIdForAsync(email, "Move Co");
         var form = await AntiforgeryForm(client, "/app", new() { ["id"] = id.ToString() });

@@ -19,7 +19,7 @@ public class CustomerHistoryTests(ColdstartWebFactory factory) : IClassFixture<C
         // Arrange
         var client = factory.CreateClient();
         var email = $"hist-live-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         await AddLeadAsync(email, "Sent Co", LeadStatus.Sent);
 
         // Act
@@ -38,7 +38,7 @@ public class CustomerHistoryTests(ColdstartWebFactory factory) : IClassFixture<C
         // Arrange
         var client = factory.CreateClient();
         var email = $"hist-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         await AddLeadAsync(email, "Sent Co", LeadStatus.Sent);
         await AddLeadAsync(email, "Shelved Co", LeadStatus.Shelved);
 
@@ -57,7 +57,7 @@ public class CustomerHistoryTests(ColdstartWebFactory factory) : IClassFixture<C
         // Arrange
         var client = factory.CreateClient();
         var email = $"hist-sent-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         await AddLeadAsync(email, "Sent Co", LeadStatus.Sent);
         await AddLeadAsync(email, "Shelved Co", LeadStatus.Shelved);
 
@@ -75,7 +75,7 @@ public class CustomerHistoryTests(ColdstartWebFactory factory) : IClassFixture<C
         // Arrange
         var client = factory.CreateClient();
         var email = $"hist-q-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         await AddLeadAsync(email, "Patronus AI", LeadStatus.Sent);
         await AddLeadAsync(email, "Globex", LeadStatus.Sent);
 
@@ -93,7 +93,7 @@ public class CustomerHistoryTests(ColdstartWebFactory factory) : IClassFixture<C
         // Arrange
         var client = factory.CreateClient();
         var email = $"hist-reopen-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         await AddLeadAsync(email, "Reopen Co", LeadStatus.Shelved);
         var id = await LeadIdAsync(email, "Reopen Co");
         var form = await AntiforgeryForm(client, "/app/history", new() { ["id"] = id.ToString() });
@@ -114,7 +114,7 @@ public class CustomerHistoryTests(ColdstartWebFactory factory) : IClassFixture<C
         // the 2 oldest spill into History's "older" set.
         var client = factory.CreateClient();
         var email = $"hist-older-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         var baseTime = new DateTimeOffset(2026, 1, 1, 8, 0, 0, TimeSpan.Zero);
         for (var i = 0; i < 17; i++)
             await AddLeadAtAsync(email, $"Older{i:D2} Co", baseTime.AddMinutes(i)); // i=0 oldest, i=16 newest
@@ -139,7 +139,7 @@ public class CustomerHistoryTests(ColdstartWebFactory factory) : IClassFixture<C
         // re-order — could disagree on which lead is the 16th, letting it appear in both or neither.
         var client = factory.CreateClient();
         var email = $"hist-tie-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         var tiedAt = new DateTimeOffset(2026, 1, 1, 8, 0, 0, TimeSpan.Zero);
         var names = Enumerable.Range(0, 16).Select(i => $"Tie{i:D2} Co").ToList();
         foreach (var name in names)

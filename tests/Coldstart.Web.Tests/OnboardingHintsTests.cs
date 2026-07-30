@@ -16,7 +16,7 @@ public class OnboardingHintsTests(ColdstartWebFactory factory) : IClassFixture<C
         // Arrange — a signed-in user with a customer (mirrors CustomerZoneTests setup)
         var client = factory.CreateClient();
         var email = $"hint-first-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
 
         // Act
         var html = await client.GetStringAsync("/app");
@@ -34,7 +34,7 @@ public class OnboardingHintsTests(ColdstartWebFactory factory) : IClassFixture<C
         // Arrange — signed-in client; scrape token from GET /app
         var client = factory.CreateClient(new() { AllowAutoRedirect = false });
         var email = $"hint-dismiss-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         var token = await TestAuth.AntiforgeryAsync(client, "/app");
 
         // Act
@@ -55,8 +55,8 @@ public class OnboardingHintsTests(ColdstartWebFactory factory) : IClassFixture<C
         // Arrange — a signed-in user WITHOUT a provisioned customer (CustomerId null)
         var client = factory.CreateClient();
         var email = $"hint-nocustomer-{Guid.NewGuid():N}@test.com";
-        await TestAuth.CreateUserAsync(factory, email, "Passw0rd!", provisionTenant: false);
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.CreateUserAsync(factory, email, "Passw0rd!long", provisionTenant: false);
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
 
         // Act
         var response = await client.GetAsync("/app");
@@ -72,7 +72,7 @@ public class OnboardingHintsTests(ColdstartWebFactory factory) : IClassFixture<C
         // Arrange — signed-in client that has dismissed the first hint already
         var client = factory.CreateClient(new() { AllowAutoRedirect = false });
         var email = $"hint-showhints-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         var dismissToken = await TestAuth.AntiforgeryAsync(client, "/app");
         await client.PostAsync("/app?handler=DismissHint", new FormUrlEncodedContent(
             new Dictionary<string, string> { ["__RequestVerificationToken"] = dismissToken!, ["key"] = OnboardingHints.All[0].Key }));
@@ -95,7 +95,7 @@ public class OnboardingHintsTests(ColdstartWebFactory factory) : IClassFixture<C
         // Arrange — signed-in client, no hints dismissed yet
         var client = factory.CreateClient(new() { AllowAutoRedirect = false });
         var email = $"hint-bogus-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         var token = await TestAuth.AntiforgeryAsync(client, "/app");
 
         // Act — POST a key that isn't in the OnboardingHints catalogue
@@ -121,12 +121,12 @@ public class OnboardingHintsTests(ColdstartWebFactory factory) : IClassFixture<C
         // Arrange — two independent signed-in users, each with a provisioned customer
         var clientA = factory.CreateClient(new() { AllowAutoRedirect = false });
         var emailA = $"hint-a-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, clientA, emailA, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, clientA, emailA, "Passw0rd!long");
         var tokenA = await TestAuth.AntiforgeryAsync(clientA, "/app");
 
         var clientB = factory.CreateClient();
         var emailB = $"hint-b-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, clientB, emailB, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, clientB, emailB, "Passw0rd!long");
 
         // Act — user A dismisses hint #1
         await clientA.PostAsync("/app?handler=DismissHint", new FormUrlEncodedContent(

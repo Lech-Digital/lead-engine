@@ -11,7 +11,7 @@ public class LockoutTests(ColdstartWebFactory factory) : IClassFixture<Coldstart
         // Arrange
         var client = factory.CreateClient();
         var email = $"lockout-{Guid.NewGuid():N}@test.com";
-        await TestAuth.CreateUserAsync(factory, email, "Passw0rd!");
+        await TestAuth.CreateUserAsync(factory, email, "Passw0rd!long");
 
         // Act — burn through the allowed attempts with a wrong password…
         for (var i = 0; i < 5; i++)
@@ -22,7 +22,7 @@ public class LockoutTests(ColdstartWebFactory factory) : IClassFixture<Coldstart
         // …then try the CORRECT password.
         var html = await TestAuth.PostFormReadAsync(client, "/Identity/Account/Login", new()
         {
-            ["Input.Email"] = email, ["Input.Password"] = "Passw0rd!", ["Input.RememberMe"] = "false",
+            ["Input.Email"] = email, ["Input.Password"] = "Passw0rd!long", ["Input.RememberMe"] = "false",
         });
 
         // Assert — the account is locked, the right password no longer signs in
@@ -35,7 +35,7 @@ public class LockoutTests(ColdstartWebFactory factory) : IClassFixture<Coldstart
         // Arrange
         var client = factory.CreateClient(new() { AllowAutoRedirect = false });
         var email = $"lockout-ok-{Guid.NewGuid():N}@test.com";
-        await TestAuth.CreateUserAsync(factory, email, "Passw0rd!");
+        await TestAuth.CreateUserAsync(factory, email, "Passw0rd!long");
 
         // Act — two wrong attempts, then the right password
         for (var i = 0; i < 2; i++)
@@ -45,7 +45,7 @@ public class LockoutTests(ColdstartWebFactory factory) : IClassFixture<Coldstart
             });
         var response = await TestAuth.PostFormAsync(client, "/Identity/Account/Login", new()
         {
-            ["Input.Email"] = email, ["Input.Password"] = "Passw0rd!", ["Input.RememberMe"] = "false",
+            ["Input.Email"] = email, ["Input.Password"] = "Passw0rd!long", ["Input.RememberMe"] = "false",
         });
 
         // Assert — normal sign-in (redirect away from the login page)

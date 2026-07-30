@@ -35,7 +35,7 @@ public class BillingFlowTests(FoilWebFactory factory) : IClassFixture<FoilWebFac
         // Arrange
         var client = factory.CreateClient(new() { AllowAutoRedirect = false });
         var email = $"billing-checkout-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         var customerId = await CustomerIdAsync(email);
 
         // Act
@@ -54,7 +54,7 @@ public class BillingFlowTests(FoilWebFactory factory) : IClassFixture<FoilWebFac
         // Arrange — a fresh Free customer has no StripeCustomerId yet
         var client = factory.CreateClient(new() { AllowAutoRedirect = false });
         var email = $"billing-portal-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
 
         // Act
         var response = await TestAuth.PostFormAsync(client, "/app/billing?handler=Portal", new());
@@ -86,7 +86,7 @@ public class BillingFlowTests(FoilWebFactory factory) : IClassFixture<FoilWebFac
         // Arrange — 5 leads, quota 2 → locked rows + foil CTA present
         var client = factory.CreateClient();
         var email = $"billing-foil-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         await AddLeadsAsync(email, 5);
 
         // Act

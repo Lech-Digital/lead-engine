@@ -17,7 +17,7 @@ public class OnboardingInviteTests(ColdstartWebFactory factory) : IClassFixture<
     {
         // Arrange
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         var invitee = $"newco-{Guid.NewGuid():N}@test.com";
         var company = $"NewCo-{Guid.NewGuid():N}";
         factory.Email.Sent.Clear();
@@ -54,7 +54,7 @@ public class OnboardingInviteTests(ColdstartWebFactory factory) : IClassFixture<
     {
         // Arrange
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         var invitee = $"noniche-{Guid.NewGuid():N}@test.com";
         factory.Email.Sent.Clear();
 
@@ -73,7 +73,7 @@ public class OnboardingInviteTests(ColdstartWebFactory factory) : IClassFixture<
     {
         // Arrange — persist an inquiry, then open the invite page for it
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         Guid inquiryId;
         var inqEmail = $"lead-{Guid.NewGuid():N}@prospect.com";
         using (var scope = factory.Services.CreateScope())

@@ -18,14 +18,14 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Arrange — a SuperAdmin session, one pending invite, one active user
         var client = factory.CreateClient();
         var admin = $"boss-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, admin, "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, admin, "Passw0rd!long", ColdstartRoles.SuperAdmin);
 
         var pending = $"pending-{Guid.NewGuid():N}@test.com";
         await TestAuth.PostFormAsync(client, "/admin?handler=Invite",
             new() { ["Input.Company"] = "Pending Co", ["Input.Email"] = pending, ["Input.Niche"] = "test niche" });
 
         var active = $"active-{Guid.NewGuid():N}@test.com";
-        await TestAuth.CreateUserAsync(factory, active, "Passw0rd!");   // EmailConfirmed=true => Active
+        await TestAuth.CreateUserAsync(factory, active, "Passw0rd!long");   // EmailConfirmed=true => Active
 
         // Act
         var html = await client.GetStringAsync("/admin");
@@ -51,7 +51,7 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         var invitee = $"resend-{Guid.NewGuid():N}@test.com";
         await TestAuth.PostFormAsync(client, "/admin?handler=Invite", new() { ["Input.Company"] = "Re Co", ["Input.Email"] = invitee, ["Input.Niche"] = "test niche" });
         factory.Email.Sent.Clear();
@@ -68,7 +68,7 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         var invitee = $"revoke-{Guid.NewGuid():N}@test.com";
         await TestAuth.PostFormAsync(client, "/admin?handler=Invite", new() { ["Input.Company"] = "Rev Co", ["Input.Email"] = invitee, ["Input.Niche"] = "test niche" });
 
@@ -98,7 +98,7 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         var invitee = $"copy-{Guid.NewGuid():N}@test.com";
         await TestAuth.PostFormAsync(client, "/admin?handler=Invite", new() { ["Input.Company"] = "Copy Co", ["Input.Email"] = invitee, ["Input.Niche"] = "test niche" });
 
@@ -114,9 +114,9 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange — an active user with a known password + tenant
         var admin = factory.CreateClient(new() { AllowAutoRedirect = false });
-        await TestAuth.SignInAsync(factory, admin, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, admin, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         var target = $"blockme-{Guid.NewGuid():N}@test.com";
-        await TestAuth.CreateUserAsync(factory, target, "Passw0rd!");
+        await TestAuth.CreateUserAsync(factory, target, "Passw0rd!long");
         string userId;
         using (var scope = factory.Services.CreateScope())
         {
@@ -128,7 +128,7 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
         await TestAuth.PostFormAsync(admin, "/admin?handler=Block", new() { ["id"] = userId });
         var blocked = factory.CreateClient(new() { AllowAutoRedirect = false });
         await TestAuth.PostFormAsync(blocked, "/Identity/Account/Login",
-            new() { ["Input.Email"] = target, ["Input.Password"] = "Passw0rd!", ["Input.RememberMe"] = "false" });
+            new() { ["Input.Email"] = target, ["Input.Password"] = "Passw0rd!long", ["Input.RememberMe"] = "false" });
         var appWhileBlocked = await blocked.GetAsync("/app");
 
         // Assert — blocked user is not authenticated (bounced to login)
@@ -139,7 +139,7 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
         await TestAuth.PostFormAsync(admin, "/admin?handler=Unblock", new() { ["id"] = userId });
         var ok = factory.CreateClient(new() { AllowAutoRedirect = false });
         await TestAuth.PostFormAsync(ok, "/Identity/Account/Login",
-            new() { ["Input.Email"] = target, ["Input.Password"] = "Passw0rd!", ["Input.RememberMe"] = "false" });
+            new() { ["Input.Email"] = target, ["Input.Password"] = "Passw0rd!long", ["Input.RememberMe"] = "false" });
         var appAfterUnblock = await ok.GetAsync("/app");
 
         // Assert — now authenticated (200, not redirected to login)
@@ -151,9 +151,9 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange
         var admin = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, admin, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, admin, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         var target = $"removeme-{Guid.NewGuid():N}@test.com";
-        await TestAuth.CreateUserAsync(factory, target, "Passw0rd!");
+        await TestAuth.CreateUserAsync(factory, target, "Passw0rd!long");
         string userId;
         Guid customerId;
         using (var scope = factory.Services.CreateScope())
@@ -184,7 +184,7 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Arrange
         var admin = factory.CreateClient();
         var bossEmail = $"boss-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, admin, bossEmail, "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, admin, bossEmail, "Passw0rd!long", ColdstartRoles.SuperAdmin);
         string bossId;
         using (var scope = factory.Services.CreateScope())
         {

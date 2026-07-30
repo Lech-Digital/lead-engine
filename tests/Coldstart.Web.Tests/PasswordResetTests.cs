@@ -19,7 +19,7 @@ public class PasswordResetTests(ColdstartWebFactory factory) : IClassFixture<Col
         // Arrange
         var client = factory.CreateClient();
         var email = $"reset-{Guid.NewGuid():N}@test.com";
-        await TestAuth.CreateUserAsync(factory, email, "Passw0rd!");
+        await TestAuth.CreateUserAsync(factory, email, "Passw0rd!long");
         factory.Email.Sent.Clear();
 
         // Act

@@ -30,7 +30,7 @@ public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange — SuperAdmin session, one seen (older) message and one unseen (newer) message
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         factory.Mailbox.Messages.Clear();
         factory.Mailbox.Messages.Add(Msg(1, "Older", seen: true));
         factory.Mailbox.Messages.Add(Msg(2, "Newer"));
@@ -49,7 +49,7 @@ public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange — SuperAdmin session, mailbox flagged unreachable
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         factory.Mailbox.Unreachable = true;
         try
         {
@@ -81,7 +81,7 @@ public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         factory.Mailbox.Messages.Clear();
         factory.Mailbox.Messages.Add(Msg(7, "Read me", html: "<p>safe <strong>html</strong></p>"));
 
@@ -98,7 +98,7 @@ public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         factory.Mailbox.Messages.Clear();
         factory.Mailbox.Messages.Add(Msg(11, "Tracked", html: "<p>hi</p>", remoteImagesRemoved: true));
 
@@ -114,7 +114,7 @@ public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange
         var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         factory.Mailbox.Messages.Clear();
         factory.Mailbox.Messages.Add(Msg(8, "Unread me", seen: true));
 
@@ -131,7 +131,7 @@ public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange
         var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         factory.Mailbox.Messages.Clear();
         factory.Mailbox.Messages.Add(Msg(9, "Delete me"));
 
@@ -149,7 +149,7 @@ public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange
         var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         factory.Mailbox.Messages.Clear();
         factory.Mailbox.Messages.Add(Msg(40, "Unread me", seen: true));
         var token = await TestAuth.AntiforgeryAsync(client, "/admin/mailbox/40");
@@ -172,7 +172,7 @@ public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange
         var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         factory.Mailbox.Messages.Clear();
         factory.Mailbox.Messages.Add(Msg(41, "Delete me"));
         var token = await TestAuth.AntiforgeryAsync(client, "/admin/mailbox/41");
@@ -195,7 +195,7 @@ public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange
         var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         factory.Mailbox.Messages.Clear();
         factory.Mailbox.Messages.Add(Msg(42, "With attachment",
             atts: [new MailAttachmentInfo(0, "report.pdf", "application/pdf", 3)]));
@@ -217,7 +217,7 @@ public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         factory.Mailbox.Messages.Clear();
         factory.Mailbox.Messages.Add(Msg(10, "With attachment",
             atts: [new MailAttachmentInfo(0, "report.pdf", "application/pdf", 3)]));
@@ -239,7 +239,7 @@ public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange
         var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         factory.Mailbox.Messages.Clear();
 
         // Act
@@ -255,7 +255,7 @@ public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange — SuperAdmin session, message with one attachment
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         factory.Mailbox.Messages.Clear();
         factory.Mailbox.Messages.Add(Msg(11, "With attachment",
             atts: [new MailAttachmentInfo(0, "report.pdf", "application/pdf", 3)]));
@@ -272,7 +272,7 @@ public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange — SuperAdmin session, mailbox flagged unreachable
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         factory.Mailbox.Messages.Clear();
         factory.Mailbox.Unreachable = true;
         try
@@ -292,7 +292,7 @@ public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange
         var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         factory.Mailbox.Sent.Clear();
         var token = await TestAuth.AntiforgeryAsync(client, "/admin/mailbox/compose");
 
@@ -317,7 +317,7 @@ public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         factory.Mailbox.Messages.Clear();
         factory.Mailbox.Sent.Clear();
         factory.Mailbox.Messages.Add(Msg(21, "Question about pricing"));
@@ -348,7 +348,7 @@ public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange — original message already carries a References chain from an earlier thread
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         factory.Mailbox.Messages.Clear();
         factory.Mailbox.Messages.Add(Msg(30, "Pricing follow-up", references: "<older@example.com>"));
 
@@ -367,7 +367,7 @@ public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange — original message has no prior References chain (References = null)
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         factory.Mailbox.Messages.Clear();
         factory.Mailbox.Messages.Add(Msg(31, "First contact"));   // references defaults to null
 
@@ -384,7 +384,7 @@ public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange — no message with this uid exists, so GetAsync returns null
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         factory.Mailbox.Messages.Clear();
 
         // Act
@@ -402,7 +402,7 @@ public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         factory.Mailbox.Unreachable = true;
         try
         {
@@ -423,7 +423,7 @@ public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Arrange — grab the antiforgery token before flagging the mailbox unreachable, since a
         // plain GET without replyTo never touches IMailbox but this keeps the ordering defensive.
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         factory.Mailbox.Sent.Clear();
         var token = await TestAuth.AntiforgeryAsync(client, "/admin/mailbox/compose");
         factory.Mailbox.Unreachable = true;
@@ -453,7 +453,7 @@ public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange — an address attempting to inject an extra header via a raw CRLF
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         factory.Mailbox.Sent.Clear();
         var token = await TestAuth.AntiforgeryAsync(client, "/admin/mailbox/compose");
 
@@ -478,7 +478,7 @@ public class MailboxPagesTests(ColdstartWebFactory factory) : IClassFixture<Cold
     {
         // Arrange
         var client = factory.CreateClient();
-        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!", ColdstartRoles.SuperAdmin);
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         factory.Mailbox.Sent.Clear();
         var token = await TestAuth.AntiforgeryAsync(client, "/admin/mailbox/compose");
 

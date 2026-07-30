@@ -18,7 +18,7 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Arrange
         var client = factory.CreateClient();
         var email = $"detail-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         var id = await AddLeadForUserAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"));
 
         // Act
@@ -35,12 +35,12 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Arrange — owner creates a lead
         var owner = factory.CreateClient();
         var ownerEmail = $"owner-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, owner, ownerEmail, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, owner, ownerEmail, "Passw0rd!long");
         var id = await AddLeadForUserAsync(ownerEmail, "Owner Co", "fp-" + Guid.NewGuid().ToString("N"));
 
         // attacker is a different logged-in customer
         var attacker = factory.CreateClient(new() { AllowAutoRedirect = false });
-        await TestAuth.SignInAsync(factory, attacker, $"attacker-{Guid.NewGuid():N}@test.com", "Passw0rd!");
+        await TestAuth.SignInAsync(factory, attacker, $"attacker-{Guid.NewGuid():N}@test.com", "Passw0rd!long");
 
         // Act
         var response = await attacker.GetAsync($"/app/leads/{id}");
@@ -56,7 +56,7 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Arrange
         var client = factory.CreateClient();
         var email = $"det-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         var id = await AddPendingLeadWithRecipientAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"), "ceo@acme.com");
 
         // Act
@@ -74,7 +74,7 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Arrange
         var client = factory.CreateClient();
         var email = $"det-confirm-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         var id = await AddPendingLeadWithRecipientAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"), "ceo@acme.com");
 
         // Act
@@ -92,7 +92,7 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Arrange
         var client = factory.CreateClient();
         var email = $"det-sent-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         var id = await AddPendingLeadWithRecipientAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"), "ceo@acme.com");
         var form = await AntiforgeryForm(client, $"/app/leads/{id}", new() {
             ["Input.Subject"] = "Hi", ["Input.Draft"] = "Body", ["Input.Recipient"] = "ceo@acme.com",
@@ -113,7 +113,7 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Arrange
         var client = factory.CreateClient();
         var email = $"det-run-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         var id = await AddPendingLeadWithRecipientAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"), "ceo@acme.com");
 
         // Act
@@ -129,7 +129,7 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Arrange — two PendingReview leads with recipients, deterministic newest-first ordering
         var client = factory.CreateClient(new() { AllowAutoRedirect = false });
         var email = $"run-marksent-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         var older = await AddPendingLeadWithRecipientAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"),
             "ceo@acme.com", DateTimeOffset.UtcNow.AddMinutes(-5));
         var newer = await AddPendingLeadWithRecipientAsync(email, "Beta Co", "fp-" + Guid.NewGuid().ToString("N"),
@@ -158,7 +158,7 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // ordering picks "newest" here — oldest-first or unordered would wrongly land on "middle".
         var client = factory.CreateClient(new() { AllowAutoRedirect = false });
         var email = $"run-marksent-newest-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         var acted = await AddPendingLeadWithRecipientAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"),
             "ceo@acme.com", DateTimeOffset.UtcNow.AddMinutes(-10));
         var middle = await AddPendingLeadWithRecipientAsync(email, "Beta Co", "fp-" + Guid.NewGuid().ToString("N"),
@@ -185,7 +185,7 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Arrange — a single PendingReview lead, nothing left in the queue once it's sent
         var client = factory.CreateClient(new() { AllowAutoRedirect = false });
         var email = $"run-marksent-last-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         var id = await AddPendingLeadWithRecipientAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"), "ceo@acme.com");
         var form = await AntiforgeryForm(client, $"/app/leads/{id}?run=1", new() {
             ["run"] = "1", ["Input.Subject"] = "Hi", ["Input.Draft"] = "Body", ["Input.Recipient"] = "ceo@acme.com",
@@ -206,7 +206,7 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Arrange — two PendingReview leads with recipients, deterministic newest-first ordering
         var client = factory.CreateClient(new() { AllowAutoRedirect = false });
         var email = $"run-skip-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         var older = await AddPendingLeadWithRecipientAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"),
             "ceo@acme.com", DateTimeOffset.UtcNow.AddMinutes(-5));
         var newer = await AddPendingLeadWithRecipientAsync(email, "Beta Co", "fp-" + Guid.NewGuid().ToString("N"),
@@ -228,7 +228,7 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Arrange
         var client = factory.CreateClient();
         var email = $"detail-approved-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         var id = await AddApprovedLeadWithRecipientAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"), "ceo@acme.com");
 
         // Act
@@ -247,10 +247,10 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // so it lands in the auth cookie), with an approved lead.
         var client = factory.CreateClient();
         var email = $"admin-send-{Guid.NewGuid():N}@test.com";
-        await TestAuth.CreateUserAsync(factory, email, "Passw0rd!", role: ColdstartRoles.SuperAdmin, provisionTenant: true);
+        await TestAuth.CreateUserAsync(factory, email, "Passw0rd!long", role: ColdstartRoles.SuperAdmin, provisionTenant: true);
         await TestAuth.PostFormAsync(client, "/Identity/Account/Login", new()
         {
-            ["Input.Email"] = email, ["Input.Password"] = "Passw0rd!", ["Input.RememberMe"] = "false",
+            ["Input.Email"] = email, ["Input.Password"] = "Passw0rd!long", ["Input.RememberMe"] = "false",
         });
         var id = await AddApprovedLeadWithRecipientAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"), "ceo@acme.com");
         factory.Outreach.LastSent = null;
@@ -278,10 +278,10 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Arrange — admin with an approved lead whose STORED recipient is the original address
         var client = factory.CreateClient();
         var email = $"admin-edit-send-{Guid.NewGuid():N}@test.com";
-        await TestAuth.CreateUserAsync(factory, email, "Passw0rd!", role: ColdstartRoles.SuperAdmin, provisionTenant: true);
+        await TestAuth.CreateUserAsync(factory, email, "Passw0rd!long", role: ColdstartRoles.SuperAdmin, provisionTenant: true);
         await TestAuth.PostFormAsync(client, "/Identity/Account/Login", new()
         {
-            ["Input.Email"] = email, ["Input.Password"] = "Passw0rd!", ["Input.RememberMe"] = "false",
+            ["Input.Email"] = email, ["Input.Password"] = "Passw0rd!long", ["Input.RememberMe"] = "false",
         });
         var id = await AddApprovedLeadWithRecipientAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"), "old@acme.com");
         factory.Outreach.LastSent = null;
@@ -305,7 +305,7 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Arrange — a normal customer (no SuperAdmin role)
         var client = factory.CreateClient();
         var email = $"cust-send-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         var id = await AddApprovedLeadWithRecipientAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"), "ceo@acme.com");
         factory.Outreach.LastSent = null;
 
@@ -334,7 +334,7 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Arrange
         var client = factory.CreateClient();
         var email = $"note-add-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         var id = await AddLeadForUserAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"));
         var form = await AntiforgeryForm(client, $"/app/leads/{id}", new() { ["Input.NoteText"] = "ring them Tuesday" });
 
@@ -353,7 +353,7 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Arrange — add a note, then discover its id from the rendered delete form's hidden NoteId input
         var client = factory.CreateClient();
         var email = $"note-remove-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         var id = await AddLeadForUserAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"));
         var addForm = await AntiforgeryForm(client, $"/app/leads/{id}", new() { ["Input.NoteText"] = "call back Friday" });
         await client.PostAsync($"/app/leads/{id}?handler=AddNote", new FormUrlEncodedContent(addForm));
@@ -376,7 +376,7 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Arrange
         var client = factory.CreateClient();
         var email = $"note-invalid-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         var id = await AddLeadWithDraftAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"),
             "Distinct-Subject-Marker", "Distinct-Draft-Marker");
         var form = await AntiforgeryForm(client, $"/app/leads/{id}", new() { ["Input.NoteText"] = "" });
@@ -397,7 +397,7 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Arrange
         var client = factory.CreateClient();
         var email = $"detail-shelved-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         var id = await AddShelvedLeadAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"));
 
         // Act
@@ -413,7 +413,7 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         // Arrange
         var client = factory.CreateClient();
         var email = $"detail-jsurl-{Guid.NewGuid():N}@test.com";
-        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
         var id = await AddLeadWithSourceUrlAsync(email, "Acme Co", "fp-" + Guid.NewGuid().ToString("N"), "javascript:alert(1)");
 
         // Act
