@@ -272,6 +272,12 @@
 .lp-included li::before { content: "*"; position: absolute; left: 4px; top: 1px; color: var(--sunrise); font-weight: 800; font-family: var(--display); }
 .lp-terms-line { font-size: 0.88rem; color: var(--body-subtle); margin: 0; }
 .lp-form { display: flex; flex-direction: column; gap: 16px; max-width: 440px; margin-top: 24px; }
+/* Consent row: checkbox + two quiet lines; links in the brand palette, not browser blue. */
+.lp-consent label { display: flex; gap: 10px; align-items: flex-start; font-size: 0.85rem; line-height: 1.55; color: var(--body-muted); font-weight: 400; cursor: pointer; }
+.lp-consent input[type="checkbox"] { flex: none; width: 16px; height: 16px; margin-top: 3px; accent-color: var(--sunrise); cursor: pointer; }
+.lp-consent span { display: inline; }
+.lp-consent a { color: var(--sunrise-deep); text-decoration: none; border-bottom: 1px solid rgba(255,106,61,0.35); transition: border-color .15s ease; }
+.lp-consent a:hover { border-bottom-color: var(--sunrise-deep); }
 .lp-form-status { min-height: 1.2em; margin: 0; font-size: 0.92rem; }
 .lp-form-status.ok { color: #2E7D4F; }
 .lp-form-status.err { color: #B3402A; }
