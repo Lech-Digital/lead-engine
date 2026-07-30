@@ -152,6 +152,13 @@
   .scene-stage .lp-hero-art svg { max-width: 360px; margin-inline: auto; }
   .beat { min-height: 0; margin-bottom: 28px; }
   .scene--night { padding: 56px 0; }
+  /* The page-sky gradient is document-height percentages; on narrow screens the sections
+     reflow taller and the daybreak copy lands inside the orange sunrise band (grey on
+     orange = unreadable). Give the act its own dawn->daylight backdrop and solid ink so
+     it reads at any scroll geometry; everything after it sits on plain daylight. */
+  .lp-act--daybreak { background: linear-gradient(180deg, #FF9E6B 0%, #FBE0CC 22%, #FDFBF7 48%, #FDFBF7 100%); }
+  .lp-act--daybreak .wrap > p { color: var(--ink); }
+  .lp-act--daybreak ~ .lp-act { background: var(--daylight); }
 }
 
 /* Reduced motion: never pin (no tall empty pinned column without scrub). */
