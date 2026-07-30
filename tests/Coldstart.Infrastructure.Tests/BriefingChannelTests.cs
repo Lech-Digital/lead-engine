@@ -96,4 +96,26 @@ public class BriefingChannelTests
         // Act / Assert — soft-degrade
         sut.CanSend(customer).Should().BeFalse();
     }
+
+    [Fact]
+    public async Task WhatsApp_WithContentSid_SendsTemplateWithSingleLineVariables()
+    {
+        // Arrange — production mode: approved template, no freeform Body.
+        var handler = new CapturingHandler();
+        var twilio = Options.Create(new TwilioOptions
+        { AccountSid = "AC1", AuthToken = "t", WhatsAppFrom = "+3197001", ContentSid = "HX123" });
+        var sut = new TwilioWhatsAppChannel(new HttpClient(handler), twilio, Base);
+        var customer = Customer.Create("Acme\nB.V.");
+        customer.ConfigureNotifications(null, "+31612345678");
+
+        // Act
+        await sut.SendAsync(customer, Note(customer), CancellationToken.None);
+
+        // Assert — template fields, no Body, variables cleaned of newlines
+        var body = System.Web.HttpUtility.UrlDecode(handler.Body!);
+        body.Should().Contain("ContentSid=HX123");
+        body.Should().NotContain("Body=");
+        body.Should().Contain("Acme, Beta BV");
+        body.Should().NotContain("Acme\nB.V.");
+    }
 }

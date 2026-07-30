@@ -23,14 +23,39 @@ internal sealed class TwilioWhatsAppChannel(HttpClient http, IOptions<TwilioOpti
             $"https://api.twilio.com/2010-04-01/Accounts/{t.AccountSid}/Messages.json");
         req.Headers.Authorization = new AuthenticationHeaderValue("Basic",
             Convert.ToBase64String(Encoding.UTF8.GetBytes($"{t.AccountSid}:{t.AuthToken}")));
-        req.Content = new FormUrlEncodedContent(new Dictionary<string, string>
+        var fields = new Dictionary<string, string>
         {
             ["From"] = $"whatsapp:{t.WhatsAppFrom}",
             ["To"] = $"whatsapp:{customer.WhatsAppNumber}",
-            ["Body"] = BuildText(notification, options.Value.BaseUrl),
-        });
+        };
+        if (string.IsNullOrWhiteSpace(t.ContentSid))
+        {
+            fields["Body"] = BuildText(notification, options.Value.BaseUrl);
+        }
+        else
+        {
+            // Production: approved template. Variables must be single-line.
+            fields["ContentSid"] = t.ContentSid;
+            fields["ContentVariables"] = BuildTemplateVariables(notification);
+        }
+        req.Content = new FormUrlEncodedContent(fields);
         using var resp = await http.SendAsync(req, ct);
         resp.EnsureSuccessStatusCode();
+    }
+
+    // Template variables for the approved briefing template:
+    //   {{1}} = lead count, {{2}} = account name, {{3}} = company list (single line).
+    internal static string BuildTemplateVariables(BriefingNotification n)
+    {
+        var companies = string.Join(", ", n.Leads.Take(5).Select(l => Clean(l.Company)));
+        if (n.Leads.Count > 5) companies += $" +{n.Leads.Count - 5} more";
+        return System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, string>
+        {
+            ["1"] = n.Leads.Count.ToString(),
+            ["2"] = Clean(n.CustomerName),
+            ["3"] = companies,
+        });
+        static string Clean(string s) => s.Replace('\n', ' ').Replace('\r', ' ').Replace('\t', ' ').Trim();
     }
 
     // WhatsApp renders link-heavy messages poorly — company names as plain text, one link.

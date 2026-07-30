@@ -73,6 +73,7 @@ services:
       Twilio__AccountSid: ${TWILIO_ACCOUNT_SID:-}
       Twilio__AuthToken: ${TWILIO_AUTH_TOKEN:-}
       Twilio__WhatsAppFrom: ${TWILIO_WHATSAPP_FROM:-}
+      Twilio__ContentSid: ${TWILIO_CONTENT_SID:-}
     volumes:
       - coldstart-dpkeys:/app/keys
     expose:
