@@ -1,2 +1,35 @@
-@page
-@model Coldstart.Web.Pages.ContactModel
+@page "/contact"
+@model Coldstart.Web.Pages.ContactPageModel
+@{ ViewData["Title"] = "Contact — Coldstart"; Layout = "_Layout"; }
+
+<partial name="_PublicNav" />
+
+<main class="static-page wrap wrap-narrow">
+  <h1>Talk to a human.</h1>
+  <p class="static-lede">Questions, doubts, feedback, or just checking we're real — write to us. Your message lands directly in the founder's mailbox, and you'll get a reply within one working day.</p>
+
+  @if (Model.Sent)
+  {
+    <div class="contact-sent">
+      <p><strong>Message sent.</strong> Thanks — you'll hear from me within one working day.</p>
+    </div>
+  }
+  else
+  {
+    <form method="post" class="lp-form contact-form">
+      <input type="text" name="Website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <div class="field"><label for="c-name">Your name</label><input id="c-name" asp-for="Name" type="text" required></div>
+      <div class="field"><label for="c-email">Your email</label><input id="c-email" asp-for="Email" type="email" required></div>
+      <div class="field"><label for="c-message">Your message</label><textarea id="c-message" asp-for="Message" rows="6" required></textarea></div>
+      <button class="btn btn-primary" type="submit">Send message →</button>
+      <p class="contact-note">Prefer plain email? <a href="mailto:info@getcoldstart.nl">info@getcoldstart.nl</a> works too. We only use your details to answer you — <a href="/privacy">privacy policy</a>.</p>
+    </form>
+  }
+
+  <section class="static-facts">
+    <h2>The facts</h2>
+    <p>Coldstart · Schiedam, the Netherlands<br>
+    KvK: 42125737<br>
+    <a href="mailto:info@getcoldstart.nl">info@getcoldstart.nl</a></p>
+  </section>
+</main>

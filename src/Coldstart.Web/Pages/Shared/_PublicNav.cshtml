@@ -1,0 +1,23 @@
+<header class="site-nav">
+  <div class="wrap site-nav-row">
+    <a class="wordmark" href="/" aria-label="Coldstart home">coldstart<i>*</i></a>
+    <nav class="site-nav-links" aria-label="Main">
+      <a href="/examples">Examples</a>
+      <a href="/technology">Technology</a>
+      <a href="/faq">FAQ</a>
+      <a href="/about">About</a>
+      <a href="/contact">Contact</a>
+    </nav>
+    <div class="site-nav-actions">
+      @if (User.Identity?.IsAuthenticated == true)
+      {
+        <a class="btn btn-primary btn-sm" href="/app">Customer zone →</a>
+      }
+      else
+      {
+        <a class="site-nav-login" href="/Identity/Account/Login">Log in</a>
+        <a class="btn btn-primary btn-sm" href="/#get-leads">Get 3 free leads</a>
+      }
+    </div>
+  </div>
+</header>

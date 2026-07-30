@@ -22,7 +22,7 @@ public class ContactTests(ColdstartWebFactory factory) : IClassFixture<Coldstart
         });
 
         // Act
-        var response = await client.PostAsync("/Contact", new FormUrlEncodedContent(form));
+        var response = await client.PostAsync("/Inquiry", new FormUrlEncodedContent(form));
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -45,7 +45,7 @@ public class ContactTests(ColdstartWebFactory factory) : IClassFixture<Coldstart
         });
 
         // Act
-        var response = await client.PostAsync("/Contact", new FormUrlEncodedContent(form));
+        var response = await client.PostAsync("/Inquiry", new FormUrlEncodedContent(form));
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -80,7 +80,7 @@ public class ContactTests(ColdstartWebFactory factory) : IClassFixture<Coldstart
         var before = factory.Email.Sent.Count;
 
         // Act
-        var response = await client.PostAsync("/Contact", new FormUrlEncodedContent(form));
+        var response = await client.PostAsync("/Inquiry", new FormUrlEncodedContent(form));
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -117,7 +117,7 @@ public class ContactTests(ColdstartWebFactory factory) : IClassFixture<Coldstart
         });
 
         // Act
-        var response = await client.PostAsync("/Contact", new FormUrlEncodedContent(form));
+        var response = await client.PostAsync("/Inquiry", new FormUrlEncodedContent(form));
 
         // Assert
         ((int)response.StatusCode).Should().Be(400);

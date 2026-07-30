@@ -5,6 +5,7 @@
     Layout = "_Layout";
 }
 
+<partial name="_PublicNav" />
 <main class="lp">
 
 @* One continuous sky behind the whole page: a document-tall day->night->dawn->day gradient
@@ -32,17 +33,6 @@
 <!-- Act 0 · Hero (daylight) -->
 <header class="lp-hero">
   <div class="wrap">
-    <nav class="lp-nav">
-      <a class="wordmark" href="/" aria-label="Coldstart home">coldstart<i>*</i></a>
-      @if (User.Identity?.IsAuthenticated == true)
-      {
-          <a class="lp-login hero-login" href="/app">Customer zone →</a>
-      }
-      else
-      {
-          <a class="lp-login hero-login" href="/Identity/Account/Login">Log in</a>
-      }
-    </nav>
     <div class="scene scene--hero" data-scene="hero" data-active="0">
       <div class="scene-track">
         <div class="scene-copy">
@@ -246,7 +236,7 @@
   <div class="wrap wrap-narrow" data-reveal>
     <h2>See your own morning first — free.</h2>
     <p>Tell us what you sell. We'll run the engine for your niche and send you 3 real leads — with drafts — before you pay anything.</p>
-    <form class="lp-form" id="sample-form" method="post" asp-page="/Contact">
+    <form class="lp-form" id="sample-form" method="post" asp-page="/Inquiry">
       <input type="text" name="Website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
       <div class="field"><label for="f-name">Your name</label><input id="f-name" name="Name" type="text" required value="@Model.PrefillName"></div>
       <div class="field"><label for="f-email">Your email</label><input id="f-email" name="Email" type="email" required value="@Model.PrefillEmail"></div>

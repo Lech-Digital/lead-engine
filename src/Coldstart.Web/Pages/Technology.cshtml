@@ -1,0 +1,40 @@
+@page "/technology"
+@model Coldstart.Web.Pages.TechnologyModel
+@{ ViewData["Title"] = "Technology — how the Coldstart engine works"; Layout = "_Layout"; }
+
+<partial name="_PublicNav" />
+
+<main class="static-page wrap wrap-narrow">
+  <h1>What actually runs at night.</h1>
+  <p class="static-lede">No magic, no black box — a pipeline with four honest stages. Here's exactly what happens between midnight and your morning coffee.</p>
+
+  <section>
+    <h2>1 · Watch — public signals only</h2>
+    <p>The engine continuously reads public sources: job postings, funding announcements, launch news, and founder posts. These are <em>buying signals</em> — a company hiring its first sales rep, or announcing a round, has a fresh, concrete reason to need certain products <em>right now</em>. Nothing is scraped from behind a login, and no private data enters the system.</p>
+  </section>
+
+  <section>
+    <h2>2 · Filter — reject almost everything</h2>
+    <p>Two gates, in order. First a fast deterministic filter scores every signal against your niche keywords — no AI involved, so it's cheap and predictable. Only what survives goes to the second gate: an AI qualifier with strict instructions to say <strong>no</strong> — competitors, job seekers, poor fits, and plain noise are rejected and remembered so they're never processed twice. One recent morning: 77 companies in, 74 rejected.</p>
+  </section>
+
+  <section>
+    <h2>3 · Draft — AI writes the opener, you own the pitch</h2>
+    <p>For the few that pass, the AI writes only the personalized part: a greeting and a short analysis grounded in that company's actual news. Your pitch and call-to-action are your own words, stored in your profile and attached verbatim to every draft — so the selling copy never drifts, and the AI can't overpromise on your behalf. Hard rules: no invented facts, no guessed email addresses, honest conditional language.</p>
+  </section>
+
+  <section>
+    <h2>4 · Morning — a human decides</h2>
+    <p>The drafts land in your briefing queue. You read each one, edit if you like, and send from your own inbox — replies come straight to you. Nothing is ever sent automatically. The engine finds and writes; the sending is deliberately, permanently yours.</p>
+  </section>
+
+  <section>
+    <h2>Where it runs</h2>
+    <p>Coldstart runs on EU infrastructure (Germany), with data stored in the EU and transactional email sent from EU regions. The stack is boring on purpose: .NET, PostgreSQL, and a fully automated nightly pipeline — plus daily backups. Built and operated in the Netherlands.</p>
+  </section>
+
+  <div class="lp-cta-row static-cta">
+    <a class="btn btn-primary" href="/#get-leads">Run it on your niche — 3 free leads</a>
+    <a class="lp-quiet" href="/examples">See real output →</a>
+  </div>
+</main>

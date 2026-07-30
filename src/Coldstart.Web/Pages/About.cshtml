@@ -1,0 +1,44 @@
+@page "/about"
+@model Coldstart.Web.Pages.AboutModel
+@{ ViewData["Title"] = "About Coldstart — the morning engine from Schiedam"; Layout = "_Layout"; }
+
+<partial name="_PublicNav" />
+
+<main class="static-page wrap wrap-narrow">
+  <h1>The morning engine from Schiedam.</h1>
+  <p class="static-lede">Coldstart exists because cold outreach became an arms race of noise — and the answer isn't more noise. It's fewer, better letters.</p>
+
+  <section>
+    <h2>Our mission</h2>
+    <p>Every company that sells to other businesses has the same quiet problem: somewhere out there, right now, a company needs exactly what they sell — and they'll never meet. The old fix was volume: buy a list, blast five thousand inboxes, apologize to no one. It doesn't work, and it makes the world a little worse.</p>
+    <p>We believe the opposite: <strong>write to a few companies, on the morning something real happens to them, about them — and say no to almost everyone else.</strong> Out of 77 companies our engine looked at one recent morning, it rejected 74. The three that remained were worth writing to. That's the entire philosophy.</p>
+  </section>
+
+  <section>
+    <h2>Who's behind it</h2>
+    <p>I'm Andrzej — founder, and for now the entire company. I'm a software engineer from Schiedam, the Netherlands, and I built Coldstart because I needed it myself: I'd rather build an engine that reads the market all night than send one more "I hope this email finds you well".</p>
+    <p>Coldstart runs on its own product. Every cold email we send about Coldstart was found, analyzed, and drafted by Coldstart — if one of them brought you here, you've already seen the demo.</p>
+  </section>
+
+  <section>
+    <h2>What we will and won't do</h2>
+    <ul class="static-list">
+      <li><strong>Public signals only.</strong> The engine reads job posts, funding news, and company announcements. Nothing private, nothing scraped from behind a login.</li>
+      <li><strong>A human approves every email.</strong> Nothing is ever sent without you reading it and choosing to send it.</li>
+      <li><strong>No invented facts, no guessed addresses.</strong> If the engine can't verify something, it says so instead of making it up.</li>
+      <li><strong>Ruthless rejection.</strong> A short briefing of real fits beats a long list of maybes — most mornings, most companies don't make the cut.</li>
+    </ul>
+  </section>
+
+  <section class="static-facts">
+    <h2>The facts</h2>
+    <p>Coldstart · Schiedam, the Netherlands<br>
+    KvK: 42125737<br>
+    <a href="mailto:info@getcoldstart.nl">info@getcoldstart.nl</a> · <a href="/contact">contact page</a></p>
+  </section>
+
+  <div class="lp-cta-row static-cta">
+    <a class="btn btn-primary" href="/#get-leads">Get 3 sample leads — free</a>
+    <a class="lp-quiet" href="/faq">Questions? Read the FAQ →</a>
+  </div>
+</main>
