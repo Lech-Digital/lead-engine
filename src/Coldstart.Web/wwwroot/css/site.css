@@ -662,3 +662,35 @@
 .site-footer-nav a:hover { color: var(--sunrise-deep); }
 .site-footer-co a { color: var(--body-muted); }
 @media (max-width: 719.98px) { .site-footer-grid { grid-template-columns: 1fr 1fr; } }
+
+/* ============ Customer zone: phone-width fixes (Android + iPhone) ============ */
+@media (max-width: 640px) {
+  /* App header: let it wrap instead of overflowing; compact the pill + buttons. */
+  .app-bar { flex-wrap: wrap; row-gap: 8px; padding: 10px 20px; }
+  .app-nav { gap: 10px; flex-wrap: wrap; }
+  .app-nav .cz-id { padding: 6px 10px; font-size: 0.82rem; max-width: 140px; }
+  .app-nav .cz-id span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .app-bar .btn, .app-nav .btn { padding: 8px 14px; font-size: 0.85rem; }
+
+  /* Briefing header: headline and Review-all stack instead of squeezing. */
+  .cz-greet { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+  .cz-greet .btn { align-self: stretch; text-align: center; justify-content: center; }
+
+  /* Rows: bigger touch target for skip; the row itself is the main tap area. */
+  .cz-skip { width: 38px; height: 38px; font-size: 1rem; }
+  .lead-row-wrap { padding: 16px 2px; }
+
+  /* Focused review / detail: bars wrap, buttons breathe, headers never collide. */
+  .cz-runbar { flex-wrap: wrap; row-gap: 6px; }
+  .ld-head { flex-wrap: wrap; gap: 6px; }
+  .ld-send-btns .btn, .app-detail-actions .btn { flex: 1 1 auto; justify-content: center; }
+
+  /* History search: full-width, and ≥16px so iOS Safari doesn't zoom on focus. */
+  .cz-search input { width: 100%; font-size: 1rem; }
+}
+
+/* iPhone notch/safe areas: keep fixed-side padding out of the rounded corners. */
+@supports (padding: max(0px)) {
+  .app-bar { padding-left: max(clamp(20px,5vw,56px), env(safe-area-inset-left)); padding-right: max(clamp(20px,5vw,56px), env(safe-area-inset-right)); }
+  .site-nav-row { padding-left: max(0px, env(safe-area-inset-left)); padding-right: max(0px, env(safe-area-inset-right)); }
+}
