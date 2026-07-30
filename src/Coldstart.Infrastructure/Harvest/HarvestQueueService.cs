@@ -46,8 +46,11 @@ internal sealed class HarvestQueueService(
         await customers.UpdateAsync(customer, ct);
         try
         {
-            await sp.GetRequiredService<IHarvestLeads>().RunForCustomerAsync(job.CustomerId, targeting, ct);
+            var report = await sp.GetRequiredService<IHarvestLeads>().RunForCustomerAsync(job.CustomerId, targeting, ct);
             customer.MarkHarvest(HarvestStatus.Done, DateTimeOffset.UtcNow);
+            log.LogInformation(
+                "Harvest for {CustomerId}: harvested {Harvested}, scored-in {ScoredIn}, deduped {Deduped}, enriched {Enriched}, saved {Saved}, rejected {Rejected}",
+                job.CustomerId, report.Harvested, report.ScoredIn, report.Deduped, report.Enriched, report.Saved, report.Rejected);
         }
         catch (Exception ex)
         {
