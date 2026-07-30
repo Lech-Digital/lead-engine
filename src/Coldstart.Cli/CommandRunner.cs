@@ -12,6 +12,13 @@ internal static class CommandRunner
           ping                         Check the admin API is up and the key works
           stats                        Health + customer/user/invite counts
           customers                    Companies, users, plans, leads, harvest state
+          invite <email> --company <name> --niche <text> [--info <text>]
+          resend <email>               Re-send a pending invite
+          revoke <email>               Revoke a pending invite (deletes user + tenant)
+          block <email> / unblock <email>
+          remove <email> --yes         Delete a user AND their tenant data
+          harvest <company|id>         Enqueue a harvest for one customer
+          harvest --due                Run the nightly top-up sweep now
 
         Options:
           --json                       Print the raw API response (read commands)
@@ -29,6 +36,25 @@ internal static class CommandRunner
                 ["ping"] => await ReadAsync(api.GetAsync("/api/admin/ping"), json, stdout, stderr, _ => "ok"),
                 ["stats"] => await ReadAsync(api.GetAsync("/api/admin/stats"), json, stdout, stderr, RenderStats),
                 ["customers"] => await ReadAsync(api.GetAsync("/api/admin/customers"), json, stdout, stderr, RenderCustomers),
+
+                ["invite", var email, ..] when GetOption(args, "--company") is { } company
+                        && GetOption(args, "--niche") is { } niche =>
+                    await ActAsync(api.PostAsync("/api/admin/invites",
+                        new { email, company, niche, info = GetOption(args, "--info") }), stdout, stderr),
+                ["invite", ..] => UsageError(stderr, "invite requires <email> --company <name> --niche <text>."),
+
+                ["resend", var email] => await ActAsync(api.PostAsync($"/api/admin/invites/{Uri.EscapeDataString(email)}/resend"), stdout, stderr),
+                ["revoke", var email] => await ActAsync(api.DeleteAsync($"/api/admin/invites/{Uri.EscapeDataString(email)}"), stdout, stderr),
+                ["block", var email] => await ActAsync(api.PostAsync($"/api/admin/users/{Uri.EscapeDataString(email)}/block"), stdout, stderr),
+                ["unblock", var email] => await ActAsync(api.PostAsync($"/api/admin/users/{Uri.EscapeDataString(email)}/unblock"), stdout, stderr),
+                ["remove", var email] when args.Contains("--yes") =>
+                    await ActAsync(api.DeleteAsync($"/api/admin/users/{Uri.EscapeDataString(email)}"), stdout, stderr),
+                ["remove", ..] => UsageError(stderr, "remove deletes the user AND their tenant data — re-run with --yes."),
+
+                ["harvest"] when args.Contains("--due") =>
+                    await ActAsync(api.PostAsync("/api/admin/harvest/due"), stdout, stderr),
+                ["harvest", var target] => await HarvestAsync(target, api, stdout, stderr),
+
                 _ => UsageError(stderr),
             };
         }
@@ -39,8 +65,9 @@ internal static class CommandRunner
         }
     }
 
-    private static int UsageError(TextWriter stderr)
+    private static int UsageError(TextWriter stderr, string? message = null)
     {
+        if (message is not null) stderr.WriteLine(message);
         stderr.WriteLine(Usage);
         return 2;
     }
@@ -62,6 +89,49 @@ internal static class CommandRunner
         using var doc = JsonDocument.Parse(result.Body);
         await stdout.WriteLineAsync(render(doc.RootElement));
         return 0;
+    }
+
+    // --option value (the token after the flag)
+    private static string? GetOption(string[] args, string name)
+    {
+        var i = Array.IndexOf(args, name);
+        return i >= 0 && i + 1 < args.Length ? args[i + 1] : null;
+    }
+
+    // Mutations: print the API's message (or raw body) on success.
+    private static async Task<int> ActAsync(Task<ApiResult> call, TextWriter stdout, TextWriter stderr)
+    {
+        var result = await call;
+        if (!result.Ok)
+        {
+            await stderr.WriteLineAsync($"HTTP {result.Status}{(result.Body.Length > 0 ? ": " + result.Body : "")}");
+            return 1;
+        }
+        await stdout.WriteLineAsync(result.Body);
+        return 0;
+    }
+
+    private static async Task<int> HarvestAsync(string target, AdminApiClient api, TextWriter stdout, TextWriter stderr)
+    {
+        if (!Guid.TryParse(target, out var id))
+        {
+            var customers = await api.GetAsync("/api/admin/customers");
+            if (!customers.Ok)
+            {
+                await stderr.WriteLineAsync($"HTTP {customers.Status}: {customers.Body}");
+                return 1;
+            }
+            using var doc = JsonDocument.Parse(customers.Body);
+            var match = doc.RootElement.EnumerateArray().FirstOrDefault(c =>
+                string.Equals(c.GetProperty("name").GetString(), target, StringComparison.OrdinalIgnoreCase));
+            if (match.ValueKind != JsonValueKind.Object)
+            {
+                await stderr.WriteLineAsync($"No customer named '{target}'. Run `coldstart customers` to see names.");
+                return 1;
+            }
+            id = match.GetProperty("id").GetGuid();
+        }
+        return await ActAsync(api.PostAsync($"/api/admin/harvest/{id}"), stdout, stderr);
     }
 
     private static string RenderStats(JsonElement root) => Table.Render(

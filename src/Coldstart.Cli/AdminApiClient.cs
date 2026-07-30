@@ -21,7 +21,7 @@ internal sealed class AdminApiClient(HttpClient http)
 
     private async Task<ApiResult> SendAsync(HttpMethod method, string path, object? body, CancellationToken ct)
     {
-        using var request = new HttpRequestMessage(method, path);
+        var request = new HttpRequestMessage(method, path);
         if (body is not null)
             request.Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");
         using var response = await http.SendAsync(request, ct);

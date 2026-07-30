@@ -32,6 +32,22 @@ Secrets live in `src/Coldstart.Web` user-secrets: `Llm:ApiKey` (Groq), `Stripe:*
 Docker + Caddy on a single host: `docker-compose.prod.yml` + `Caddyfile`, env template in
 `deploy/.env.prod.example`.
 
+## Admin CLI
+
+Terminal administration of a running Coldstart instance (local or production) over
+the key-protected admin API:
+
+    export COLDSTART_URL=https://getcoldstart.nl     # default: http://localhost:5000
+    export COLDSTART_ADMIN_KEY=...                    # AdminApi:Key / ADMIN_API_KEY
+
+    dotnet run --project src/Coldstart.Cli -- customers
+    dotnet run --project src/Coldstart.Cli -- invite kim@acme.example --company "Acme BV" --niche "HR SaaS"
+    dotnet run --project src/Coldstart.Cli -- harvest "Acme BV"
+    dotnet run --project src/Coldstart.Cli -- stats --json
+
+Every read command takes `--json` for machine consumption. `remove` requires `--yes`.
+Publish a standalone binary with `dotnet publish src/Coldstart.Cli -c Release`.
+
 ## Docs
 
 Design specs and implementation plans live in `docs/superpowers/{specs,plans}`; brand assets
