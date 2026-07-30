@@ -152,12 +152,14 @@
   .scene-stage .lp-hero-art svg { max-width: 360px; margin-inline: auto; }
   .beat { min-height: 0; margin-bottom: 28px; }
   .scene--night { padding: 56px 0; }
-  /* The page-sky gradient is document-height percentages; on narrow screens the sections
-     reflow taller and the daybreak copy lands inside the orange sunrise band (grey on
-     orange = unreadable). Give the act its own dawn->daylight backdrop and solid ink so
-     it reads at any scroll geometry; everything after it sits on plain daylight. */
-  .lp-act--daybreak { background: linear-gradient(180deg, #FF9E6B 0%, #FBE0CC 22%, #FDFBF7 48%, #FDFBF7 100%); }
-  .lp-act--daybreak .wrap > p { color: var(--ink); }
+  /* The scroll engine is off on narrow screens, so the night scene's sky never blooms to
+     dawn: its closing headline needs light text, and the acts after it would otherwise sit
+     on the document-height page-sky's orange band with grey text. The daybreak act carries
+     the night->dawn->day bloom itself — starting in the exact night navy so it fuses with
+     the sky above (no seam), pixel-anchored so the copy always starts on daylight. */
+  .scene--night h2 { color: #F2EEF8; }
+  .lp-act--daybreak { padding-top: 300px;
+    background: linear-gradient(180deg, #1C1F33 0px, #54425E 90px, #C96F4A 170px, #FF9E6B 225px, #FBE0CC 265px, #FDFBF7 300px); }
   .lp-act--daybreak ~ .lp-act { background: var(--daylight); }
 }
 
