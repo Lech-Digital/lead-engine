@@ -197,7 +197,7 @@ public class GroqLeadEnricherTests
         handler.SentBody.Should().NotContain("the very tool this email offers");
         // Empathy + their-language + honest-bridge requirements
         handler.SentBody.Should().Contain("congratulate or acknowledge");
-        handler.SentBody.Should().Contain("industry's own vocabulary");
+        handler.SentBody.Should().Contain("own vocabulary"); // note: apostrophes JSON-escape to ' in the body
         handler.SentBody.Should().Contain("never claim leads are already found");
     }
 
