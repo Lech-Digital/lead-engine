@@ -389,7 +389,9 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         var customers = scope.ServiceProvider.GetRequiredService<Coldstart.Application.Ports.ICustomerRepository>();
         var customer = (await customers.AllAsync(CancellationToken.None)).Single(c => c.Id.Value == customerId);
         customer.SlackWebhookUrl.Should().Be("https://hooks.slack.com/services/T0/B0/secret");
-        customer.WhatsAppNumber.Should().Be("+31612345678");
+        // WhatsApp is operator-only until the paid Twilio account exists — a customer's
+        // posted number is ignored.
+        customer.WhatsAppNumber.Should().BeNull();
     }
 
     [Fact]

@@ -93,14 +93,20 @@
         <label asp-for="SlackWebhookUrl">Slack webhook URL <span class="field-hint">— Slack → Apps → Incoming Webhooks → Add to channel, then paste the URL here</span></label>
         <input asp-for="SlackWebhookUrl" placeholder="https://hooks.slack.com/services/…">
       </div>
-      <div class="field">
-        <label asp-for="WhatsAppNumber">WhatsApp number <span class="field-hint">— international format; leave empty to switch off</span></label>
-        <input asp-for="WhatsAppNumber" placeholder="+31 6 12345678">
-      </div>
+      @if (User.IsInRole(Coldstart.Web.ColdstartRoles.SuperAdmin))
+      {
+        <div class="field">
+          <label asp-for="WhatsAppNumber">WhatsApp number <span class="field-hint">— operator only (sandbox) until the paid Twilio account exists</span></label>
+          <input asp-for="WhatsAppNumber" placeholder="+31 6 12345678">
+        </div>
+      }
       <div class="settings-actions">
         <button class="btn btn-primary" type="submit">Save notifications</button>
         <button class="btn btn-ghost" type="submit" asp-page-handler="TestSlack">Send Slack test</button>
-        <button class="btn btn-ghost" type="submit" asp-page-handler="TestWhatsApp">Send WhatsApp test</button>
+        @if (User.IsInRole(Coldstart.Web.ColdstartRoles.SuperAdmin))
+        {
+          <button class="btn btn-ghost" type="submit" asp-page-handler="TestWhatsApp">Send WhatsApp test</button>
+        }
       </div>
     </form>
   </section>

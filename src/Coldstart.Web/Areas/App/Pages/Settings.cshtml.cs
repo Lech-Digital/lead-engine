@@ -110,7 +110,12 @@ public sealed class SettingsModel(UserManager<ApplicationUser> users, IGetCompan
     {
         var user = await users.GetUserAsync(User);
         if (user?.CustomerId is null) return RedirectToPage("Index");
-        var error = await updateNotifications.UpdateAsync(user.CustomerId.Value, SlackWebhookUrl, WhatsAppNumber, ct);
+        // WhatsApp is operator-only until the paid Twilio account exists — non-operators
+        // keep whatever is stored, regardless of what the form posts.
+        var whatsApp = User.IsInRole(ColdstartRoles.SuperAdmin)
+            ? WhatsAppNumber
+            : (await customers.GetAsync(new CustomerId(user.CustomerId.Value), ct))?.WhatsAppNumber;
+        var error = await updateNotifications.UpdateAsync(user.CustomerId.Value, SlackWebhookUrl, whatsApp, ct);
         StatusMessage = error ?? "Notification settings saved.";
         return RedirectToPage(null, null, null, "notifications");
     }
