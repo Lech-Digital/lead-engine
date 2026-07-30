@@ -196,9 +196,11 @@ public class GroqLeadEnricherTests
         handler.SentBody.Should().Contain("appended automatically");
         handler.SentBody.Should().NotContain("the very tool this email offers");
         // Empathy + their-language + honest-bridge requirements
-        handler.SentBody.Should().Contain("congratulate or acknowledge");
         handler.SentBody.Should().Contain("own vocabulary"); // note: apostrophes JSON-escape to ' in the body
         handler.SentBody.Should().Contain("never claim leads are already found");
+        // Direct address: TO them (you/your), compliment-first, never third-person about their company
+        handler.SentBody.Should().Contain("Speak TO them, not about them");
+        handler.SentBody.Should().Contain("genuine, specific compliment");
     }
 
     [Fact]
