@@ -68,7 +68,7 @@ internal sealed class HarvestLeads(
             enriched++;
             var company = string.IsNullOrWhiteSpace(result.Company) || result.Company == "-" ? item.Author : result.Company;
             // Real fits get the sender's hardcoded pitch/CTA appended; rejected drafts are "-".
-            var draft = result.Fit == Fit.No ? result.Draft : DraftComposer.Compose(result.Draft, sender);
+            var draft = result.Fit == Fit.No ? result.Draft : DraftComposer.Compose(result.Draft, sender, company);
             var lead = Lead.CreateHarvested(cid, company, result.Fit, result.Subject, draft,
                 item.Source, item.Url, item.Fingerprint, signal.Score, string.Join(",", signal.Matched), DateTimeOffset.UtcNow);
             if (result.Fit == Fit.No)

@@ -131,4 +131,17 @@ public class PublicPagesTests(ColdstartWebFactory factory) : IClassFixture<Colds
         landing.Should().Contain("/terms");
         landing.Should().Contain("/privacy");
     }
+
+    [Fact]
+    public async Task Landing_WithCompanyQueryParam_PrefillsTheSampleLeadsForm()
+    {
+        // Arrange — outreach emails link to /?company=<name>#get-leads
+        var client = factory.CreateClient();
+
+        // Act
+        var html = await client.GetStringAsync("/?company=Acme%20%26%20Zn%20B.V.");
+
+        // Assert — the company field arrives pre-filled (HTML-encoded by Razor)
+        html.Should().Contain("value=\"Acme &amp; Zn B.V.\"");
+    }
 }

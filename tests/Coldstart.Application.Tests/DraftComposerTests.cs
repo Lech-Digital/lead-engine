@@ -52,6 +52,22 @@ public class DraftComposerTests
     }
 
     [Fact]
+    public void Compose_WithCompanyTokens_SubstitutesPlainAndUrlEncoded()
+    {
+        // Arrange — {company} is the display name; {company-url} is URL-safe for query strings.
+        var sender = new SenderContext(null, false,
+            PitchLine: "An idea for {company}.",
+            CtaLine: "Grab 3 free leads: https://getcoldstart.nl/?company={company-url}#get-leads");
+
+        // Act
+        var draft = DraftComposer.Compose("Hook.", sender, company: "Acme & Zn B.V.");
+
+        // Assert
+        draft.Should().Contain("An idea for Acme & Zn B.V.");
+        draft.Should().Contain("?company=Acme%20%26%20Zn%20B.V.#get-leads");
+    }
+
+    [Fact]
     public void HasFixedPitch_TracksPitchAndCtaPresence()
     {
         // Arrange / Act / Assert
