@@ -133,13 +133,18 @@ internal sealed class GroqLeadEnricher : ILeadEnricher
         FIT: YES | MAYBE | NO — would this specific person plausibly buy the offer? Be strict; default to NO if the content is off-topic, a job seeker, a competitor, or just noise.
         SUMMARY: one sentence — who they are and the concrete reason they do or don't fit.
         SUBJECT: a 4-7 word subject line referencing their specific situation (no clickbait, no emojis).
-        DRAFT: 4-5 short sentences from {n.SenderName} ({n.SenderTitle}), written to one person. Build it in this order: (1) a specific detail from THEIR content that proves you actually read it; (2) the concrete need or pressure that detail creates for them right now; (3) one sentence on the specific outcome the offer gives them for that need — a result they'd want, not a feature list; (4) a short question that is easy to answer. One idea per sentence — no comma splices, no filler, no marketing voice. No greeting or signature. Banned: "I hope this email finds you well", "I came across", "reaching out", "game-changer", "revolutionize", "synergy", "circle back", "touch base", "in today's fast-paced".
+        DRAFT: a short, warm email from {n.SenderName} ({n.SenderTitle}), written to one person — 5-7 short sentences in total, laid out as a greeting line plus 2-3 paragraphs separated by ONE blank line each:
+        - Greeting on its own line: "Hi <first name>," when the author's real first name is clearly visible in the content; otherwise exactly "Hi there,". Never guess or invent a name.
+        - Paragraph 1: a specific detail from THEIR content that proves you actually read it, and the concrete need or pressure that detail creates for them right now.
+        - Paragraph 2: the specific outcome the offer gives them for that need — a result they'd want, not a feature list.
+        - Final paragraph: one friendly, low-effort question that is easy to answer with a single sentence.
+        Welcoming and human, never salesy: short, clean sentences, one idea each — no comma splices, no filler, no marketing voice. No signature (one is added on send). Banned: "I hope this email finds you well", "I came across", "reaching out", "game-changer", "revolutionize", "synergy", "circle back", "touch base", "in today's fast-paced".
         COMPANY: the real company/org name this is about, or "-" if it cannot be determined. Never guess.
 
         If FIT is NO, still fill SUBJECT and DRAFT with "-".
         {(sender.MentionSourceTool ? """
 
-        Also: work in one natural sentence that this very email is proof the tool works — you found them with Coldstart, the exact lead engine you are offering. Make it a quiet demonstration, not a boast.
+        Also: inside paragraph 2, state plainly in first person that the sender found this prospect using Coldstart — the very tool this email offers them (for example: "I found your post with Coldstart, the same engine I'd like to put to work for you."). Exactly one sentence; honest proof, stated as a simple fact, no boasting beyond the fact itself.
         """ : "")}
         """;
 }

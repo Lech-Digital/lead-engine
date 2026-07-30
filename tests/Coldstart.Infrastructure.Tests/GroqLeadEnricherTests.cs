@@ -172,7 +172,27 @@ public class GroqLeadEnricherTests
         // Act
         await sut.EnrichAsync(Item, Niche, Signal, sender, CancellationToken.None);
 
-        // Assert
+        // Assert — the dogfood line must be an explicit, first-person "found you with the
+        // tool I'm offering you" statement, not a vague hint.
         handler.SentBody.Should().Contain("Coldstart");
+        handler.SentBody.Should().Contain("first person");
+        handler.SentBody.Should().Contain("the very tool this email offers");
+    }
+
+    [Fact]
+    public async Task EnrichAsync_Always_PromptAsksForGreetingAndParagraphs()
+    {
+        // Arrange
+        var handler = new CapturingHandler(ValidBody);
+        var sut = new GroqLeadEnricher(new HttpClient(handler), Opts(), (d, _) => Task.CompletedTask);
+
+        // Act
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
+
+        // Assert — drafts open with a greeting and are laid out as paragraphs, never one block
+        handler.SentBody.Should().Contain("Hi there");
+        handler.SentBody.Should().Contain("greeting");
+        handler.SentBody.Should().Contain("paragraphs separated by ONE blank line");
+        handler.SentBody.Should().Contain("Never guess or invent a name");
     }
 }
