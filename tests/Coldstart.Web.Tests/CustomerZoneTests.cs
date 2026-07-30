@@ -121,7 +121,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         var html = await client.GetStringAsync("/app");
 
         // Assert — a compact chip links to the profile page; the full card is NOT on /app
-        html.Should().Contain("href=\"/app/profile\"");
+        html.Should().Contain("href=\"/app/settings\"");
         html.Should().NotContain("Add your company details");   // moved to the profile page
     }
 
@@ -131,7 +131,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Arrange
         var client = factory.CreateClient();
         await TestAuth.SignInAsync(factory, client, $"prof-{Guid.NewGuid():N}@test.com", "Passw0rd!");
-        var form = await AntiforgeryForm(client, "/app/profile", new()
+        var form = await AntiforgeryForm(client, "/app/settings", new()
         {
             ["Input.CompanyName"] = "Acme Ltd", ["Input.VatNumber"] = "NL999",
             ["Input.Niche"] = "B2B SaaS", ["Input.Address"] = "", ["Input.KvkNumber"] = "",
@@ -139,8 +139,8 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         });
 
         // Act
-        await client.PostAsync("/app/profile", new FormUrlEncodedContent(form));
-        var profile = await client.GetStringAsync("/app/profile");
+        await client.PostAsync("/app/settings", new FormUrlEncodedContent(form));
+        var profile = await client.GetStringAsync("/app/settings");
 
         // Assert
         profile.Should().Contain("Acme Ltd");
@@ -156,7 +156,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         var client = factory.CreateClient();
         var email = $"prof-brief-{Guid.NewGuid():N}@test.com";
         await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
-        var form = await AntiforgeryForm(client, "/app/profile", new()
+        var form = await AntiforgeryForm(client, "/app/settings", new()
         {
             ["Input.CompanyName"] = "Acme Ltd", ["Input.VatNumber"] = "", ["Input.Niche"] = "",
             ["Input.Address"] = "", ["Input.KvkNumber"] = "", ["Input.Website"] = "", ["Input.ContactEmail"] = "",
@@ -164,8 +164,8 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         });
 
         // Act
-        await client.PostAsync("/app/profile", new FormUrlEncodedContent(form));
-        var page = await client.GetStringAsync("/app/profile");
+        await client.PostAsync("/app/settings", new FormUrlEncodedContent(form));
+        var page = await client.GetStringAsync("/app/settings");
 
         // Assert — brief persists, the toggle is neither rendered nor persisted
         page.Should().Contain("We help dentists fill calendars.");
@@ -190,7 +190,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         {
             ["Input.Email"] = email, ["Input.Password"] = "Passw0rd!", ["Input.RememberMe"] = "false",
         });
-        var form = await AntiforgeryForm(client, "/app/profile", new()
+        var form = await AntiforgeryForm(client, "/app/settings", new()
         {
             ["Input.CompanyName"] = "Coldstart", ["Input.VatNumber"] = "", ["Input.Niche"] = "",
             ["Input.Address"] = "", ["Input.KvkNumber"] = "", ["Input.Website"] = "", ["Input.ContactEmail"] = "",
@@ -198,8 +198,8 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         });
 
         // Act
-        await client.PostAsync("/app/profile", new FormUrlEncodedContent(form));
-        var page = await client.GetStringAsync("/app/profile");
+        await client.PostAsync("/app/settings", new FormUrlEncodedContent(form));
+        var page = await client.GetStringAsync("/app/settings");
 
         // Assert — the toggle renders for the operator and persisted as checked
         page.Should().Contain("id=\"Input_MentionSourceTool\"");
@@ -212,7 +212,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Arrange
         var client = factory.CreateClient(new() { AllowAutoRedirect = false });
         await TestAuth.SignInAsync(factory, client, $"prof-save-redir-{Guid.NewGuid():N}@test.com", "Passw0rd!");
-        var form = await AntiforgeryForm(client, "/app/profile", new()
+        var form = await AntiforgeryForm(client, "/app/settings", new()
         {
             ["Input.CompanyName"] = "Acme Ltd", ["Input.VatNumber"] = "", ["Input.Niche"] = "",
             ["Input.Address"] = "", ["Input.KvkNumber"] = "", ["Input.Website"] = "", ["Input.ContactEmail"] = "",
@@ -220,14 +220,14 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         });
 
         // Act
-        var post = await client.PostAsync("/app/profile", new FormUrlEncodedContent(form));
+        var post = await client.PostAsync("/app/settings", new FormUrlEncodedContent(form));
 
         // Assert — PRG back to the profile page itself (not /app), with a fragment so the browser
         // returns to the form instead of jumping to the very top; the confirmation then shows inline.
         post.StatusCode.Should().Be(HttpStatusCode.Redirect);
-        post.Headers.Location!.OriginalString.Should().StartWith("/app/profile");
+        post.Headers.Location!.OriginalString.Should().StartWith("/app/settings");
         post.Headers.Location!.OriginalString.Should().Contain("#");
-        var page = await client.GetStringAsync("/app/profile");
+        var page = await client.GetStringAsync("/app/settings");
         page.Should().Contain("Company profile saved");
     }
 
@@ -238,15 +238,15 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         var client = factory.CreateClient();
         await TestAuth.SignInAsync(factory, client, $"prof-polish-{Guid.NewGuid():N}@test.com", "Passw0rd!");
         factory.BriefPolisher.Result = "POLISHED BRIEF";
-        var saveForm = await AntiforgeryForm(client, "/app/profile", new()
+        var saveForm = await AntiforgeryForm(client, "/app/settings", new()
         {
             ["Input.CompanyName"] = "", ["Input.VatNumber"] = "", ["Input.Niche"] = "",
             ["Input.Address"] = "", ["Input.KvkNumber"] = "", ["Input.Website"] = "", ["Input.ContactEmail"] = "",
             ["Input.Brief"] = "rough notes",
         });
-        await client.PostAsync("/app/profile", new FormUrlEncodedContent(saveForm)); // persist the stored brief
+        await client.PostAsync("/app/settings", new FormUrlEncodedContent(saveForm)); // persist the stored brief
 
-        var polishForm = await AntiforgeryForm(client, "/app/profile", new()
+        var polishForm = await AntiforgeryForm(client, "/app/settings", new()
         {
             ["Input.CompanyName"] = "", ["Input.VatNumber"] = "", ["Input.Niche"] = "",
             ["Input.Address"] = "", ["Input.KvkNumber"] = "", ["Input.Website"] = "", ["Input.ContactEmail"] = "",
@@ -254,9 +254,9 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         });
 
         // Act
-        var polish = await client.PostAsync("/app/profile?handler=Polish", new FormUrlEncodedContent(polishForm));
+        var polish = await client.PostAsync("/app/settings?handler=Polish", new FormUrlEncodedContent(polishForm));
         var polishHtml = await polish.Content.ReadAsStringAsync();
-        var freshGet = await client.GetStringAsync("/app/profile");
+        var freshGet = await client.GetStringAsync("/app/settings");
 
         // Assert
         polish.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -273,7 +273,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         await TestAuth.SignInAsync(factory, client, $"prof-enter-{Guid.NewGuid():N}@test.com", "Passw0rd!");
 
         // Act
-        var html = await client.GetStringAsync("/app/profile");
+        var html = await client.GetStringAsync("/app/settings");
 
         // Assert
         var hiddenDefaultSubmit = "<button type=\"submit\" hidden aria-hidden=\"true\" tabindex=\"-1\"></button>";
@@ -290,7 +290,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         var client = factory.CreateClient();
         await TestAuth.SignInAsync(factory, client, $"prof-polish-fail-{Guid.NewGuid():N}@test.com", "Passw0rd!");
         factory.BriefPolisher.Result = null;
-        var polishForm = await AntiforgeryForm(client, "/app/profile", new()
+        var polishForm = await AntiforgeryForm(client, "/app/settings", new()
         {
             ["Input.CompanyName"] = "", ["Input.VatNumber"] = "", ["Input.Niche"] = "",
             ["Input.Address"] = "", ["Input.KvkNumber"] = "", ["Input.Website"] = "", ["Input.ContactEmail"] = "",
@@ -298,7 +298,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         });
 
         // Act
-        var polish = await client.PostAsync("/app/profile?handler=Polish", new FormUrlEncodedContent(polishForm));
+        var polish = await client.PostAsync("/app/settings?handler=Polish", new FormUrlEncodedContent(polishForm));
         var polishHtml = await polish.Content.ReadAsStringAsync();
 
         // Assert
@@ -315,7 +315,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         await TestAuth.SignInAsync(factory, client, $"prof-shell-{Guid.NewGuid():N}@test.com", "Passw0rd!");
 
         // Act
-        var html = await client.GetStringAsync("/app/profile");
+        var html = await client.GetStringAsync("/app/settings");
 
         // Assert — top app-bar nav (like the lead pages), grouped panels, no auth-card shell
         html.Should().Contain("app-bar");
@@ -330,7 +330,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         var client = factory.CreateClient(new() { AllowAutoRedirect = false });
 
         // Act
-        var response = await client.GetAsync("/app/profile");
+        var response = await client.GetAsync("/app/settings");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Redirect);
@@ -364,5 +364,46 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
             fields["__RequestVerificationToken"] = html[start..end];
         }
         return fields;
+    }
+
+    [Fact]
+    public async Task SettingsPost_SaveNotifications_PersistsChannelsOnTheCustomer()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var email = $"notif-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!");
+        var form = await AntiforgeryForm(client, "/app/settings", new()
+        {
+            ["SlackWebhookUrl"] = "https://hooks.slack.com/services/T0/B0/secret",
+            ["WhatsAppNumber"] = "+31 6 1234 5678",
+        });
+
+        // Act
+        await client.PostAsync("/app/settings?handler=SaveNotifications", new FormUrlEncodedContent(form));
+
+        // Assert — persisted (and the number normalized) on the tenant
+        using var scope = factory.Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var customerId = (await users.FindByEmailAsync(email))!.CustomerId!.Value;
+        var customers = scope.ServiceProvider.GetRequiredService<Coldstart.Application.Ports.ICustomerRepository>();
+        var customer = (await customers.AllAsync(CancellationToken.None)).Single(c => c.Id.Value == customerId);
+        customer.SlackWebhookUrl.Should().Be("https://hooks.slack.com/services/T0/B0/secret");
+        customer.WhatsAppNumber.Should().Be("+31612345678");
+    }
+
+    [Fact]
+    public async Task Profile_OldUrl_RedirectsPermanentlyToSettings()
+    {
+        // Arrange
+        var client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        await TestAuth.SignInAsync(factory, client, $"redir-{Guid.NewGuid():N}@test.com", "Passw0rd!");
+
+        // Act
+        var response = await client.GetAsync("/app/profile");
+
+        // Assert
+        ((int)response.StatusCode).Should().Be(301);
+        response.Headers.Location!.ToString().Should().StartWith("/app/settings");
     }
 }

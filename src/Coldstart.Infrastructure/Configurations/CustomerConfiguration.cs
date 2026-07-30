@@ -49,6 +49,8 @@ internal sealed class CustomerConfiguration : IEntityTypeConfiguration<Customer>
             p.Property(x => x.IntroLine).HasColumnName("ProfileIntroLine");
             p.Property(x => x.SubjectTemplate).HasColumnName("ProfileSubjectTemplate");
         });
+        builder.Property(c => c.SlackWebhookUrl);
+        builder.Property(c => c.WhatsAppNumber);
         builder.Navigation(c => c.Profile).IsRequired();   // Profile is never null (defaults to Empty)
     }
 }

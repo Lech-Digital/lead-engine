@@ -13,7 +13,7 @@
     {
       <a class="app-navlink" href="/app/billing">Billing</a>
     }
-    <a class="cz-id" href="/app/profile">@(string.IsNullOrWhiteSpace(Model.Profile.CompanyName) ? Model.CustomerName : Model.Profile.CompanyName) <span class="cz-chev">▾</span></a>
+    <a class="cz-id" href="/app/settings">@(string.IsNullOrWhiteSpace(Model.Profile.CompanyName) ? Model.CustomerName : Model.Profile.CompanyName) <span class="cz-chev">▾</span></a>
     <form method="post" asp-page="/Account/Logout" asp-area="Identity"><button class="btn btn-ghost" type="submit">Log out</button></form>
   </nav>
 </header>

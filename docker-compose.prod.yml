@@ -67,6 +67,12 @@ services:
       OutreachMailbox__Username: ${OUTREACH_USERNAME:-}
       OutreachMailbox__Password: ${OUTREACH_PASSWORD:-}
       OutreachMailbox__FromAddress: ${OUTREACH_FROM_ADDRESS:-}
+      # Briefing push notifications. BaseUrl feeds deep links; Twilio creds enable the
+      # WhatsApp channel (soft-degrade: unset -> WhatsApp off, Slack unaffected).
+      Notifications__BaseUrl: ${NOTIFICATIONS_BASE_URL:-https://getcoldstart.nl}
+      Twilio__AccountSid: ${TWILIO_ACCOUNT_SID:-}
+      Twilio__AuthToken: ${TWILIO_AUTH_TOKEN:-}
+      Twilio__WhatsAppFrom: ${TWILIO_WHATSAPP_FROM:-}
     volumes:
       - coldstart-dpkeys:/app/keys
     expose:

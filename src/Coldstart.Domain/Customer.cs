@@ -13,6 +13,9 @@ public sealed class Customer
     public string? StripeCustomerId { get; private set; }
     public string? StripeSubscriptionId { get; private set; }
     public DateTimeOffset? PlanRenewsAt { get; private set; }
+    // Briefing push channels (customer-configured; null = channel off).
+    public string? SlackWebhookUrl { get; private set; }
+    public string? WhatsAppNumber { get; private set; }
     public IReadOnlyList<Lead> Leads => _leads.AsReadOnly();
 
     private Customer() { } // EF materialization
@@ -49,6 +52,12 @@ public sealed class Customer
         Plan = CustomerPlan.Full;
         StripeSubscriptionId = subscriptionId;
         PlanRenewsAt = renewsAt;
+    }
+
+    public void ConfigureNotifications(string? slackWebhookUrl, string? whatsAppNumber)
+    {
+        SlackWebhookUrl = string.IsNullOrWhiteSpace(slackWebhookUrl) ? null : slackWebhookUrl.Trim();
+        WhatsAppNumber = string.IsNullOrWhiteSpace(whatsAppNumber) ? null : whatsAppNumber.Trim();
     }
 
     public void DowngradeToFree()

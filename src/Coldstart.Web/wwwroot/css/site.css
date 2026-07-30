@@ -696,3 +696,7 @@
   .app-bar { padding-left: max(clamp(20px,5vw,56px), env(safe-area-inset-left)); padding-right: max(clamp(20px,5vw,56px), env(safe-area-inset-right)); }
   .site-nav-row, .wrap { padding-left: max(clamp(20px, 5vw, 56px), env(safe-area-inset-left)); padding-right: max(clamp(20px, 5vw, 56px), env(safe-area-inset-right)); }
 }
+
+/* Settings page */
+.settings-note { font-size: 0.92rem; color: var(--body-muted); margin: 0 0 14px; }
+.settings-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 6px; }

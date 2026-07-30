@@ -28,6 +28,8 @@ public static class DependencyInjection
         services.AddScoped<Application.Harvest.ILeadSource, Harvest.HackerNewsSource>();
         services.AddScoped<Application.Harvest.ILeadSource, Harvest.FundingRssSource>();
         services.AddScoped<Application.Harvest.ILeadEnricher, Harvest.GroqLeadEnricher>();
+        services.AddScoped<Application.Notifications.IBriefingChannel, Notifications.SlackBriefingChannel>();
+        services.AddScoped<Application.Notifications.IBriefingChannel, Notifications.TwilioWhatsAppChannel>();
         services.AddScoped<Application.Customers.ICompanyBriefPolisher, Harvest.GroqBriefPolisher>();
         services.AddScoped<Application.Customers.ISearchProfileGenerator, Harvest.GroqSearchProfileGenerator>();
         services.AddScoped<Application.Billing.IBillingGateway, Billing.StripeBillingGateway>();

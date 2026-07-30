@@ -48,6 +48,15 @@ internal sealed class HarvestQueueService(
         {
             var report = await sp.GetRequiredService<IHarvestLeads>().RunForCustomerAsync(job.CustomerId, targeting, ct);
             customer.MarkHarvest(HarvestStatus.Done, DateTimeOffset.UtcNow);
+            if (report.NewLeads.Count > 0)
+            {
+                // Push the briefing to the customer's configured channels. Best-effort by
+                // design — the notifier isolates channel failures and never throws here.
+                var sentTo = await sp.GetRequiredService<Application.Notifications.INotifyBriefing>()
+                    .NotifyAsync(job.CustomerId, report.NewLeads, channelFilter: null, ct);
+                if (sentTo.Count > 0)
+                    log.LogInformation("Briefing for {CustomerId} pushed to: {Channels}", job.CustomerId, string.Join(",", sentTo));
+            }
             log.LogInformation(
                 "Harvest for {CustomerId}: harvested {Harvested}, scored-in {ScoredIn}, deduped {Deduped}, enriched {Enriched}, saved {Saved}, rejected {Rejected}",
                 job.CustomerId, report.Harvested, report.ScoredIn, report.Deduped, report.Enriched, report.Saved, report.Rejected);

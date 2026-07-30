@@ -20,6 +20,8 @@ public static class DependencyInjection
         services.AddScoped<Customers.IDeleteCustomer, Customers.DeleteCustomer>();
         services.AddScoped<Harvest.IHarvestLeads, Harvest.HarvestLeads>();
         services.AddScoped<Billing.IApplySubscriptionChange, Billing.ApplySubscriptionChange>();
+        services.AddScoped<Notifications.INotifyBriefing, Notifications.NotifyBriefing>();
+        services.AddScoped<Notifications.IUpdateNotificationSettings, Notifications.UpdateNotificationSettings>();
         return services;
     }
 }

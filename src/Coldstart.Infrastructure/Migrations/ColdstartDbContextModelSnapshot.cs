@@ -51,6 +51,9 @@ namespace Coldstart.Infrastructure.Migrations
                     b.Property<DateTimeOffset?>("PlanRenewsAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("SlackWebhookUrl")
+                        .HasColumnType("text");
+
                     b.Property<string>("StripeCustomerId")
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
@@ -58,6 +61,9 @@ namespace Coldstart.Infrastructure.Migrations
                     b.Property<string>("StripeSubscriptionId")
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
+
+                    b.Property<string>("WhatsAppNumber")
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 

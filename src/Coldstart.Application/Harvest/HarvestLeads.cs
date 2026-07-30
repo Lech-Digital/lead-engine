@@ -37,6 +37,7 @@ internal sealed class HarvestLeads(
     {
         var runNiche = BuildRunNiche(targeting);
         int harvested = 0, scoredIn = 0, deduped = 0, enriched = 0, saved = 0, rejected = 0;
+        var savedLeads = new List<SavedLead>();
 
         // Phase 1: harvest + cheap score gate + dedup (no LLM spend yet).
         var candidates = new List<(RawItem item, SignalResult signal)>();
@@ -85,9 +86,10 @@ internal sealed class HarvestLeads(
             }
             await leads.AddAsync(lead, ct);
             saved++;
+            savedLeads.Add(new SavedLead(lead.Id.Value, company, subject));
         }
 
-        return new HarvestReport(harvested, scoredIn, deduped, enriched, saved, rejected);
+        return new HarvestReport(harvested, scoredIn, deduped, enriched, saved, rejected, savedLeads);
     }
 
     // Per-run options: per-customer targeting + the injected global source config.

@@ -1,0 +1,124 @@
+@page "/app/settings"
+@model Coldstart.Web.Areas.App.Pages.SettingsModel
+@{ ViewData["Title"] = "Settings"; Layout = "/Pages/Shared/_Layout.cshtml"; }
+
+<header class="app-bar">
+  <a class="wordmark" href="/">coldstart<i>*</i></a>
+  <nav class="app-nav">
+    <a href="/app">Your briefing</a>
+    <form method="post" asp-page="/Account/Logout" asp-area="Identity"><button class="btn btn-ghost" type="submit">Log out</button></form>
+  </nav>
+</header>
+
+<main class="wrap app-zone profile">
+  <section class="app-briefing">
+    <h1>Settings</h1>
+    <p class="app-briefing-ts">Company · outreach voice · notifications · account</p>
+  </section>
+
+  <form method="post" class="profile-form">
+    <button type="submit" hidden aria-hidden="true" tabindex="-1"></button>
+
+    <section class="panel" id="company">
+      <h2 class="app-group-head">Company</h2>
+      <div class="profile-grid">
+        <div class="field"><label asp-for="Input.CompanyName">Company name</label><input asp-for="Input.CompanyName"></div>
+        <div class="field"><label asp-for="Input.Website">Website</label><input asp-for="Input.Website"></div>
+        <div class="field"><label asp-for="Input.Niche">Niche</label><input asp-for="Input.Niche"></div>
+        <div class="field"><label asp-for="Input.ContactEmail">Contact email</label><input asp-for="Input.ContactEmail" type="email"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 class="app-group-head">Registration</h2>
+      <div class="profile-grid">
+        <div class="field profile-span-2"><label asp-for="Input.Address">Address</label><input asp-for="Input.Address"></div>
+        <div class="field"><label asp-for="Input.VatNumber">VAT number</label><input asp-for="Input.VatNumber"></div>
+        <div class="field"><label asp-for="Input.KvkNumber">KvK number</label><input asp-for="Input.KvkNumber"></div>
+      </div>
+    </section>
+
+    <section class="panel" id="outreach">
+      <h2 class="app-group-head">Outreach</h2>
+      <div class="field">
+        <label asp-for="Input.Brief">Company brief <span class="field-hint">— a short "who we are" used as context in your outreach</span></label>
+        <textarea asp-for="Input.Brief" rows="4" placeholder="e.g. Acme helps dental clinics fill last-minute cancellations with automated waitlist texts." autofocus="@Model.JustPolished"></textarea>
+        <button class="btn btn-ghost btn-sm profile-polish" type="submit" asp-page-handler="Polish">Polish with AI</button>
+      </div>
+      <div class="field">
+        <label asp-for="Input.PitchLine">Pitch paragraph <span class="field-hint">— appended to every draft, word-for-word; the AI writes only the personal opener above it</span></label>
+        <textarea asp-for="Input.PitchLine" rows="3" placeholder="e.g. I run Acme — we fill last-minute dental cancellations automatically, so your chairs never sit empty."></textarea>
+      </div>
+      <div class="field">
+        <label asp-for="Input.IntroLine">Intro line <span class="field-hint">— one sentence after the greeting explaining why you're writing; inserted before the engine's quoted analysis</span></label>
+        <textarea asp-for="Input.IntroLine" rows="2" placeholder="e.g. I'm Sam from Acme — my scheduling engine flagged your clinic overnight and wrote this note:"></textarea>
+      </div>
+      @if (User.IsInRole(Coldstart.Web.ColdstartRoles.SuperAdmin))
+      {
+        <div class="field">
+          <label asp-for="Input.CtaLine">Call-to-action paragraph <span class="field-hint">— operator only; the closing ask, appended after the pitch</span></label>
+          <textarea asp-for="Input.CtaLine" rows="2"></textarea>
+        </div>
+        <div class="profile-grid">
+          <div class="field">
+            <label asp-for="Input.CtaButtonText">Button label <span class="field-hint">— {company} is filled per lead</span></label>
+            <input asp-for="Input.CtaButtonText" placeholder="e.g. Claim your free sample leads for {company}">
+          </div>
+          <div class="field">
+            <label asp-for="Input.CtaButtonUrl">Button link <span class="field-hint">— {company-url}, {prospect-niche-url}, {prospect-sells-url} are filled per lead</span></label>
+            <input asp-for="Input.CtaButtonUrl" placeholder="https://your-site.example/offer?company={company-url}">
+          </div>
+        </div>
+        <div class="field">
+          <label asp-for="Input.SubjectTemplate">Subject template <span class="field-hint">— overrides the AI subject when set; {company} is filled per lead</span></label>
+          <input asp-for="Input.SubjectTemplate" placeholder="e.g. Live demo (and free leads for {company})">
+        </div>
+        <div class="field field-check">
+          <label><input asp-for="Input.MentionSourceTool" type="checkbox"> Mention leads were found via Coldstart</label>
+        </div>
+      }
+    </section>
+
+    <div class="profile-actions">
+      <button class="btn btn-primary" type="submit">Save →</button>
+      @if (Model.StatusMessage is not null) { <span class="form-status">@Model.StatusMessage</span> }
+    </div>
+  </form>
+
+  <section class="panel" id="notifications">
+    <h2 class="app-group-head">Notifications</h2>
+    <p class="settings-note">Get a push the moment new leads land in your briefing — no need to check the portal.</p>
+    <form method="post" asp-page-handler="SaveNotifications">
+      <div class="field">
+        <label asp-for="SlackWebhookUrl">Slack webhook URL <span class="field-hint">— Slack → Apps → Incoming Webhooks → Add to channel, then paste the URL here</span></label>
+        <input asp-for="SlackWebhookUrl" placeholder="https://hooks.slack.com/services/…">
+      </div>
+      <div class="field">
+        <label asp-for="WhatsAppNumber">WhatsApp number <span class="field-hint">— international format; leave empty to switch off</span></label>
+        <input asp-for="WhatsAppNumber" placeholder="+31 6 12345678">
+      </div>
+      <div class="settings-actions">
+        <button class="btn btn-primary" type="submit">Save notifications</button>
+        <button class="btn btn-ghost" type="submit" asp-page-handler="TestSlack">Send Slack test</button>
+        <button class="btn btn-ghost" type="submit" asp-page-handler="TestWhatsApp">Send WhatsApp test</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="panel" id="account">
+    <h2 class="app-group-head">Account</h2>
+    <p class="settings-note">Signed in as <strong>@Model.SignedInEmail</strong></p>
+    <div class="settings-actions">
+      <a class="btn btn-ghost" href="/Identity/Account/ForgotPassword">Change password</a>
+      <form method="post" asp-page="/Account/Logout" asp-area="Identity"><button class="btn btn-ghost" type="submit">Log out</button></form>
+    </div>
+  </section>
+
+  <section class="panel profile-hints" id="hints">
+    <h2 class="app-group-head">Onboarding hints</h2>
+    <p>Want the getting-started tips again? They'll reappear one per day.</p>
+    <form method="post" asp-page-handler="ShowHints">
+      <button type="submit" class="btn btn-ghost">Show hints again</button>
+    </form>
+  </section>
+</main>

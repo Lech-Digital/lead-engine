@@ -78,8 +78,8 @@ public class OnboardingHintsTests(ColdstartWebFactory factory) : IClassFixture<C
             new Dictionary<string, string> { ["__RequestVerificationToken"] = dismissToken!, ["key"] = OnboardingHints.All[0].Key }));
 
         // Act — click "Show hints again" on the profile page
-        var resetToken = await TestAuth.AntiforgeryAsync(client, "/app/profile");
-        var reset = await client.PostAsync("/app/profile?handler=ShowHints", new FormUrlEncodedContent(
+        var resetToken = await TestAuth.AntiforgeryAsync(client, "/app/settings");
+        var reset = await client.PostAsync("/app/settings?handler=ShowHints", new FormUrlEncodedContent(
             new Dictionary<string, string> { ["__RequestVerificationToken"] = resetToken! }));
         var appHtml = await client.GetStringAsync("/app");
 
