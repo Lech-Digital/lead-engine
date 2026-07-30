@@ -438,7 +438,7 @@
   .lead-modal-eyebrow { font-family: var(--mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--sunrise-deep); margin: 0 0 8px; }
   .lead-modal-title { font-size: 1.15rem; margin: 0 0 8px; letter-spacing: -0.01em; }
   .lead-modal-detail { margin: 0 0 18px; color: var(--body-muted); font-size: 0.95rem; }
-  .lead-modal-actions { display: flex; justify-content: flex-end; }
+  .lead-modal-actions { display: flex; justify-content: flex-end; align-items: center; gap: 10px; flex-wrap: wrap; }
   .lead-modal[open] .lead-modal-card { animation: lead-modal-pop .16s ease; }
   @keyframes lead-modal-pop { from { transform: translateY(6px) scale(.98); opacity: 0; } to { transform: none; opacity: 1; } }
   @media (prefers-reduced-motion: reduce) { .lead-modal[open] .lead-modal-card { animation: none; } }
