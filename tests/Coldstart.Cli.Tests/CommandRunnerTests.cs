@@ -163,4 +163,19 @@ public sealed class CommandRunnerTests
         exit.Should().Be(1);
         stderr.ToString().Should().Contain("No customer named");
     }
+
+    [Fact]
+    public async Task RunAsync_WhenApiTimesOut_ShouldReturn1WithTimeoutMessage()
+    {
+        // Arrange
+        var api = StubHandler.Client(_ => throw new TaskCanceledException(), out _);
+        var stderr = new StringWriter();
+
+        // Act
+        var exit = await CommandRunner.RunAsync(["stats"], api, new StringWriter(), stderr);
+
+        // Assert
+        exit.Should().Be(1);
+        stderr.ToString().Should().Contain("did not respond").And.Contain("30 seconds");
+    }
 }

@@ -47,7 +47,7 @@ public sealed class AdminApiHarvestTests(ColdstartWebFactory factory) : IClassFi
     }
 
     [Fact]
-    public async Task HarvestDue_WithNoFullPlanCustomers_ShouldReturnZero()
+    public async Task HarvestDue_WhenCalled_ShouldReturn200WithCount()
     {
         // Arrange — factory tenants are Free-plan except the seeded Coldstart tenant,
         // which has HarvestStatus.None and no profile keywords but IS Full plan; assert

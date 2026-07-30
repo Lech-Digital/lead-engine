@@ -63,6 +63,11 @@ internal static class CommandRunner
             await stderr.WriteLineAsync($"Cannot reach the Coldstart API: {ex.Message}");
             return 1;
         }
+        catch (OperationCanceledException)
+        {
+            await stderr.WriteLineAsync("The Coldstart API did not respond within 30 seconds.");
+            return 1;
+        }
     }
 
     private static int UsageError(TextWriter stderr, string? message = null)

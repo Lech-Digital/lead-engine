@@ -1,6 +1,6 @@
 using Coldstart.Cli;
 
-var url = Environment.GetEnvironmentVariable("COLDSTART_URL") ?? "http://localhost:5000";
+var url = Environment.GetEnvironmentVariable("COLDSTART_URL") ?? "http://localhost:5242";
 var key = Environment.GetEnvironmentVariable("COLDSTART_ADMIN_KEY");
 if (string.IsNullOrWhiteSpace(key))
 {

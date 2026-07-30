@@ -37,7 +37,7 @@ Docker + Caddy on a single host: `docker-compose.prod.yml` + `Caddyfile`, env te
 Terminal administration of a running Coldstart instance (local or production) over
 the key-protected admin API:
 
-    export COLDSTART_URL=https://getcoldstart.nl     # default: http://localhost:5000
+    export COLDSTART_URL=https://getcoldstart.nl     # default: http://localhost:5242
     export COLDSTART_ADMIN_KEY=...                    # AdminApi:Key / ADMIN_API_KEY
 
     dotnet run --project src/Coldstart.Cli -- customers
