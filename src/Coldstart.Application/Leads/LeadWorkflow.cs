@@ -53,9 +53,11 @@ internal sealed class LeadWorkflow(ILeadRepository leads, IOutreachMailer outrea
         if (lead.RecipientEmail is null)
             return LeadActionResult.Invalid("A recipient is required before sending.");
 
+        var sender = await customers.GetAsync(new CustomerId(customerId), ct);
         try
         {
-            await outreach.SendAsync(new OutreachEmail(lead.RecipientEmail.Value, lead.Subject, lead.Draft), ct);
+            await outreach.SendAsync(new OutreachEmail(lead.RecipientEmail.Value, lead.Subject, lead.Draft,
+                sender?.Profile.CtaButtonText), ct);
         }
         catch (Exception) when (!ct.IsCancellationRequested)
         {

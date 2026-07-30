@@ -24,7 +24,7 @@ internal sealed class IndexModel(
     public IReadOnlyList<InquiryRow> Inquiries { get; private set; } = [];
     public (string Email, string Url)? CopyLink { get; private set; }
 
-    public sealed record InquiryRow(Guid Id, string Name, string Email, string Niche, string WhatYouSell, string? Message, DateTimeOffset CreatedAt);
+    public sealed record InquiryRow(Guid Id, string Name, string Email, string Niche, string WhatYouSell, string? Message, DateTimeOffset CreatedAt, string? Company);
 
     public async Task OnGetAsync(Guid? useInquiry, CancellationToken ct)
     {
@@ -35,6 +35,7 @@ internal sealed class IndexModel(
                 Input = new InputModel
                 {
                     Email = inq.Email.Value,
+                    Company = inq.Company ?? "",
                     Niche = inq.Niche,
                     Info = string.IsNullOrWhiteSpace(inq.Message) ? inq.WhatYouSell : $"{inq.WhatYouSell}\n\n{inq.Message}",
                 };
@@ -126,7 +127,7 @@ internal sealed class IndexModel(
     {
         Rows = await admin.ListAsync(User.Identity?.Name, ct);
         Inquiries = (await inquiries.RecentAsync(20, ct))
-            .Select(i => new InquiryRow(i.Id.Value, i.Name, i.Email.Value, i.Niche, i.WhatYouSell, i.Message, i.CreatedAt))
+            .Select(i => new InquiryRow(i.Id.Value, i.Name, i.Email.Value, i.Niche, i.WhatYouSell, i.Message, i.CreatedAt, i.Company))
             .ToList();
     }
 

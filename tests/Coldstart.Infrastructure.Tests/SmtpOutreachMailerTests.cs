@@ -29,6 +29,41 @@ public class SmtpOutreachMailerTests
     }
 
     [Fact]
+    public void BuildMessage_WithButtonTextAndTrailingUrl_RendersHtmlButton()
+    {
+        // Arrange — the draft ends with a lone URL line; the HTML part shows it as a
+        // branded button labeled from the profile, the text part keeps the raw URL.
+        var mail = new OutreachEmail("ceo@acme.com", "Subject",
+            "Hook.\n\nPitch.\n\nhttps://getcoldstart.nl/?company=Acme#get-leads",
+            CtaButtonText: "Get my 3 free leads");
+
+        // Act
+        var msg = SmtpOutreachMailer.BuildMessage(Opts(), mail);
+        var html = msg.HtmlBody!;
+        var text = msg.TextBody!;
+
+        // Assert
+        html.Should().Contain(">Get my 3 free leads<");
+        html.Should().Contain("href=\"https://getcoldstart.nl/?company=Acme#get-leads\"");
+        html.Should().Contain("background:#FF6A3D");
+        text.Should().Contain("https://getcoldstart.nl/?company=Acme#get-leads");
+    }
+
+    [Fact]
+    public void BuildMessage_WithoutButtonText_KeepsUrlAsPlainParagraph()
+    {
+        // Arrange
+        var mail = new OutreachEmail("ceo@acme.com", "S", "Hook.\n\nhttps://x.test/a");
+
+        // Act
+        var msg = SmtpOutreachMailer.BuildMessage(Opts(), mail);
+
+        // Assert — no button markup when no label is configured
+        msg.HtmlBody!.Should().NotContain("background:#FF6A3D;border-radius");
+        msg.HtmlBody!.Should().Contain("https://x.test/a");
+    }
+
+    [Fact]
     public void BuildMessage_WithRelaySmtpAccount_UsesFromAddressNotUsername()
     {
         // Arrange — on a relay like Resend the SMTP username is a login token ("resend"),

@@ -28,7 +28,7 @@ internal sealed class HarvestLeads(
         var sender = customer is null
             ? SenderContext.None
             : new SenderContext(customer.Profile.Brief, customer.Profile.MentionSourceTool,
-                customer.Profile.PitchLine, customer.Profile.CtaLine);
+                customer.Profile.PitchLine, customer.Profile.CtaLine, customer.Profile.CtaButtonUrl);
         return await RunPipelineAsync(cid, targeting, sender, ct);
     }
 

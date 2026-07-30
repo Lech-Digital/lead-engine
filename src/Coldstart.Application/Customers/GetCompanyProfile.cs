@@ -9,6 +9,6 @@ internal sealed class GetCompanyProfile(ICustomerRepository customers) : IGetCom
     {
         var customer = await customers.GetAsync(new CustomerId(customerId), ct);
         var p = customer?.Profile ?? CompanyProfile.Empty;
-        return new CompanyProfileView(p.CompanyName, p.Address, p.VatNumber, p.KvkNumber, p.Niche, p.Website, p.ContactEmail, p.Brief, p.MentionSourceTool, p.PitchLine, p.CtaLine);
+        return new CompanyProfileView(p.CompanyName, p.Address, p.VatNumber, p.KvkNumber, p.Niche, p.Website, p.ContactEmail, p.Brief, p.MentionSourceTool, p.PitchLine, p.CtaLine, p.CtaButtonText, p.CtaButtonUrl);
     }
 }

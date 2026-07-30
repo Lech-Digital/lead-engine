@@ -411,6 +411,14 @@ namespace Coldstart.Infrastructure.Migrations
                                 .HasColumnType("text")
                                 .HasColumnName("ProfileContactEmail");
 
+                            b1.Property<string>("CtaButtonText")
+                                .HasColumnType("text")
+                                .HasColumnName("ProfileCtaButtonText");
+
+                            b1.Property<string>("CtaButtonUrl")
+                                .HasColumnType("text")
+                                .HasColumnName("ProfileCtaButtonUrl");
+
                             b1.Property<string>("CtaLine")
                                 .HasColumnType("text")
                                 .HasColumnName("ProfileCtaLine");

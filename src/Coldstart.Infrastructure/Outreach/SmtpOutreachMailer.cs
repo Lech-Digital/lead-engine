@@ -40,23 +40,45 @@ internal sealed class SmtpOutreachMailer(IOptions<OutreachMailboxOptions> option
         msg.Body = new BodyBuilder
         {
             TextBody = body + "\n\n— Andrzej\nFounder, Coldstart\nhttps://getcoldstart.nl",
-            HtmlBody = BuildHtml(body),
+            HtmlBody = BuildHtml(body, mail.CtaButtonText),
         }.ToMessageBody();
         return msg;
     }
 
-    private static string BuildHtml(string body)
+    private static string BuildHtml(string body, string? ctaButtonText = null)
     {
+        // When a button label is configured and the draft ends with a lone URL line,
+        // that URL becomes a branded button instead of raw text (the text part keeps it raw).
+        var paras = body.Split("\n\n", StringSplitOptions.RemoveEmptyEntries).ToList();
+        string? buttonUrl = null;
+        if (!string.IsNullOrWhiteSpace(ctaButtonText) && paras.Count > 0)
+        {
+            var last = paras[^1].Trim();
+            if (Uri.TryCreate(last, UriKind.Absolute, out var uri) && (uri.Scheme == "https" || uri.Scheme == "http") && !last.Contains(' '))
+            {
+                buttonUrl = last;
+                paras.RemoveAt(paras.Count - 1);
+            }
+        }
         var paragraphs = new StringBuilder();
-        foreach (var para in body.Split("\n\n", StringSplitOptions.RemoveEmptyEntries))
+        foreach (var para in paras)
             paragraphs.Append("<p style=\"margin:0 0 12px\">")
                       .Append(WebUtility.HtmlEncode(para).Replace("\n", "<br>"))
                       .Append("</p>");
+
+        var button = buttonUrl is null ? "" : $"""
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:18px 0 4px"><tr>
+          <td style="background:#FF6A3D;border-radius:9px">
+            <a href="{buttonUrl}" style="display:inline-block;padding:12px 22px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:9px">{WebUtility.HtmlEncode(ctaButtonText)}</a>
+          </td>
+        </tr></table>
+        """;
 
         // CSS/text wordmark — the '*' is the brand mark, tinted sunrise; no external assets.
         return $"""
         <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5;color:#16192B">
           {paragraphs}
+          {button}
           <div style="margin-top:20px;padding-top:12px;border-top:1px solid #E7E2D8;color:#16192B">
             <div style="font-weight:700;letter-spacing:-0.01em">coldstart<span style="color:#FF6A3D">*</span></div>
             <div style="font-size:13px;color:#5A5E70">Andrzej · Founder, Coldstart · <a href="https://getcoldstart.nl" style="color:#FF6A3D;text-decoration:none">getcoldstart.nl</a></div>

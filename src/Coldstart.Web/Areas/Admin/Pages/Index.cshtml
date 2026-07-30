@@ -31,12 +31,13 @@
   {
     <h2 class="app-group-head">Recent inquiries</h2>
     <table class="admin-table">
-      <thead><tr><th>Name</th><th>Email</th><th>Niche</th><th>Sells</th><th></th></tr></thead>
+      <thead><tr><th>Name</th><th>Company</th><th>Email</th><th>Niche</th><th>Sells</th><th></th></tr></thead>
       <tbody>
       @foreach (var q in Model.Inquiries)
       {
         <tr>
           <td>@q.Name</td>
+          <td>@(q.Company ?? "—")</td>
           <td>@q.Email</td>
           <td>@q.Niche</td>
           <td>@q.WhatYouSell</td>

@@ -8,4 +8,4 @@ public interface IOutreachMailer
 }
 
 // Body is the approved plain-text draft; the adapter builds the text + branded-HTML alternatives.
-public sealed record OutreachEmail(string To, string Subject, string Body);
+public sealed record OutreachEmail(string To, string Subject, string Body, string? CtaButtonText = null);

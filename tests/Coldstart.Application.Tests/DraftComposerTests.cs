@@ -68,6 +68,22 @@ public class DraftComposerTests
     }
 
     [Fact]
+    public void Compose_WithCtaButtonUrl_AppendsResolvedUrlAsOwnFinalLine()
+    {
+        // Arrange — the URL gets its own paragraph so plain-text handoffs carry it and
+        // the HTML mailer can swap it for a button.
+        var sender = new SenderContext(null, false,
+            PitchLine: "Pitch.", CtaLine: "Want free leads?",
+            CtaButtonUrl: "https://getcoldstart.nl/?company={company-url}#get-leads");
+
+        // Act
+        var draft = DraftComposer.Compose("Hook.", sender, company: "Acme B.V.");
+
+        // Assert
+        draft.Should().EndWith("Want free leads?\n\nhttps://getcoldstart.nl/?company=Acme%20B.V.#get-leads");
+    }
+
+    [Fact]
     public void HasFixedPitch_TracksPitchAndCtaPresence()
     {
         // Arrange / Act / Assert

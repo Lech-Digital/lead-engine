@@ -50,8 +50,18 @@
         <textarea asp-for="Input.PitchLine" rows="3" placeholder="e.g. I run Acme — we fill last-minute dental cancellations automatically, so your chairs never sit empty."></textarea>
       </div>
       <div class="field">
-        <label asp-for="Input.CtaLine">Call-to-action paragraph <span class="field-hint">— the closing ask, appended after the pitch (offer, link, next step)</span></label>
+        <label asp-for="Input.CtaLine">Call-to-action paragraph <span class="field-hint">— the closing ask, appended after the pitch (offer, next step)</span></label>
         <textarea asp-for="Input.CtaLine" rows="2" placeholder="e.g. Want to see it on your own clinic? Reply and I'll set up a free week."></textarea>
+      </div>
+      <div class="profile-grid">
+        <div class="field">
+          <label asp-for="Input.CtaButtonText">Button label <span class="field-hint">— shown as a button in sent emails</span></label>
+          <input asp-for="Input.CtaButtonText" placeholder="e.g. Get my 3 free leads">
+        </div>
+        <div class="field">
+          <label asp-for="Input.CtaButtonUrl">Button link <span class="field-hint">— {company-url}, {prospect-niche-url}, {prospect-sells-url} are filled per lead</span></label>
+          <input asp-for="Input.CtaButtonUrl" placeholder="https://your-site.example/offer?company={company-url}">
+        </div>
       </div>
       @if (User.IsInRole(Coldstart.Web.ColdstartRoles.SuperAdmin))
       {

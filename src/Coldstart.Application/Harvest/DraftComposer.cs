@@ -10,7 +10,7 @@ public static class DraftComposer
     public static string Compose(string aiDraft, SenderContext sender, string company = "", string prospectNiche = "", string prospectSells = "")
     {
         if (!sender.HasFixedPitch) return aiDraft;
-        var blocks = new[] { aiDraft.Trim(), Fill(sender.PitchLine, company, prospectNiche, prospectSells), Fill(sender.CtaLine, company, prospectNiche, prospectSells) };
+        var blocks = new[] { aiDraft.Trim(), Fill(sender.PitchLine, company, prospectNiche, prospectSells), Fill(sender.CtaLine, company, prospectNiche, prospectSells), Fill(sender.CtaButtonUrl, company, prospectNiche, prospectSells) };
         return string.Join("\n\n", blocks.Where(b => !string.IsNullOrWhiteSpace(b)));
     }
 
