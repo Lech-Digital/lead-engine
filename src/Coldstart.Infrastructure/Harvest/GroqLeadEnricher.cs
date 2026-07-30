@@ -137,7 +137,7 @@ internal sealed class GroqLeadEnricher : ILeadEnricher
         - Greeting on its own line: "Hi <first name>," when the author's real first name is clearly visible in the content; otherwise exactly "Hi there,". Never guess or invent a name.
         - Paragraph 1: a specific detail from THEIR content that proves you actually read it, and the concrete need or pressure that detail creates for them right now.
         - Paragraph 2: the specific outcome the offer gives them for that need — a result they'd want, not a feature list.
-        - Final paragraph: one friendly, low-effort question that is easy to answer with a single sentence.
+        - Final paragraph: one friendly, low-effort question that is easy to answer with a single sentence. If the OFFER includes anything free or no-commitment (a sample, a trial, free leads), the question must offer exactly that — it is the easiest possible yes.
         Welcoming and human, never salesy: short, clean sentences, one idea each — no comma splices, no filler, no marketing voice. No signature (one is added on send). Banned: "I hope this email finds you well", "I came across", "reaching out", "game-changer", "revolutionize", "synergy", "circle back", "touch base", "in today's fast-paced".
         COMPANY: the real company/org name this is about, or "-" if it cannot be determined. Never guess.
 

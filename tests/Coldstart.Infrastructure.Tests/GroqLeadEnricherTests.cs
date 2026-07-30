@@ -194,5 +194,8 @@ public class GroqLeadEnricherTests
         handler.SentBody.Should().Contain("greeting");
         handler.SentBody.Should().Contain("paragraphs separated by ONE blank line");
         handler.SentBody.Should().Contain("Never guess or invent a name");
+        // When the offer contains a free / no-commitment element, the closing question
+        // must offer exactly that — it's the lowest-friction ask available.
+        handler.SentBody.Should().Contain("free or no-commitment");
     }
 }
