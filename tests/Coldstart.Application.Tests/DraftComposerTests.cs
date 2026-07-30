@@ -84,6 +84,39 @@ public class DraftComposerTests
     }
 
     [Fact]
+    public void Compose_WithIntroLine_InsertsItBeforeTheQuotedAnalysis()
+    {
+        // Arrange — the intro ("this is a live demo…") sits between the congrats
+        // sentence and the AI's quoted analysis block.
+        var sender = new SenderContext(null, false, PitchLine: "Pitch.",
+            IntroLine: "This email is a live demo. My engine wrote this:");
+        var hook = "Hi there,\n\nCongrats on your raise!\n\n> Growth means GTM pressure.";
+
+        // Act
+        var draft = DraftComposer.Compose(hook, sender);
+
+        // Assert
+        draft.Should().Be(
+            "Hi there,\n\nCongrats on your raise!\n\n" +
+            "This email is a live demo. My engine wrote this:\n\n" +
+            "> Growth means GTM pressure.\n\nPitch.");
+    }
+
+    [Fact]
+    public void ComposeSubject_WithTemplate_OverridesAiSubjectAndFillsCompany()
+    {
+        // Arrange
+        var sender = new SenderContext(null, false, PitchLine: "p",
+            SubjectTemplate: "Live demo (and free leads for {company})");
+
+        // Act / Assert
+        DraftComposer.ComposeSubject("AI subject", sender, "Acme").Should()
+            .Be("Live demo (and free leads for Acme)");
+        DraftComposer.ComposeSubject("AI subject", new SenderContext(null, false), "Acme").Should()
+            .Be("AI subject");
+    }
+
+    [Fact]
     public void HasFixedPitch_TracksPitchAndCtaPresence()
     {
         // Arrange / Act / Assert

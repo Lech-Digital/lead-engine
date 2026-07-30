@@ -17,7 +17,9 @@ public sealed record CompanyProfile(
     string? PitchLine = null,
     string? CtaLine = null,
     string? CtaButtonText = null,
-    string? CtaButtonUrl = null)
+    string? CtaButtonUrl = null,
+    string? IntroLine = null,
+    string? SubjectTemplate = null)
 {
     public static CompanyProfile Empty { get; } = new(null, null, null, null, null, null, null);
 }

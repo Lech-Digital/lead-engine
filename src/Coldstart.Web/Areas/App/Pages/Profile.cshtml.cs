@@ -34,6 +34,8 @@ public sealed class ProfileModel(UserManager<ApplicationUser> users, IGetCompany
         public string? CtaLine { get; set; }
         public string? CtaButtonText { get; set; }
         public string? CtaButtonUrl { get; set; }
+        public string? IntroLine { get; set; }
+        public string? SubjectTemplate { get; set; }
     }
 
     public async Task<IActionResult> OnGetAsync(CancellationToken ct)
@@ -45,7 +47,7 @@ public sealed class ProfileModel(UserManager<ApplicationUser> users, IGetCompany
         {
             CompanyName = v.CompanyName, Address = v.Address, VatNumber = v.VatNumber, KvkNumber = v.KvkNumber,
             Niche = v.Niche, Website = v.Website, ContactEmail = v.ContactEmail,
-            Brief = v.Brief, MentionSourceTool = v.MentionSourceTool, PitchLine = v.PitchLine, CtaLine = v.CtaLine, CtaButtonText = v.CtaButtonText, CtaButtonUrl = v.CtaButtonUrl,
+            Brief = v.Brief, MentionSourceTool = v.MentionSourceTool, PitchLine = v.PitchLine, CtaLine = v.CtaLine, CtaButtonText = v.CtaButtonText, CtaButtonUrl = v.CtaButtonUrl, IntroLine = v.IntroLine, SubjectTemplate = v.SubjectTemplate,
         };
         return Page();
     }
@@ -54,14 +56,19 @@ public sealed class ProfileModel(UserManager<ApplicationUser> users, IGetCompany
     {
         var user = await users.GetUserAsync(User);
         if (user?.CustomerId is null) return RedirectToPage("Index");
-        // The "found via Coldstart" mention is the operator's dogfooding line — it only makes
-        // sense when the sender sells Coldstart itself. Non-operators keep their stored value
-        // regardless of what the form posts.
-        var mentionSourceTool = User.IsInRole(ColdstartRoles.SuperAdmin)
-            ? Input.MentionSourceTool
-            : (await getProfile.ForCustomerAsync(user.CustomerId.Value, ct)).MentionSourceTool;
+        // Operator-only fields (dogfood mention, CTA paragraph, button, subject template):
+        // non-operators keep their stored values regardless of what the form posts.
+        var isOperator = User.IsInRole(ColdstartRoles.SuperAdmin);
+        var stored = isOperator ? null : await getProfile.ForCustomerAsync(user.CustomerId.Value, ct);
         await updateProfile.UpdateAsync(user.CustomerId.Value,
-            new CompanyProfileInput(Input.CompanyName, Input.Address, Input.VatNumber, Input.KvkNumber, Input.Niche, Input.Website, Input.ContactEmail, Input.Brief, mentionSourceTool, Input.PitchLine, Input.CtaLine, Input.CtaButtonText, Input.CtaButtonUrl), ct);
+            new CompanyProfileInput(Input.CompanyName, Input.Address, Input.VatNumber, Input.KvkNumber, Input.Niche, Input.Website, Input.ContactEmail, Input.Brief,
+                isOperator ? Input.MentionSourceTool : stored!.MentionSourceTool,
+                Input.PitchLine,
+                isOperator ? Input.CtaLine : stored!.CtaLine,
+                isOperator ? Input.CtaButtonText : stored!.CtaButtonText,
+                isOperator ? Input.CtaButtonUrl : stored!.CtaButtonUrl,
+                Input.IntroLine,
+                isOperator ? Input.SubjectTemplate : stored!.SubjectTemplate), ct);
         StatusMessage = "Company profile saved.";
         // PRG back to this page (not the briefing) with a fragment, so the confirmation shows here
         // and the browser lands on the form instead of jumping to the very top.

@@ -192,7 +192,9 @@ public class GroqLeadEnricherTests
         await sut.EnrichAsync(Item, Niche, Signal, sender, CancellationToken.None);
 
         // Assert — hook-only instructions; no AI-written pitch/CTA/dogfood line
-        handler.SentBody.Should().Contain("ONLY the greeting and the personalization");
+        handler.SentBody.Should().Contain("ONLY the greeting, one congratulations sentence");
+        handler.SentBody.Should().Contain("quoted analysis");
+        handler.SentBody.Should().Contain("their potential customers");
         handler.SentBody.Should().Contain("appended automatically");
         handler.SentBody.Should().NotContain("the very tool this email offers");
         // Empathy + their-language + honest-bridge requirements

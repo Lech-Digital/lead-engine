@@ -46,6 +46,8 @@ internal sealed class CustomerConfiguration : IEntityTypeConfiguration<Customer>
             p.Property(x => x.CtaLine).HasColumnName("ProfileCtaLine");
             p.Property(x => x.CtaButtonText).HasColumnName("ProfileCtaButtonText");
             p.Property(x => x.CtaButtonUrl).HasColumnName("ProfileCtaButtonUrl");
+            p.Property(x => x.IntroLine).HasColumnName("ProfileIntroLine");
+            p.Property(x => x.SubjectTemplate).HasColumnName("ProfileSubjectTemplate");
         });
         builder.Navigation(c => c.Profile).IsRequired();   // Profile is never null (defaults to Empty)
     }

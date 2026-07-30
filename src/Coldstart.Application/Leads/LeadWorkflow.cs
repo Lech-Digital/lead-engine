@@ -57,7 +57,7 @@ internal sealed class LeadWorkflow(ILeadRepository leads, IOutreachMailer outrea
         try
         {
             await outreach.SendAsync(new OutreachEmail(lead.RecipientEmail.Value, lead.Subject, lead.Draft,
-                sender?.Profile.CtaButtonText), ct);
+                sender?.Profile.CtaButtonText?.Replace("{company}", lead.Company)), ct);
         }
         catch (Exception) when (!ct.IsCancellationRequested)
         {

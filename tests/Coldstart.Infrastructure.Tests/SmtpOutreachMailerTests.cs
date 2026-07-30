@@ -50,6 +50,25 @@ public class SmtpOutreachMailerTests
     }
 
     [Fact]
+    public void BuildMessage_QuotedParagraph_RendersAsStyledBlockquote()
+    {
+        // Arrange — "> " paragraphs are the AI analysis; HTML shows them as a branded
+        // quote block, the text part keeps the "> " marker.
+        var mail = new OutreachEmail("ceo@acme.com", "S",
+            "Hi there,\n\n> Growth means pressure.\n> Your buyers are MSPs.\n\nPitch.");
+
+        // Act
+        var msg = SmtpOutreachMailer.BuildMessage(Opts(), mail);
+
+        // Assert
+        msg.HtmlBody!.Should().Contain("<blockquote");
+        msg.HtmlBody!.Should().Contain("border-left:3px solid #FF6A3D");
+        msg.HtmlBody!.Should().Contain("Growth means pressure.");
+        msg.HtmlBody!.Should().NotContain("&gt; Growth");
+        msg.TextBody!.Should().Contain("> Growth means pressure.");
+    }
+
+    [Fact]
     public void BuildMessage_WithoutButtonText_KeepsUrlAsPlainParagraph()
     {
         // Arrange

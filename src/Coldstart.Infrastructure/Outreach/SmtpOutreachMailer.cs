@@ -62,9 +62,22 @@ internal sealed class SmtpOutreachMailer(IOptions<OutreachMailboxOptions> option
         }
         var paragraphs = new StringBuilder();
         foreach (var para in paras)
+        {
+            if (para.TrimStart().StartsWith('>'))
+            {
+                // "> " paragraphs are the engine's quoted analysis — show them as a branded
+                // quote block so the reader sees "this is what it wrote about MY company".
+                var quoted = string.Join("<br>", para.Split('\n')
+                    .Select(l => WebUtility.HtmlEncode(l.TrimStart().TrimStart('>').TrimStart())));
+                paragraphs.Append("<blockquote style=\"margin:0 0 12px;padding:10px 14px;border-left:3px solid #FF6A3D;background:#FBF7F1;border-radius:0 8px 8px 0;color:#3A3E52\">")
+                          .Append(quoted)
+                          .Append("</blockquote>");
+                continue;
+            }
             paragraphs.Append("<p style=\"margin:0 0 12px\">")
                       .Append(WebUtility.HtmlEncode(para).Replace("\n", "<br>"))
                       .Append("</p>");
+        }
 
         var button = buttonUrl is null ? "" : $"""
         <table role="presentation" cellpadding="0" cellspacing="0" style="margin:18px 0 4px"><tr>

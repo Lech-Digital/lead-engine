@@ -427,6 +427,10 @@ namespace Coldstart.Infrastructure.Migrations
                                 .HasColumnType("text")
                                 .HasColumnName("ProfileDisqualifiers");
 
+                            b1.Property<string>("IntroLine")
+                                .HasColumnType("text")
+                                .HasColumnName("ProfileIntroLine");
+
                             b1.Property<string>("KvkNumber")
                                 .HasColumnType("text")
                                 .HasColumnName("ProfileKvkNumber");
@@ -448,6 +452,10 @@ namespace Coldstart.Infrastructure.Migrations
                             b1.Property<string>("PitchLine")
                                 .HasColumnType("text")
                                 .HasColumnName("ProfilePitchLine");
+
+                            b1.Property<string>("SubjectTemplate")
+                                .HasColumnType("text")
+                                .HasColumnName("ProfileSubjectTemplate");
 
                             b1.Property<string>("TargetKeywords")
                                 .HasColumnType("text")

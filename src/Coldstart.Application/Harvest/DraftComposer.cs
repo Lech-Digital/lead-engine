@@ -10,8 +10,24 @@ public static class DraftComposer
     public static string Compose(string aiDraft, SenderContext sender, string company = "", string prospectNiche = "", string prospectSells = "")
     {
         if (!sender.HasFixedPitch) return aiDraft;
-        var blocks = new[] { aiDraft.Trim(), Fill(sender.PitchLine, company, prospectNiche, prospectSells), Fill(sender.CtaLine, company, prospectNiche, prospectSells), Fill(sender.CtaButtonUrl, company, prospectNiche, prospectSells) };
+        var hook = InsertIntro(aiDraft.Trim(), Fill(sender.IntroLine, company, prospectNiche, prospectSells));
+        var blocks = new[] { hook, Fill(sender.PitchLine, company, prospectNiche, prospectSells), Fill(sender.CtaLine, company, prospectNiche, prospectSells), Fill(sender.CtaButtonUrl, company, prospectNiche, prospectSells) };
         return string.Join("\n\n", blocks.Where(b => !string.IsNullOrWhiteSpace(b)));
+    }
+
+    // The AI subject is used unless the sender configured a fixed template.
+    public static string ComposeSubject(string aiSubject, SenderContext sender, string company = "", string prospectNiche = "", string prospectSells = "") =>
+        string.IsNullOrWhiteSpace(sender.SubjectTemplate) ? aiSubject : Fill(sender.SubjectTemplate, company, prospectNiche, prospectSells)!;
+
+    // The intro ("this email is a live demo…") reads best right before the AI's quoted
+    // analysis; with no quoted block it lands after the hook.
+    private static string InsertIntro(string aiDraft, string? intro)
+    {
+        if (string.IsNullOrWhiteSpace(intro)) return aiDraft;
+        var paras = aiDraft.Split("\n\n", StringSplitOptions.RemoveEmptyEntries).ToList();
+        var quoteIndex = paras.FindIndex(p => p.TrimStart().StartsWith('>'));
+        if (quoteIndex < 0) paras.Add(intro); else paras.Insert(quoteIndex, intro);
+        return string.Join("\n\n", paras);
     }
 
     private static string? Fill(string? block, string company, string prospectNiche, string prospectSells) =>

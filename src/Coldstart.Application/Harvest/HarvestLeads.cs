@@ -28,7 +28,8 @@ internal sealed class HarvestLeads(
         var sender = customer is null
             ? SenderContext.None
             : new SenderContext(customer.Profile.Brief, customer.Profile.MentionSourceTool,
-                customer.Profile.PitchLine, customer.Profile.CtaLine, customer.Profile.CtaButtonUrl);
+                customer.Profile.PitchLine, customer.Profile.CtaLine, customer.Profile.CtaButtonUrl,
+                customer.Profile.IntroLine, customer.Profile.SubjectTemplate);
         return await RunPipelineAsync(cid, targeting, sender, ct);
     }
 
@@ -69,7 +70,8 @@ internal sealed class HarvestLeads(
             var company = string.IsNullOrWhiteSpace(result.Company) || result.Company == "-" ? item.Author : result.Company;
             // Real fits get the sender's hardcoded pitch/CTA appended; rejected drafts are "-".
             var draft = result.Fit == Fit.No ? result.Draft : DraftComposer.Compose(result.Draft, sender, company, result.ProspectNiche, result.ProspectSells);
-            var lead = Lead.CreateHarvested(cid, company, result.Fit, result.Subject, draft,
+            var subject = result.Fit == Fit.No ? result.Subject : DraftComposer.ComposeSubject(result.Subject, sender, company, result.ProspectNiche, result.ProspectSells);
+            var lead = Lead.CreateHarvested(cid, company, result.Fit, subject, draft,
                 item.Source, item.Url, item.Fingerprint, signal.Score, string.Join(",", signal.Matched), DateTimeOffset.UtcNow);
             if (result.Fit == Fit.No)
             {

@@ -50,21 +50,29 @@
         <textarea asp-for="Input.PitchLine" rows="3" placeholder="e.g. I run Acme — we fill last-minute dental cancellations automatically, so your chairs never sit empty."></textarea>
       </div>
       <div class="field">
-        <label asp-for="Input.CtaLine">Call-to-action paragraph <span class="field-hint">— the closing ask, appended after the pitch (offer, next step)</span></label>
-        <textarea asp-for="Input.CtaLine" rows="2" placeholder="e.g. Want to see it on your own clinic? Reply and I'll set up a free week."></textarea>
-      </div>
-      <div class="profile-grid">
-        <div class="field">
-          <label asp-for="Input.CtaButtonText">Button label <span class="field-hint">— shown as a button in sent emails</span></label>
-          <input asp-for="Input.CtaButtonText" placeholder="e.g. Get my 3 free leads">
-        </div>
-        <div class="field">
-          <label asp-for="Input.CtaButtonUrl">Button link <span class="field-hint">— {company-url}, {prospect-niche-url}, {prospect-sells-url} are filled per lead</span></label>
-          <input asp-for="Input.CtaButtonUrl" placeholder="https://your-site.example/offer?company={company-url}">
-        </div>
+        <label asp-for="Input.IntroLine">Intro line <span class="field-hint">— one sentence after the greeting explaining why you're writing; inserted before the engine's quoted analysis</span></label>
+        <textarea asp-for="Input.IntroLine" rows="2" placeholder="e.g. I'm Sam from Acme — my scheduling engine flagged your clinic overnight and wrote this note:"></textarea>
       </div>
       @if (User.IsInRole(Coldstart.Web.ColdstartRoles.SuperAdmin))
       {
+        <div class="field">
+          <label asp-for="Input.CtaLine">Call-to-action paragraph <span class="field-hint">— operator only; the closing ask, appended after the pitch</span></label>
+          <textarea asp-for="Input.CtaLine" rows="2"></textarea>
+        </div>
+        <div class="profile-grid">
+          <div class="field">
+            <label asp-for="Input.CtaButtonText">Button label <span class="field-hint">— {company} is filled per lead</span></label>
+            <input asp-for="Input.CtaButtonText" placeholder="e.g. Claim your free sample leads for {company}">
+          </div>
+          <div class="field">
+            <label asp-for="Input.CtaButtonUrl">Button link <span class="field-hint">— {company-url}, {prospect-niche-url}, {prospect-sells-url} are filled per lead</span></label>
+            <input asp-for="Input.CtaButtonUrl" placeholder="https://your-site.example/offer?company={company-url}">
+          </div>
+        </div>
+        <div class="field">
+          <label asp-for="Input.SubjectTemplate">Subject template <span class="field-hint">— overrides the AI subject when set; {company} is filled per lead</span></label>
+          <input asp-for="Input.SubjectTemplate" placeholder="e.g. Live demo (and free leads for {company})">
+        </div>
         <div class="field field-check">
           <label><input asp-for="Input.MentionSourceTool" type="checkbox"> Mention leads were found via Coldstart</label>
         </div>

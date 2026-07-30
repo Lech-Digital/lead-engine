@@ -5,7 +5,8 @@ public sealed record CompanyProfileView(
     string? Niche, string? Website, string? ContactEmail,
     string? Brief = null, bool MentionSourceTool = false,
     string? PitchLine = null, string? CtaLine = null,
-    string? CtaButtonText = null, string? CtaButtonUrl = null)
+    string? CtaButtonText = null, string? CtaButtonUrl = null,
+    string? IntroLine = null, string? SubjectTemplate = null)
 {
     public bool IsEmpty =>
         string.IsNullOrWhiteSpace(CompanyName) && string.IsNullOrWhiteSpace(Address)

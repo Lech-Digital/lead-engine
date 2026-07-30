@@ -5,4 +5,5 @@ public sealed record CompanyProfileInput(
     string? Niche, string? Website, string? ContactEmail,
     string? Brief = null, bool MentionSourceTool = false,
     string? PitchLine = null, string? CtaLine = null,
-    string? CtaButtonText = null, string? CtaButtonUrl = null);
+    string? CtaButtonText = null, string? CtaButtonUrl = null,
+    string? IntroLine = null, string? SubjectTemplate = null);
