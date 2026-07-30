@@ -1,6 +1,9 @@
+using Coldstart.Application.Harvest;
 using Coldstart.Application.Ports;
+using Coldstart.Infrastructure.Harvest;
 using Coldstart.Web.Admin;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
 
 namespace Coldstart.Web.Api;
 
@@ -77,6 +80,24 @@ internal static class AdminEndpoints
 
         group.MapDelete("/users/{email}", async (string email, AdminUserService admin, CancellationToken ct) =>
             ToHttp(await admin.RemoveAsync(email, actorEmail: null, ct)));
+
+        group.MapPost("/harvest/{customerId:guid}", async (
+            Guid customerId, ICustomerRepository customers, IHarvestQueue queue, CancellationToken ct) =>
+        {
+            var customer = (await customers.AllAsync(ct)).FirstOrDefault(c => c.Id.Value == customerId);
+            if (customer is null)
+                return Results.Problem(statusCode: 404, title: "No such customer.");
+
+            queue.Enqueue(new HarvestJob(customerId));
+            return Results.Accepted($"/api/admin/customers", new { enqueued = customer.Name });
+        });
+
+        group.MapPost("/harvest/due", async (
+            IServiceProvider services, IOptions<HarvestScheduleOptions> schedule, CancellationToken ct) =>
+        {
+            var count = await NightlyHarvestScheduler.EnqueueDueAsync(services, schedule.Value.TopUpThreshold, ct);
+            return Results.Ok(new { enqueued = count });
+        });
 
         return app;
     }
