@@ -45,6 +45,8 @@ public sealed class AdzunaOptions
     public int MaxQueries { get; set; } = 5;
     public int ResultsPerQuery { get; set; } = 20;
     public int MaxDaysOld { get; set; } = 14;
-    public double BaseScore { get; set; } = 0.45;
+    // Deliberately BELOW the score gate: Adzuna matching is fuzzy, so a job must also
+    // hit the profile keywords in its text to survive the deterministic filter.
+    public double BaseScore { get; set; } = 0.35;
     public double ScoreWeight { get; set; } = 1.0;
 }

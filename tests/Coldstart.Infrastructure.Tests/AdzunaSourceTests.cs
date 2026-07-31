@@ -49,7 +49,8 @@ public class AdzunaSourceTests
 
         // Assert — one URL per keyword, against the NL endpoint, with credentials
         handler.Urls.Should().HaveCount(2);
-        handler.Urls[0].Should().Contain("/jobs/nl/search/1").And.Contain("what=first sales hire").And.Contain("app_id=id1");
+        handler.Urls[0].Should().Contain("/jobs/nl/search/1").And.Contain("what_phrase=first sales hire").And.Contain("app_id=id1");
+        handler.Urls[1].Should().Contain("what=SDR");
         // The company-less job is dropped; the good one carries the sentinel + company as author
         items.Should().HaveCount(2); // 1 valid job per query x 2 queries
         items[0].Author.Should().Be("Fietsly B.V.");

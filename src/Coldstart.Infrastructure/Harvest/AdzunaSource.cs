@@ -26,9 +26,12 @@ internal sealed class AdzunaSource(HttpClient http, NicheOptions niche) : ILeadS
         var items = new List<RawItem>();
         foreach (var keyword in runNiche.TargetKeywords.Take(_o.MaxQueries))
         {
+            // Multi-word keywords search as an exact phrase — Adzuna's plain `what` matching
+            // is fuzzy enough to return unrelated Dutch job ads.
+            var param = keyword.Contains(' ') ? "what_phrase" : "what";
             var url = $"https://api.adzuna.com/v1/api/jobs/{_o.Country}/search/1" +
                       $"?app_id={Uri.EscapeDataString(_o.AppId)}&app_key={Uri.EscapeDataString(_o.AppKey)}" +
-                      $"&what={Uri.EscapeDataString(keyword)}&results_per_page={_o.ResultsPerQuery}" +
+                      $"&{param}={Uri.EscapeDataString(keyword)}&results_per_page={_o.ResultsPerQuery}" +
                       $"&max_days_old={_o.MaxDaysOld}&content-type=application/json";
             try
             {
