@@ -3,36 +3,55 @@
     ViewData["Title"] = "Terms & conditions — Coldstart";
     Layout = "/Pages/Shared/_Layout.cshtml";
 }
+<partial name="_PublicNav" />
 <main class="legal">
   <div class="wrap wrap-narrow">
     <h1>Terms &amp; conditions</h1>
-    <p class="legal-banner">Draft — pending review, not legal advice. These terms are a starting point while Coldstart finalizes its legal details.</p>
+    <p class="legal-banner">Version 1.1 · 31 July 2026 · These terms apply to all use of Coldstart.</p>
 
-    <h2>1. Who we are</h2>
-    <p>Coldstart ("we") is a business-to-business service based in Schiedam, the Netherlands. KvK: 42125737. VAT: —. Contact: info@getcoldstart.nl.</p>
+    <h2>1. Who we are, definitions</h2>
+    <p>Coldstart ("Coldstart", "we") is a business-to-business service operated from Schiedam, the Netherlands, registered with the Dutch Chamber of Commerce under KvK number 42125737. Contact: <a href="mailto:info@getcoldstart.nl">info@getcoldstart.nl</a>. "Customer" ("you") means the business that creates an account or orders the service; "Service" means the Coldstart platform, the leads it identifies, and the email drafts it produces.</p>
 
-    <h2>2. The service</h2>
-    <p>Coldstart is a done-for-you lead service: we monitor publicly available sources, select companies that plausibly need what you sell, and draft opening emails for you. You review every draft; nothing is sent without your explicit approval. We provide leads and drafts — we do not guarantee replies, meetings, or revenue.</p>
+    <h2>2. Applicability</h2>
+    <p>These terms apply to every offer, trial, and agreement between Coldstart and the Customer, to the exclusion of the Customer's own purchasing or other general terms. Deviations bind us only if agreed in writing. The Service is offered to businesses only, not to consumers.</p>
 
-    <h2>3. Fees and billing</h2>
-    <p>The service costs €750 per month plus a one-time setup fee of €350, both excluding VAT. Billing is monthly in advance. You can cancel at any time; cancellation takes effect at the end of the paid month. There is no minimum term and no notice period.</p>
+    <h2>3. The service</h2>
+    <p>Coldstart monitors publicly available sources, selects companies that plausibly need what you sell, and drafts opening emails for you. You review every draft; nothing is sent without your explicit approval, and when you send, you send from your own address as the sender in the legal sense. The Service is a best-efforts tool built on public data and automated judgment: we do not guarantee the accuracy or completeness of any individual lead, nor replies, meetings, or revenue.</p>
 
-    <h2>4. Your data and your leads</h2>
-    <p>Every lead, draft, and result produced for your account belongs to you. You can export them at any time, including after cancellation (on request, up to 30 days after your account ends).</p>
+    <h2>4. Account and acceptable use</h2>
+    <p>Accounts are created by invitation and are personal to your business; keep your credentials confidential and tell us immediately about suspected misuse. You agree to use the leads and drafts for lawful business-to-business outreach only, and to comply with the laws that apply to your outreach — including the GDPR and, in the Netherlands, the Telecommunicatiewet. You will not use the Service to send bulk unsolicited mail, to resell leads as a data product, or to probe, overload, or reverse-engineer the platform. We may suspend an account that is used unlawfully or that endangers the Service, after a warning where reasonably possible.</p>
 
-    <h2>5. Acceptable use</h2>
-    <p>You agree to use the drafts and leads for lawful business-to-business outreach only, and to comply with applicable email and privacy law in your market (including the GDPR and, in the Netherlands, the Telecommunicatiewet). You send emails from your own address and are the sender in the legal sense.</p>
+    <h2>5. Term, cancellation</h2>
+    <p>The subscription runs per calendar month and renews automatically. You can cancel at any time — through the billing portal or by email — and cancellation takes effect at the end of the paid month. There is no minimum term and no notice period. We may end the agreement with one month's notice, or immediately if you materially breach these terms; prepaid fees for undelivered service are then refunded pro rata, except in the case of your material breach.</p>
 
-    <h2>6. Liability</h2>
-    <p>We work with public data and automated judgment; occasional errors (a mismatched lead, an imperfect draft) are part of the service's nature. Our total liability under these terms is limited to the fees you paid us in the three months before the event giving rise to the claim. We are not liable for indirect damage, including lost profit.</p>
+    <h2>6. Fees and payment</h2>
+    <p>The Service costs €750 per month plus a one-time setup fee of €350, both excluding VAT. Billing is monthly in advance via our payment provider (Stripe). If a payment fails, we will notify you and retry; if payment remains outstanding 14 days after the due date, we may suspend the Service until it is settled. Statutory commercial interest and reasonable collection costs may apply to overdue amounts. Price changes are announced at least 30 days in advance and give you the right to cancel before they take effect.</p>
 
-    <h2>7. Privacy and processing</h2>
-    <p>How we handle personal data is described in our <a href="/privacy">privacy policy</a>. Where we process personal data on your behalf, we do so under these terms as your processor.</p>
+    <h2>7. Availability and maintenance</h2>
+    <p>We aim for high availability but offer the Service without an uptime guarantee. Maintenance is performed where possible outside Dutch business hours; we announce planned downtime that we expect to be noticeable. Overnight processing runs are by nature periodic — a missed or delayed run is remedied by the next run.</p>
 
-    <h2>8. Changes</h2>
-    <p>We may update these terms; we will announce material changes by email at least 30 days in advance. If you don't agree with a change, you can cancel before it takes effect.</p>
+    <h2>8. Your data and your leads</h2>
+    <p>Every lead, draft, note, and result produced for your account belongs to you. You can export them at any time, including up to 30 days after your account ends (on request). We use your account data only to provide the Service and never sell it. On termination we delete your data within 60 days, except where law requires longer retention.</p>
 
-    <h2>9. Governing law</h2>
-    <p>These terms are governed by Dutch law. Disputes go to the competent court in Rotterdam, the Netherlands.</p>
+    <h2>9. Privacy and processing</h2>
+    <p>How we handle personal data is described in our <a href="/privacy">privacy policy</a>. Where we process personal data on your behalf (for example contact details inside your leads), we act as your processor under Article 28 GDPR: we process only on your instructions, keep it confidential, secure it appropriately, engage sub-processors (hosting in the EU, email delivery) under equivalent duties, assist you with data-subject requests, and delete the data on termination as set out above. A signed processor agreement (verwerkersovereenkomst) is available on request.</p>
+
+    <h2>10. Intellectual property</h2>
+    <p>The Coldstart platform, its software, and its branding remain our property. You receive a non-exclusive, non-transferable right to use the Service for your own business during the subscription. The drafts generated for you are yours to use, edit, and send freely.</p>
+
+    <h2>11. Confidentiality</h2>
+    <p>Each party keeps the other's non-public information confidential — your niche, profile, and leads on our side; the workings of the Service on yours — and uses it only for the purposes of the agreement. This duty survives the end of the agreement.</p>
+
+    <h2>12. Liability</h2>
+    <p>We work with public data and automated judgment; occasional errors (a mismatched lead, an imperfect draft) are part of the Service's nature, and you make the final decision on every email that goes out. Our total liability under or in connection with these terms is limited to the fees you paid us in the three months preceding the event giving rise to the claim. We are not liable for indirect or consequential damage, including lost profit, lost data, or reputational harm. These limits do not apply where liability cannot be limited under Dutch law, such as in cases of intent or deliberate recklessness. Any claim lapses twelve months after you became aware of it.</p>
+
+    <h2>13. Force majeure</h2>
+    <p>Neither party is liable for failure caused by circumstances beyond its reasonable control, including outages of hosting, email, or data providers, internet disruptions, and government measures. If force majeure lasts longer than 30 days, either party may cancel the affected part of the agreement without compensation.</p>
+
+    <h2>14. Changes to these terms</h2>
+    <p>We may update these terms; material changes are announced by email at least 30 days in advance. If you do not agree with a change, you can cancel before it takes effect — the old terms apply until then.</p>
+
+    <h2>15. Final provisions</h2>
+    <p>Dutch law governs these terms. Disputes that we cannot resolve together first are submitted exclusively to the competent court in Rotterdam, the Netherlands. If any provision of these terms proves invalid, the remainder stays in force and the invalid provision is replaced by a valid one that comes closest to its intent.</p>
   </div>
 </main>

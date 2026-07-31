@@ -85,7 +85,7 @@ public class PublicPagesTests(ColdstartWebFactory factory) : IClassFixture<Colds
     }
 
     [Fact]
-    public async Task GetTerms_ReturnsOk_WithDraftBanner()
+    public async Task GetTerms_ReturnsOk_WithVersionLineAndCompanyFacts()
     {
         // Arrange
         var client = factory.CreateClient();
@@ -95,7 +95,9 @@ public class PublicPagesTests(ColdstartWebFactory factory) : IClassFixture<Colds
 
         // Assert
         html.Should().Contain("Terms");
-        html.Should().Contain("pending review");
+        html.Should().Contain("Version 1.1");
+        html.Should().Contain("KvK number 42125737");
+        html.Should().Contain("verwerkersovereenkomst");
         html.Should().Contain("Netherlands");
     }
 
