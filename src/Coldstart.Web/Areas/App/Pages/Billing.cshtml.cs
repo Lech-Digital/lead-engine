@@ -28,17 +28,21 @@ public sealed class BillingModel(UserManager<ApplicationUser> users, ICustomerRe
         return Page();
     }
 
-    public async Task<IActionResult> OnPostCheckoutAsync(CancellationToken ct)
+    // The prices carry currency_options for exactly these; anything else falls back to EUR.
+    private static readonly string[] SupportedCurrencies = ["eur", "usd", "gbp"];
+
+    public async Task<IActionResult> OnPostCheckoutAsync(string? currency, CancellationToken ct)
     {
         var user = await users.GetUserAsync(User);
         var customer = await ResolveOwnCustomerAsync(ct);
         if (user is null || customer is null) return RedirectToPage("Index");
+        var chosen = SupportedCurrencies.Contains(currency?.ToLowerInvariant()) ? currency!.ToLowerInvariant() : null;
         try
         {
             var origin = $"{Request.Scheme}://{Request.Host}";
             var url = await gateway.CreateCheckoutSessionUrlAsync(
                 new CheckoutRequest(customer.Id.Value, customer.StripeCustomerId,
-                    user.Email ?? "", $"{origin}/app?upgraded=1", $"{origin}/app"), ct);
+                    user.Email ?? "", $"{origin}/app?upgraded=1", $"{origin}/app", chosen), ct);
             return Redirect(url);
         }
         catch

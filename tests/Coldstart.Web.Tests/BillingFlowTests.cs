@@ -49,6 +49,40 @@ public class BillingFlowTests(FoilWebFactory factory) : IClassFixture<FoilWebFac
     }
 
     [Fact]
+    public async Task Checkout_WithSupportedCurrency_PassesItToTheGateway()
+    {
+        // Arrange
+        var client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        var email = $"billing-usd-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
+
+        // Act
+        var response = await TestAuth.PostFormAsync(client, "/app/billing?handler=Checkout",
+            new() { ["currency"] = "USD" });
+
+        // Assert — normalized to lowercase for Stripe
+        ((int)response.StatusCode).Should().BeInRange(300, 399);
+        factory.Billing.LastCheckout!.Currency.Should().Be("usd");
+    }
+
+    [Fact]
+    public async Task Checkout_WithUnsupportedCurrency_FallsBackToDefault()
+    {
+        // Arrange
+        var client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        var email = $"billing-badcur-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
+
+        // Act
+        var response = await TestAuth.PostFormAsync(client, "/app/billing?handler=Checkout",
+            new() { ["currency"] = "btc" });
+
+        // Assert — bogus input never reaches Stripe; the session falls back to the price default
+        ((int)response.StatusCode).Should().BeInRange(300, 399);
+        factory.Billing.LastCheckout!.Currency.Should().BeNull();
+    }
+
+    [Fact]
     public async Task Portal_WithoutStripeCustomer_DoesNotRedirectToStripe()
     {
         // Arrange — a fresh Free customer has no StripeCustomerId yet

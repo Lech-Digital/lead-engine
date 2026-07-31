@@ -26,6 +26,7 @@ internal sealed class StripeBillingGateway(IOptions<StripeOptions> options) : IB
         {
             Mode = "subscription",
             LineItems = lineItems,
+            Currency = req.Currency,
             AutomaticTax = new SessionAutomaticTaxOptions { Enabled = true },
             TaxIdCollection = new SessionTaxIdCollectionOptions { Enabled = true },
             ClientReferenceId = req.CustomerId.ToString(),
