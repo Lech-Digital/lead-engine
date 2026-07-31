@@ -21,6 +21,12 @@ public interface ICustomerRepository
     // System-level (no tenant context): per-customer lead totals for the admin overview.
     // Customers with zero leads are absent from the dictionary.
     Task<IReadOnlyDictionary<Guid, LeadCounts>> LeadCountsAsync(CancellationToken ct);
+
+    // System-level (no tenant context): Free-plan customers eligible for a trial follow-up —
+    // harvested at least once (on or before `harvestedBefore`), not opted out, not fully nudged.
+    Task<IReadOnlyList<TrialFollowUpCandidate>> TrialFollowUpCandidatesAsync(DateTimeOffset harvestedBefore, CancellationToken ct);
 }
 
 public sealed record LeadCounts(int Total, int PendingReview);
+
+public sealed record TrialFollowUpCandidate(Guid Id, int FollowUpStage, DateTimeOffset LastHarvestAt);

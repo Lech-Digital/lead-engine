@@ -1,0 +1,18 @@
+@page "/followups/optout"
+@model Coldstart.Web.Pages.FollowUpOptOutModel
+@{ ViewData["Title"] = "Reminders stopped — Coldstart"; Layout = "_Layout"; }
+
+<partial name="_PublicNav" />
+
+<main class="static-page wrap wrap-narrow">
+  @if (Model.Success)
+  {
+    <h1>Done — no more reminders.</h1>
+    <p class="static-lede">We won't email you about your trial again. Your account and your leads stay exactly where they are, at <a href="/app">getcoldstart.nl/app</a>, whenever you want them.</p>
+  }
+  else
+  {
+    <h1>That link didn't work.</h1>
+    <p class="static-lede">It may have been cut short by your email client. You can also stop the reminders from your <a href="/app/settings/account">account settings</a>, or just reply to the email and we'll do it by hand.</p>
+  }
+</main>

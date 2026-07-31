@@ -18,6 +18,9 @@ public sealed class Customer
     public string? WhatsAppNumber { get; private set; }
     // Comma-separated source names the customer opted into; null = all sources.
     public string? EnabledSourcesCsv { get; private set; }
+    // Trial follow-up nudges (Free plan): highest stage already sent (0 = none), and opt-out.
+    public int FollowUpStage { get; private set; }
+    public bool FollowUpsOptOut { get; private set; }
     public IReadOnlyList<Lead> Leads => _leads.AsReadOnly();
 
     private Customer() { } // EF materialization
@@ -46,6 +49,14 @@ public sealed class Customer
         _leads.Add(lead);
         return lead;
     }
+
+    // Monotonic: a lower or repeated stage never rewinds progress (guards double-sends).
+    public void MarkFollowUpSent(int stage)
+    {
+        if (stage > FollowUpStage) FollowUpStage = stage;
+    }
+
+    public void OptOutOfFollowUps() => FollowUpsOptOut = true;
 
     public void LinkStripeCustomer(string stripeCustomerId) => StripeCustomerId = stripeCustomerId;
 

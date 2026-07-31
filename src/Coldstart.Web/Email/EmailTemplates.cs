@@ -83,6 +83,59 @@ internal static class EmailTemplates
 
     private static string Enc(string s) => WebUtility.HtmlEncode(s);
 
+    internal static EmailContent TrialFollowUpDay2(string company, int lockedCount, string appUrl, string optOutUrl)
+    {
+        var lockedText = lockedCount > 0
+            ? $"And they're not alone: {lockedCount} more matches from that same run are sitting in your queue, locked. They unlock the moment you subscribe — no new setup, they're already yours to claim."
+            : "They come from a live run of the engine against your niche — the same run that would land in your inbox every morning as a subscriber.";
+        return new(
+            Subject: lockedCount > 0
+                ? $"{lockedCount} more leads are waiting for {company}"
+                : $"Your sample leads are waiting, {company}",
+            TextBody:
+                $"A couple of days ago the engine ran for {company} and your free sample leads landed — each one a company that plausibly needs what you sell, with a drafted opening email attached.\n\n" +
+                $"{lockedText}\n\n" +
+                $"Have a look when you have a coffee in hand:\n\n{appUrl}\n\n" +
+                $"Nothing is ever sent without your approval.\n\nStop these reminders (one click, no login): {optOutUrl}",
+            HtmlBody: Shell(
+                heading: "Your leads are waiting",
+                introHtml: $"A couple of days ago the engine ran for <strong>{Enc(company)}</strong> and your free sample leads landed — " +
+                           "each one a company that plausibly needs what you sell, with a drafted opening email attached. " +
+                           Enc(lockedText),
+                ctaText: "Open your briefing",
+                ctaUrl: appUrl,
+                footnote: OptOutFootnote(optOutUrl)));
+    }
+
+    internal static EmailContent TrialFollowUpDay5(string company, int lockedCount, string appUrl, string optOutUrl)
+    {
+        var queueLine = lockedCount > 0
+            ? $"The {lockedCount} locked leads in your queue were caught in a moment — a fresh funding round, a new hiring push. "
+            : "The leads we find are caught in a moment — a fresh funding round, a new hiring push. ";
+        return new(
+            Subject: $"Leads cool down fast — an honest note for {company}",
+            TextBody:
+                $"One thing we've learned doing this: timing beats everything.\n\n" +
+                queueLine +
+                "That's exactly when a good first email works — and every week that passes, someone else gets there first.\n\n" +
+                $"A subscription switches the engine on for {company}: fresh leads every morning, drafts included, €750/month, cancel any month.\n\n" +
+                $"Switch it on here:\n\n{appUrl}\n\n" +
+                $"This is the last reminder we'll send — promise.\n\nStop these reminders (one click, no login): {optOutUrl}",
+            HtmlBody: Shell(
+                heading: "Leads cool down fast",
+                introHtml: "One thing we've learned doing this: timing beats everything. " +
+                           Enc(queueLine) +
+                           "That's exactly when a good first email works — and every week that passes, someone else gets there first. " +
+                           $"A subscription switches the engine on for <strong>{Enc(company)}</strong>: fresh leads every morning, drafts included, €750/month, cancel any month.",
+                ctaText: "Switch the engine on",
+                ctaUrl: appUrl,
+                footnote: "This is the last reminder we'll send — promise. " + OptOutFootnote(optOutUrl)));
+    }
+
+    private static string OptOutFootnote(string optOutUrl) =>
+        $"You're getting this because you claimed free sample leads on Coldstart. We send at most two of these, ever. " +
+        $"<a href=\"{optOutUrl}\" style=\"color:#8B8578;\">Stop these reminders</a> — one click, no login.";
+
     private static string Shell(string heading, string introHtml, string ctaText, string ctaUrl, string footnote) => $$"""
 <!doctype html>
 <html lang="en">

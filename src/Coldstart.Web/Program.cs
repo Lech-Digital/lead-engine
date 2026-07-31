@@ -21,11 +21,13 @@ builder.Services.Configure<Coldstart.Infrastructure.Mailbox.MailboxOptions>(buil
 builder.Services.Configure<Coldstart.Infrastructure.Harvest.LlmOptions>(builder.Configuration.GetSection("Llm"));
 builder.Services.Configure<Coldstart.Infrastructure.Outreach.OutreachMailboxOptions>(builder.Configuration.GetSection("OutreachMailbox"));
 builder.Services.Configure<Coldstart.Infrastructure.Harvest.HarvestScheduleOptions>(builder.Configuration.GetSection("HarvestSchedule"));
+builder.Services.Configure<Coldstart.Infrastructure.FollowUps.FollowUpOptions>(builder.Configuration.GetSection("FollowUps"));
 builder.Services.Configure<Coldstart.Infrastructure.Billing.StripeOptions>(builder.Configuration.GetSection("Stripe"));
 builder.Services.Configure<Coldstart.Infrastructure.Notifications.NotificationsOptions>(builder.Configuration.GetSection("Notifications"));
 builder.Services.Configure<Coldstart.Infrastructure.Notifications.TwilioOptions>(builder.Configuration.GetSection("Twilio"));
 builder.Services.Configure<Coldstart.Infrastructure.OpsOptions>(builder.Configuration.GetSection("Ops"));
 builder.Services.AddScoped<Coldstart.Application.Notifications.IBriefingChannel, Coldstart.Web.Email.EmailBriefingChannel>();
+builder.Services.AddScoped<Coldstart.Application.FollowUps.ITrialFollowUpSender, Coldstart.Web.Email.EmailTrialFollowUpSender>();
 builder.Services.Configure<Coldstart.Web.Api.AdminApiOptions>(builder.Configuration.GetSection("AdminApi"));
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<Coldstart.Web.Admin.AdminUserService>();

@@ -30,6 +30,16 @@ namespace Coldstart.Infrastructure.Migrations
                     b.Property<string>("EnabledSourcesCsv")
                         .HasColumnType("text");
 
+                    b.Property<int>("FollowUpStage")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<bool>("FollowUpsOptOut")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("HarvestStatus")
                         .IsRequired()
                         .ValueGeneratedOnAdd()

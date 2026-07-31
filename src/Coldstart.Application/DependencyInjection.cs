@@ -23,6 +23,7 @@ public static class DependencyInjection
         services.AddScoped<Notifications.INotifyBriefing, Notifications.NotifyBriefing>();
         services.AddScoped<Customers.IUpdateSourceSelection, Customers.UpdateSourceSelection>();
         services.AddScoped<Notifications.IUpdateNotificationSettings, Notifications.UpdateNotificationSettings>();
+        services.AddScoped<FollowUps.ISendTrialFollowUps, FollowUps.SendTrialFollowUps>();
         return services;
     }
 }

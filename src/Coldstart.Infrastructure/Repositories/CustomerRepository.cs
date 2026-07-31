@@ -57,6 +57,19 @@ internal sealed class CustomerRepository(ColdstartDbContext db) : ICustomerRepos
         return due.Select(c => c.Id.Value).ToList();
     }
 
+    public async Task<IReadOnlyList<TrialFollowUpCandidate>> TrialFollowUpCandidatesAsync(DateTimeOffset harvestedBefore, CancellationToken ct)
+    {
+        // Cross-customer system read for the follow-up scheduler → bypass the tenant filter.
+        var due = await db.Customers.IgnoreQueryFilters()
+            .Where(c => c.Plan == CustomerPlan.Free
+                        && !c.FollowUpsOptOut
+                        && c.FollowUpStage < 2
+                        && c.LastHarvestAt != null
+                        && c.LastHarvestAt <= harvestedBefore)
+            .ToListAsync(ct);   // materialize, then map the value-object id in memory
+        return due.Select(c => new TrialFollowUpCandidate(c.Id.Value, c.FollowUpStage, c.LastHarvestAt!.Value)).ToList();
+    }
+
     public async Task<IReadOnlyDictionary<Guid, LeadCounts>> LeadCountsAsync(CancellationToken ct)
     {
         var grouped = await db.Leads.IgnoreQueryFilters()
