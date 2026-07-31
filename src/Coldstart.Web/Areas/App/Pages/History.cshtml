@@ -22,6 +22,7 @@
     <a class="cz-chip @(Model.Filter == "sent" ? "on" : "")" href="/app/history?filter=sent">Sent <span style="opacity:.6">@Model.SentCount</span></a>
     <a class="cz-chip @(Model.Filter == "skipped" ? "on" : "")" href="/app/history?filter=skipped">Skipped <span style="opacity:.6">@Model.SkippedCount</span></a>
     <a class="cz-chip @(Model.Filter == "older" ? "on" : "")" href="/app/history?filter=older">Older unreviewed <span style="opacity:.6">@Model.OlderCount</span></a>
+    <a class="cz-chip cz-chip-export" href="/app/history?handler=Export" download>Export CSV ↓</a>
     <form method="get" class="cz-search">
       <input type="hidden" name="filter" value="@Model.Filter">
       <input type="text" id="history-search" name="q" value="@Model.Query" placeholder="Search company…" aria-label="Search company" autocomplete="off">

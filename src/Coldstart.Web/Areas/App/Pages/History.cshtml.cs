@@ -47,6 +47,20 @@ public sealed class HistoryModel(UserManager<ApplicationUser> users, IGetLeadInb
         Rows = rows.OrderByDescending(l => l.CreatedAt).ToList();
     }
 
+    // Every unlocked lead, all statuses, newest first. Locked (paywalled) leads stay out —
+    // the export must never reveal more than the portal does.
+    public async Task<IActionResult> OnGetExportAsync(CancellationToken ct)
+    {
+        var user = await users.GetUserAsync(User);
+        if (user?.CustomerId is null) return RedirectToPage("Index");
+
+        var result = await inbox.ForCustomerAsync(user.CustomerId.Value, ct);
+        var csv = LeadCsv.Build(result.Leads.Where(l => !l.Locked).OrderByDescending(l => l.CreatedAt));
+        var bytes = System.Text.Encoding.UTF8.GetPreamble()   // BOM so Excel detects UTF-8
+            .Concat(System.Text.Encoding.UTF8.GetBytes(csv)).ToArray();
+        return File(bytes, "text/csv; charset=utf-8", $"coldstart-leads-{DateTime.UtcNow:yyyy-MM-dd}.csv");
+    }
+
     public async Task<IActionResult> OnPostReopenAsync(Guid id, CancellationToken ct)
     {
         var user = await users.GetUserAsync(User);
