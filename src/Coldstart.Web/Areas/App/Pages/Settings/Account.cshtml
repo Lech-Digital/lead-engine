@@ -1,0 +1,27 @@
+@page "/app/settings/account"
+@model Coldstart.Web.Areas.App.Pages.Settings.AccountSettingsModel
+@{ ViewData["Title"] = "Settings · Account"; Layout = "/Pages/Shared/_Layout.cshtml"; ViewData["SettingsTab"] = "account"; }
+
+<partial name="_SettingsHeader" />
+<main class="wrap app-zone settings-page">
+  <section class="app-briefing"><h1>Settings</h1></section>
+  <partial name="_SettingsNav" />
+
+  <section class="panel" id="account">
+    <h2 class="app-group-head">Account</h2>
+    <p class="settings-note">Signed in as <strong>@Model.SignedInEmail</strong></p>
+    <div class="settings-actions">
+      <a class="btn btn-ghost" href="/Identity/Account/ForgotPassword">Change password</a>
+      <form method="post" asp-page="/Account/Logout" asp-area="Identity"><button class="btn btn-ghost" type="submit">Log out</button></form>
+    </div>
+  </section>
+
+  <section class="panel profile-hints" id="hints">
+    <h2 class="app-group-head">Onboarding hints</h2>
+    <p>Want the getting-started tips again? They'll reappear one per day.</p>
+    <form method="post" asp-page-handler="ShowHints">
+      <button type="submit" class="btn btn-ghost">Show hints again</button>
+      @if (Model.StatusMessage is not null) { <span class="form-status">@Model.StatusMessage</span> }
+    </form>
+  </section>
+</main>

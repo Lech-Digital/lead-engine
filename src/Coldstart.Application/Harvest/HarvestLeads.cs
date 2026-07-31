@@ -17,7 +17,7 @@ internal sealed class HarvestLeads(
         var target = await ResolveTargetCustomerAsync(ct);
         tenantScope.SetCurrent(target.Id.Value);
         var sender = new SenderContext(target.Profile.Brief, target.Profile.MentionSourceTool);
-        return await RunPipelineAsync(target.Id, HarvestTargeting.FromNiche(niche), sender, ct);
+        return await RunPipelineAsync(target.Id, HarvestTargeting.FromNiche(niche), sender, target.AllowsSource, ct);
     }
 
     public async Task<HarvestReport> RunForCustomerAsync(Guid customerId, HarvestTargeting targeting, CancellationToken ct)
@@ -30,10 +30,10 @@ internal sealed class HarvestLeads(
             : new SenderContext(customer.Profile.Brief, customer.Profile.MentionSourceTool,
                 customer.Profile.PitchLine, customer.Profile.CtaLine, customer.Profile.CtaButtonUrl,
                 customer.Profile.IntroLine, customer.Profile.SubjectTemplate);
-        return await RunPipelineAsync(cid, targeting, sender, ct);
+        return await RunPipelineAsync(cid, targeting, sender, customer is null ? _ => true : customer.AllowsSource, ct);
     }
 
-    private async Task<HarvestReport> RunPipelineAsync(CustomerId cid, HarvestTargeting targeting, SenderContext sender, CancellationToken ct)
+    private async Task<HarvestReport> RunPipelineAsync(CustomerId cid, HarvestTargeting targeting, SenderContext sender, Func<string, bool> allowsSource, CancellationToken ct)
     {
         var runNiche = BuildRunNiche(targeting);
         int harvested = 0, scoredIn = 0, deduped = 0, enriched = 0, saved = 0, rejected = 0;
@@ -42,7 +42,7 @@ internal sealed class HarvestLeads(
         // Phase 1: harvest + cheap score gate + dedup (no LLM spend yet).
         var candidates = new List<(RawItem item, SignalResult signal)>();
         var seen = new HashSet<string>();   // fingerprints already taken this run
-        foreach (var source in sources.Where(s => s.Enabled))
+        foreach (var source in sources.Where(s => s.Enabled && allowsSource(s.Name)))
         {
             IReadOnlyList<RawItem> items;
             try { items = await source.FetchAsync(runNiche, ct); }
@@ -105,6 +105,7 @@ internal sealed class HarvestLeads(
         MaxEnrichPerRun = t.MaxEnrichPerRun,
         HackerNews = niche.HackerNews,
         Funding = niche.Funding,
+        FundingNl = niche.FundingNl,
         Adzuna = niche.Adzuna,
     };
 

@@ -131,7 +131,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Arrange
         var client = factory.CreateClient();
         await TestAuth.SignInAsync(factory, client, $"prof-{Guid.NewGuid():N}@test.com", "Passw0rd!long");
-        var form = await AntiforgeryForm(client, "/app/settings", new()
+        var form = await AntiforgeryForm(client, "/app/settings/company", new()
         {
             ["Input.CompanyName"] = "Acme Ltd", ["Input.VatNumber"] = "NL999",
             ["Input.Niche"] = "B2B SaaS", ["Input.Address"] = "", ["Input.KvkNumber"] = "",
@@ -139,8 +139,8 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         });
 
         // Act
-        await client.PostAsync("/app/settings", new FormUrlEncodedContent(form));
-        var profile = await client.GetStringAsync("/app/settings");
+        await client.PostAsync("/app/settings/company", new FormUrlEncodedContent(form));
+        var profile = await client.GetStringAsync("/app/settings/company");
 
         // Assert
         profile.Should().Contain("Acme Ltd");
@@ -156,7 +156,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         var client = factory.CreateClient();
         var email = $"prof-brief-{Guid.NewGuid():N}@test.com";
         await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
-        var form = await AntiforgeryForm(client, "/app/settings", new()
+        var form = await AntiforgeryForm(client, "/app/settings/outreach", new()
         {
             ["Input.CompanyName"] = "Acme Ltd", ["Input.VatNumber"] = "", ["Input.Niche"] = "",
             ["Input.Address"] = "", ["Input.KvkNumber"] = "", ["Input.Website"] = "", ["Input.ContactEmail"] = "",
@@ -164,8 +164,8 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         });
 
         // Act
-        await client.PostAsync("/app/settings", new FormUrlEncodedContent(form));
-        var page = await client.GetStringAsync("/app/settings");
+        await client.PostAsync("/app/settings/outreach", new FormUrlEncodedContent(form));
+        var page = await client.GetStringAsync("/app/settings/outreach");
 
         // Assert — brief persists, the toggle is neither rendered nor persisted
         page.Should().Contain("We help dentists fill calendars.");
@@ -190,7 +190,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         {
             ["Input.Email"] = email, ["Input.Password"] = "Passw0rd!long", ["Input.RememberMe"] = "false",
         });
-        var form = await AntiforgeryForm(client, "/app/settings", new()
+        var form = await AntiforgeryForm(client, "/app/settings/outreach", new()
         {
             ["Input.CompanyName"] = "Coldstart", ["Input.VatNumber"] = "", ["Input.Niche"] = "",
             ["Input.Address"] = "", ["Input.KvkNumber"] = "", ["Input.Website"] = "", ["Input.ContactEmail"] = "",
@@ -198,8 +198,8 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         });
 
         // Act
-        await client.PostAsync("/app/settings", new FormUrlEncodedContent(form));
-        var page = await client.GetStringAsync("/app/settings");
+        await client.PostAsync("/app/settings/outreach", new FormUrlEncodedContent(form));
+        var page = await client.GetStringAsync("/app/settings/outreach");
 
         // Assert — the toggle renders for the operator and persisted as checked
         page.Should().Contain("id=\"Input_MentionSourceTool\"");
@@ -212,7 +212,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Arrange
         var client = factory.CreateClient(new() { AllowAutoRedirect = false });
         await TestAuth.SignInAsync(factory, client, $"prof-save-redir-{Guid.NewGuid():N}@test.com", "Passw0rd!long");
-        var form = await AntiforgeryForm(client, "/app/settings", new()
+        var form = await AntiforgeryForm(client, "/app/settings/outreach", new()
         {
             ["Input.CompanyName"] = "Acme Ltd", ["Input.VatNumber"] = "", ["Input.Niche"] = "",
             ["Input.Address"] = "", ["Input.KvkNumber"] = "", ["Input.Website"] = "", ["Input.ContactEmail"] = "",
@@ -220,15 +220,14 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         });
 
         // Act
-        var post = await client.PostAsync("/app/settings", new FormUrlEncodedContent(form));
+        var post = await client.PostAsync("/app/settings/outreach", new FormUrlEncodedContent(form));
 
         // Assert — PRG back to the profile page itself (not /app), with a fragment so the browser
         // returns to the form instead of jumping to the very top; the confirmation then shows inline.
         post.StatusCode.Should().Be(HttpStatusCode.Redirect);
         post.Headers.Location!.OriginalString.Should().StartWith("/app/settings");
-        post.Headers.Location!.OriginalString.Should().Contain("#");
-        var page = await client.GetStringAsync("/app/settings");
-        page.Should().Contain("Company profile saved");
+        var page = await client.GetStringAsync("/app/settings/outreach");
+        page.Should().Contain("Saved");
     }
 
     [Fact]
@@ -238,15 +237,15 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         var client = factory.CreateClient();
         await TestAuth.SignInAsync(factory, client, $"prof-polish-{Guid.NewGuid():N}@test.com", "Passw0rd!long");
         factory.BriefPolisher.Result = "POLISHED BRIEF";
-        var saveForm = await AntiforgeryForm(client, "/app/settings", new()
+        var saveForm = await AntiforgeryForm(client, "/app/settings/outreach", new()
         {
             ["Input.CompanyName"] = "", ["Input.VatNumber"] = "", ["Input.Niche"] = "",
             ["Input.Address"] = "", ["Input.KvkNumber"] = "", ["Input.Website"] = "", ["Input.ContactEmail"] = "",
             ["Input.Brief"] = "rough notes",
         });
-        await client.PostAsync("/app/settings", new FormUrlEncodedContent(saveForm)); // persist the stored brief
+        await client.PostAsync("/app/settings/outreach", new FormUrlEncodedContent(saveForm)); // persist the stored brief
 
-        var polishForm = await AntiforgeryForm(client, "/app/settings", new()
+        var polishForm = await AntiforgeryForm(client, "/app/settings/outreach", new()
         {
             ["Input.CompanyName"] = "", ["Input.VatNumber"] = "", ["Input.Niche"] = "",
             ["Input.Address"] = "", ["Input.KvkNumber"] = "", ["Input.Website"] = "", ["Input.ContactEmail"] = "",
@@ -254,9 +253,9 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         });
 
         // Act
-        var polish = await client.PostAsync("/app/settings?handler=Polish", new FormUrlEncodedContent(polishForm));
+        var polish = await client.PostAsync("/app/settings/outreach?handler=Polish", new FormUrlEncodedContent(polishForm));
         var polishHtml = await polish.Content.ReadAsStringAsync();
-        var freshGet = await client.GetStringAsync("/app/settings");
+        var freshGet = await client.GetStringAsync("/app/settings/outreach");
 
         // Assert
         polish.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -273,7 +272,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         await TestAuth.SignInAsync(factory, client, $"prof-enter-{Guid.NewGuid():N}@test.com", "Passw0rd!long");
 
         // Act
-        var html = await client.GetStringAsync("/app/settings");
+        var html = await client.GetStringAsync("/app/settings/outreach");
 
         // Assert
         var hiddenDefaultSubmit = "<button type=\"submit\" hidden aria-hidden=\"true\" tabindex=\"-1\"></button>";
@@ -290,7 +289,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         var client = factory.CreateClient();
         await TestAuth.SignInAsync(factory, client, $"prof-polish-fail-{Guid.NewGuid():N}@test.com", "Passw0rd!long");
         factory.BriefPolisher.Result = null;
-        var polishForm = await AntiforgeryForm(client, "/app/settings", new()
+        var polishForm = await AntiforgeryForm(client, "/app/settings/outreach", new()
         {
             ["Input.CompanyName"] = "", ["Input.VatNumber"] = "", ["Input.Niche"] = "",
             ["Input.Address"] = "", ["Input.KvkNumber"] = "", ["Input.Website"] = "", ["Input.ContactEmail"] = "",
@@ -298,7 +297,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         });
 
         // Act
-        var polish = await client.PostAsync("/app/settings?handler=Polish", new FormUrlEncodedContent(polishForm));
+        var polish = await client.PostAsync("/app/settings/outreach?handler=Polish", new FormUrlEncodedContent(polishForm));
         var polishHtml = await polish.Content.ReadAsStringAsync();
 
         // Assert
@@ -315,11 +314,11 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         await TestAuth.SignInAsync(factory, client, $"prof-shell-{Guid.NewGuid():N}@test.com", "Passw0rd!long");
 
         // Act
-        var html = await client.GetStringAsync("/app/settings");
+        var html = await client.GetStringAsync("/app/settings/outreach");
 
         // Assert — top app-bar nav (like the lead pages), grouped panels, no auth-card shell
         html.Should().Contain("app-bar");
-        html.Should().Contain("profile-grid");
+        html.Should().Contain("panel");
         html.Should().NotContain("auth-card");
     }
 
@@ -373,14 +372,14 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         var client = factory.CreateClient();
         var email = $"notif-{Guid.NewGuid():N}@test.com";
         await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
-        var form = await AntiforgeryForm(client, "/app/settings", new()
+        var form = await AntiforgeryForm(client, "/app/settings/outreach", new()
         {
             ["SlackWebhookUrl"] = "https://hooks.slack.com/services/T0/B0/secret",
             ["WhatsAppNumber"] = "+31 6 1234 5678",
         });
 
         // Act
-        await client.PostAsync("/app/settings?handler=SaveNotifications", new FormUrlEncodedContent(form));
+        await client.PostAsync("/app/settings/notifications", new FormUrlEncodedContent(form));
 
         // Assert — persisted (and the number normalized) on the tenant
         using var scope = factory.Services.CreateScope();

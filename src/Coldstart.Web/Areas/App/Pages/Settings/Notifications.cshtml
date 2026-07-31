@@ -1,0 +1,36 @@
+@page "/app/settings/notifications"
+@model Coldstart.Web.Areas.App.Pages.Settings.NotificationsSettingsModel
+@{ ViewData["Title"] = "Settings · Notifications"; Layout = "/Pages/Shared/_Layout.cshtml"; ViewData["SettingsTab"] = "notifications"; }
+
+<partial name="_SettingsHeader" />
+<main class="wrap app-zone settings-page">
+  <section class="app-briefing"><h1>Settings</h1></section>
+  <partial name="_SettingsNav" />
+
+  <form method="post">
+    <section class="panel" id="notifications">
+      <h2 class="app-group-head">Notifications</h2>
+      <p class="settings-note">Get a push the moment new leads land in your briefing — no need to check the portal.</p>
+      <div class="field">
+        <label asp-for="SlackWebhookUrl">Slack webhook URL <span class="field-hint">— Slack → Apps → Incoming Webhooks → Add to channel, then paste the URL here</span></label>
+        <input asp-for="SlackWebhookUrl" placeholder="https://hooks.slack.com/services/…">
+      </div>
+      @if (User.IsInRole(Coldstart.Web.ColdstartRoles.SuperAdmin))
+      {
+        <div class="field">
+          <label asp-for="WhatsAppNumber">WhatsApp number <span class="field-hint">— operator only (sandbox) until the paid Twilio account exists</span></label>
+          <input asp-for="WhatsAppNumber" placeholder="+31 6 12345678">
+        </div>
+      }
+      <div class="settings-actions">
+        <button class="btn btn-primary" type="submit">Save →</button>
+        <button class="btn btn-ghost" type="submit" asp-page-handler="TestSlack">Send Slack test</button>
+        @if (User.IsInRole(Coldstart.Web.ColdstartRoles.SuperAdmin))
+        {
+          <button class="btn btn-ghost" type="submit" asp-page-handler="TestWhatsApp">Send WhatsApp test</button>
+        }
+        @if (Model.StatusMessage is not null) { <span class="form-status">@Model.StatusMessage</span> }
+      </div>
+    </section>
+  </form>
+</main>

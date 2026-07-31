@@ -6,8 +6,11 @@ using Coldstart.Application.Harvest;
 
 namespace Coldstart.Infrastructure.Harvest;
 
-internal sealed class FundingRssSource(HttpClient http, NicheOptions niche) : ILeadSource
+// Global funding/business feeds ("funding") - see DutchBusinessNewsSource for the NL set.
+internal class FundingRssSource(HttpClient http, FundingOptions options, string name) : ILeadSource
 {
+    public FundingRssSource(HttpClient http, NicheOptions niche) : this(http, niche.Funding, "funding") { }
+
     private const string Sentinel =
         "FUNDING SIGNAL — this company recently announced new investment, a strong " +
         "indicator they are about to scale headcount and invest in new tooling:";
@@ -17,9 +20,9 @@ internal sealed class FundingRssSource(HttpClient http, NicheOptions niche) : IL
         @"|\bfinancierings?(?:ronde)?\b|\binvesterings?(?:ronde)?\b|\bopgehaald\b|\bophalen\b|\bmiljoen\b|€\s*\d+(?:[.,]\d+)?\s*(?:miljoen|mln|[mMkK]\b)",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-    private readonly FundingOptions _o = niche.Funding;
+    private readonly FundingOptions _o = options;
 
-    public string Name => "funding";
+    public string Name => name;
     public double BaseScore => _o.BaseScore;
     public double ScoreWeight => 1.0;
     public bool Enabled => _o.Enabled;

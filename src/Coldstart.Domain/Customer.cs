@@ -16,6 +16,8 @@ public sealed class Customer
     // Briefing push channels (customer-configured; null = channel off).
     public string? SlackWebhookUrl { get; private set; }
     public string? WhatsAppNumber { get; private set; }
+    // Comma-separated source names the customer opted into; null = all sources.
+    public string? EnabledSourcesCsv { get; private set; }
     public IReadOnlyList<Lead> Leads => _leads.AsReadOnly();
 
     private Customer() { } // EF materialization
@@ -53,6 +55,15 @@ public sealed class Customer
         StripeSubscriptionId = subscriptionId;
         PlanRenewsAt = renewsAt;
     }
+
+    public void ConfigureSources(IReadOnlyCollection<string>? sourceNames) =>
+        EnabledSourcesCsv = sourceNames is null || sourceNames.Count == 0
+            ? null
+            : string.Join(',', sourceNames.Select(s => s.Trim().ToLowerInvariant()).Where(s => s.Length > 0).Distinct());
+
+    public bool AllowsSource(string sourceName) =>
+        EnabledSourcesCsv is null
+        || EnabledSourcesCsv.Split(',', StringSplitOptions.RemoveEmptyEntries).Contains(sourceName, StringComparer.OrdinalIgnoreCase);
 
     public void ConfigureNotifications(string? slackWebhookUrl, string? whatsAppNumber)
     {

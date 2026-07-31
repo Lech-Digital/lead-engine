@@ -27,6 +27,9 @@ namespace Coldstart.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("EnabledSourcesCsv")
+                        .HasColumnType("text");
+
                     b.Property<string>("HarvestStatus")
                         .IsRequired()
                         .ValueGeneratedOnAdd()

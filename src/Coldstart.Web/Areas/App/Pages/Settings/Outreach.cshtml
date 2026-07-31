@@ -1,0 +1,48 @@
+@page "/app/settings/outreach"
+@model Coldstart.Web.Areas.App.Pages.Settings.OutreachSettingsModel
+@{ ViewData["Title"] = "Settings · Outreach"; Layout = "/Pages/Shared/_Layout.cshtml"; ViewData["SettingsTab"] = "outreach"; }
+
+<partial name="_SettingsHeader" />
+<main class="wrap app-zone settings-page">
+  <section class="app-briefing"><h1>Settings</h1></section>
+  <partial name="_SettingsNav" />
+
+  <form method="post">
+    <button type="submit" hidden aria-hidden="true" tabindex="-1"></button>
+    <section class="panel" id="outreach">
+      <h2 class="app-group-head">Outreach voice</h2>
+      <div class="field">
+        <label asp-for="Input.Brief">Company brief <span class="field-hint">— a short "who we are" used as context in your outreach</span></label>
+        <textarea asp-for="Input.Brief" rows="4" autofocus="@Model.JustPolished"></textarea>
+        <button class="btn btn-ghost btn-sm profile-polish" type="submit" asp-page-handler="Polish">Polish with AI</button>
+      </div>
+      <div class="field">
+        <label asp-for="Input.PitchLine">Pitch paragraph <span class="field-hint">— appended to every draft, word-for-word; the AI writes only the personal opener above it</span></label>
+        <textarea asp-for="Input.PitchLine" rows="3"></textarea>
+      </div>
+      <div class="field">
+        <label asp-for="Input.IntroLine">Intro line <span class="field-hint">— one sentence after the greeting explaining why you're writing</span></label>
+        <textarea asp-for="Input.IntroLine" rows="2"></textarea>
+      </div>
+      @if (User.IsInRole(Coldstart.Web.ColdstartRoles.SuperAdmin))
+      {
+        <div class="field">
+          <label asp-for="Input.CtaLine">Call-to-action paragraph <span class="field-hint">— operator only</span></label>
+          <textarea asp-for="Input.CtaLine" rows="2"></textarea>
+        </div>
+        <div class="profile-grid">
+          <div class="field"><label asp-for="Input.CtaButtonText">Button label</label><input asp-for="Input.CtaButtonText"></div>
+          <div class="field"><label asp-for="Input.CtaButtonUrl">Button link</label><input asp-for="Input.CtaButtonUrl"></div>
+        </div>
+        <div class="field"><label asp-for="Input.SubjectTemplate">Subject template</label><input asp-for="Input.SubjectTemplate"></div>
+        <div class="field field-check">
+          <label><input asp-for="Input.MentionSourceTool" type="checkbox"> Mention leads were found via Coldstart</label>
+        </div>
+      }
+    </section>
+    <div class="profile-actions">
+      <button class="btn btn-primary" type="submit">Save →</button>
+      @if (Model.StatusMessage is not null) { <span class="form-status">@Model.StatusMessage</span> }
+    </div>
+  </form>
+</main>

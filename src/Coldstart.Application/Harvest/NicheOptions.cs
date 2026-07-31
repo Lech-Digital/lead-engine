@@ -13,6 +13,8 @@ public sealed class NicheOptions
     public string TargetCustomerName { get; set; } = "Coldstart";
     public HackerNewsOptions HackerNews { get; set; } = new();
     public FundingOptions Funding { get; set; } = new();
+    // The Dutch feed set, exposed to customers as its own source ("funding-nl").
+    public FundingOptions FundingNl { get; set; } = new();
     public AdzunaOptions Adzuna { get; set; } = new();
 }
 

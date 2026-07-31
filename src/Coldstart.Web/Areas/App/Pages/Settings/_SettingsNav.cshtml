@@ -1,0 +1,8 @@
+@{ var active = (string?)ViewData["SettingsTab"] ?? ""; }
+<nav class="settings-nav" aria-label="Settings sections">
+  <a href="/app/settings/company" class="@(active == "company" ? "active" : null)">Company</a>
+  <a href="/app/settings/outreach" class="@(active == "outreach" ? "active" : null)">Outreach</a>
+  <a href="/app/settings/sources" class="@(active == "sources" ? "active" : null)">Sources</a>
+  <a href="/app/settings/notifications" class="@(active == "notifications" ? "active" : null)">Notifications</a>
+  <a href="/app/settings/account" class="@(active == "account" ? "active" : null)">Account</a>
+</nav>
