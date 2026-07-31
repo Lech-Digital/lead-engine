@@ -10,7 +10,12 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 namespace Coldstart.Web.Areas.App.Pages.Settings;
 
 [Authorize]
-public sealed class SourcesSettingsModel(UserManager<ApplicationUser> users, ICustomerRepository customers, IUpdateSourceSelection updateSources) : PageModel
+public sealed class SourcesSettingsModel(
+    UserManager<ApplicationUser> users,
+    ICustomerRepository customers,
+    IUpdateSourceSelection updateSources,
+    IEmailSender email,
+    Microsoft.Extensions.Options.IOptions<Coldstart.Infrastructure.OpsOptions> ops) : PageModel
 {
     // The customer-facing source catalogue. Names must match ILeadSource.Name values.
     internal static readonly (string Name, string Title, string Description)[] Catalogue =
@@ -60,6 +65,28 @@ public sealed class SourcesSettingsModel(UserManager<ApplicationUser> users, ICu
         await updateSources.UpdateAsync(user.CustomerId.Value,
             selected.Count == Catalogue.Length ? null : selected, ct);
         StatusMessage = "Saved.";
+        return RedirectToPage();
+    }
+
+    // The wish box: free text straight to the founder's inbox — customer wishes ARE the roadmap.
+    public async Task<IActionResult> OnPostWishAsync(string? wish, CancellationToken ct)
+    {
+        var user = await users.GetUserAsync(User);
+        if (user?.CustomerId is null) return RedirectToPage("/Index", new { area = "App" });
+
+        var text = (wish ?? "").Trim();
+        if (text.Length is < 3 or > 2000)
+        {
+            StatusMessage = "Tell us a bit more — a few words is all it takes.";
+            return RedirectToPage();
+        }
+
+        var customer = await customers.GetAsync(new CustomerId(user.CustomerId.Value), ct);
+        await email.SendAsync(ops.Value.AlertEmail,
+            $"💡 Wish from {customer?.Name ?? "a customer"}",
+            $"From: {customer?.Name ?? "?"} ({user.Email})\nPage: /app/settings/sources\n\n{text}",
+            null, ct);
+        StatusMessage = "Sent — it lands directly with the founder. Thank you!";
         return RedirectToPage();
     }
 }

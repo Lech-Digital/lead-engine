@@ -28,4 +28,17 @@
       @if (Model.StatusMessage is not null) { <span class="form-status">@Model.StatusMessage</span> }
     </div>
   </form>
+
+  <form method="post" asp-page-handler="Wish">
+    <section class="panel">
+      <h2 class="app-group-head">Missing something?</h2>
+      <p class="settings-note">A source we should hunt, a feature you wish existed — say it here and it goes straight to the founder, not into a ticket queue.</p>
+      <textarea name="wish" rows="3" minlength="3" maxlength="2000" required
+                placeholder="e.g. Belgian job boards, LinkedIn company announcements, a weekly summary email…"
+                style="width:100%;resize:vertical;"></textarea>
+      <div class="profile-actions" style="margin-top:10px;">
+        <button class="btn btn-ghost" type="submit">Send wish →</button>
+      </div>
+    </section>
+  </form>
 </main>
