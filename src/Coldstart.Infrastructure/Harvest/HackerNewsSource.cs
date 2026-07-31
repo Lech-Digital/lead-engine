@@ -15,7 +15,7 @@ internal sealed class HackerNewsSource(HttpClient http, NicheOptions niche) : IL
     public double ScoreWeight => _o.ScoreWeight;
     public bool Enabled => _o.Enabled;
 
-    public async Task<IReadOnlyList<RawItem>> FetchAsync(CancellationToken ct)
+    public async Task<IReadOnlyList<RawItem>> FetchAsync(NicheOptions runNiche, CancellationToken ct)
     {
         var cutoff = DateTimeOffset.UtcNow.AddHours(-_o.LookbackHours).ToUnixTimeSeconds();
         var items = new List<RawItem>();

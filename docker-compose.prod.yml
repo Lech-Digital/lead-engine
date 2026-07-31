@@ -74,6 +74,9 @@ services:
       Twilio__AuthToken: ${TWILIO_AUTH_TOKEN:-}
       Twilio__WhatsAppFrom: ${TWILIO_WHATSAPP_FROM:-}
       Twilio__ContentSid: ${TWILIO_CONTENT_SID:-}
+      # Adzuna job-signal source (free developer key). Soft-degrade: unset -> source off.
+      Niche__Adzuna__AppId: ${ADZUNA_APP_ID:-}
+      Niche__Adzuna__AppKey: ${ADZUNA_APP_KEY:-}
     volumes:
       - coldstart-dpkeys:/app/keys
     expose:

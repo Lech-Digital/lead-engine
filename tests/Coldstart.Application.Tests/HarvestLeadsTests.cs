@@ -20,7 +20,7 @@ public class HarvestLeadsTests
         public double BaseScore => 0;
         public double ScoreWeight => 1;
         public bool Enabled => true;
-        public Task<IReadOnlyList<RawItem>> FetchAsync(CancellationToken ct) => Task.FromResult<IReadOnlyList<RawItem>>(items);
+        public Task<IReadOnlyList<RawItem>> FetchAsync(NicheOptions runNiche, CancellationToken ct) => Task.FromResult<IReadOnlyList<RawItem>>(items);
     }
 
     [Fact]
@@ -155,7 +155,7 @@ public class HarvestLeadsTests
         source.Enabled.Returns(true);
         source.BaseScore.Returns(0.0);
         source.ScoreWeight.Returns(1.0);
-        source.FetchAsync(Arg.Any<CancellationToken>()).Returns(new[] { item });
+        source.FetchAsync(Arg.Any<NicheOptions>(), Arg.Any<CancellationToken>()).Returns(new[] { item });
 
         var leads = Substitute.For<ILeadRepository>();
         leads.ExistsByFingerprintAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(false);

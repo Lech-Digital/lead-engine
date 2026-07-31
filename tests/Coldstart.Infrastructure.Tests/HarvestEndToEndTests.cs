@@ -15,7 +15,7 @@ public class HarvestEndToEndTests(PostgresFixture fixture) : IClassFixture<Postg
     private sealed class OneSource(RawItem item) : ILeadSource
     {
         public string Name => "fake"; public double BaseScore => 0; public double ScoreWeight => 1; public bool Enabled => true;
-        public Task<IReadOnlyList<RawItem>> FetchAsync(CancellationToken ct) => Task.FromResult<IReadOnlyList<RawItem>>([item]);
+        public Task<IReadOnlyList<RawItem>> FetchAsync(NicheOptions runNiche, CancellationToken ct) => Task.FromResult<IReadOnlyList<RawItem>>([item]);
     }
 
     // The DbContext's tenant filter reads from the same ITenantContext instance HarvestLeads sets

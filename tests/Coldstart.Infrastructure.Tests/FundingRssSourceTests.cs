@@ -36,7 +36,7 @@ public class FundingRssSourceTests
         var sut = new FundingRssSource(http, niche);
 
         // Act
-        var items = await sut.FetchAsync(CancellationToken.None);
+        var items = await sut.FetchAsync(niche, CancellationToken.None);
 
         // Assert
         items.Should().ContainSingle();
@@ -56,11 +56,11 @@ public class FundingRssSourceTests
         var sut = new FundingRssSource(http, niche);
 
         // Act
-        Func<Task> act = async () => await sut.FetchAsync(CancellationToken.None);
+        Func<Task> act = async () => await sut.FetchAsync(niche, CancellationToken.None);
 
         // Assert
         await act.Should().NotThrowAsync();
-        var items = await sut.FetchAsync(CancellationToken.None);
+        var items = await sut.FetchAsync(niche, CancellationToken.None);
         items.Should().BeEmpty();
     }
 
@@ -83,7 +83,7 @@ public class FundingRssSourceTests
         var sut = new FundingRssSource(http, niche);
 
         // Act
-        var items = await sut.FetchAsync(CancellationToken.None);
+        var items = await sut.FetchAsync(niche, CancellationToken.None);
 
         // Assert
         items.Should().ContainSingle();
@@ -110,7 +110,7 @@ public class FundingRssSourceTests
         var sut = new FundingRssSource(http, niche);
 
         // Act
-        var items = await sut.FetchAsync(CancellationToken.None);
+        var items = await sut.FetchAsync(niche, CancellationToken.None);
 
         // Assert
         items.Should().ContainSingle();

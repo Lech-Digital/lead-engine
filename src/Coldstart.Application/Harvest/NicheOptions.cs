@@ -13,6 +13,7 @@ public sealed class NicheOptions
     public string TargetCustomerName { get; set; } = "Coldstart";
     public HackerNewsOptions HackerNews { get; set; } = new();
     public FundingOptions Funding { get; set; } = new();
+    public AdzunaOptions Adzuna { get; set; } = new();
 }
 
 public sealed class HackerNewsOptions
@@ -32,4 +33,18 @@ public sealed class FundingOptions
     public int MaxPerFeed { get; set; } = 40;
     public bool RequireFundingTerms { get; set; } = true;
     public double BaseScore { get; set; } = 0.5;
+}
+
+public sealed class AdzunaOptions
+{
+    public bool Enabled { get; set; } = true;
+    // Free developer credentials from developer.adzuna.com; empty = source off (soft-degrade).
+    public string AppId { get; set; } = "";
+    public string AppKey { get; set; } = "";
+    public string Country { get; set; } = "nl";
+    public int MaxQueries { get; set; } = 5;
+    public int ResultsPerQuery { get; set; } = 20;
+    public int MaxDaysOld { get; set; } = 14;
+    public double BaseScore { get; set; } = 0.45;
+    public double ScoreWeight { get; set; } = 1.0;
 }

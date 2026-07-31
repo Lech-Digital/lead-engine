@@ -29,7 +29,7 @@ public class HackerNewsSourceTests
         var sut = new HackerNewsSource(http, niche);
 
         // Act
-        var items = await sut.FetchAsync(CancellationToken.None);
+        var items = await sut.FetchAsync(niche, CancellationToken.None);
 
         // Assert
         items.Should().ContainSingle();
@@ -50,11 +50,11 @@ public class HackerNewsSourceTests
         var sut = new HackerNewsSource(http, niche);
 
         // Act
-        Func<Task> act = async () => await sut.FetchAsync(CancellationToken.None);
+        Func<Task> act = async () => await sut.FetchAsync(niche, CancellationToken.None);
 
         // Assert
         await act.Should().NotThrowAsync();
-        var items = await sut.FetchAsync(CancellationToken.None);
+        var items = await sut.FetchAsync(niche, CancellationToken.None);
         items.Should().BeEmpty();
     }
 
@@ -70,7 +70,7 @@ public class HackerNewsSourceTests
         var sut = new HackerNewsSource(http, niche);
 
         // Act
-        var items = await sut.FetchAsync(CancellationToken.None);
+        var items = await sut.FetchAsync(niche, CancellationToken.None);
 
         // Assert
         items.Should().BeEmpty();

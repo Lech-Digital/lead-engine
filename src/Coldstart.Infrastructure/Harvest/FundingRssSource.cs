@@ -12,7 +12,9 @@ internal sealed class FundingRssSource(HttpClient http, NicheOptions niche) : IL
         "FUNDING SIGNAL — this company recently announced new investment, a strong " +
         "indicator they are about to scale headcount and invest in new tooling:";
     private static readonly Regex FundingRe = new(
-        @"\brais(?:e|es|ed|ing)\b|\b(?:pre-)?seed\b|\bseries\s+[a-h]\b|\bfunding\b|\bround\b|\bled\sby\b|\$\d+(?:\.\d+)?\s*[mMbB]\b|\blands?\s+\$",
+        @"\brais(?:e|es|ed|ing)\b|\b(?:pre-)?seed\b|\bseries\s+[a-h]\b|\bfunding\b|\bround\b|\bled\sby\b|\$\d+(?:\.\d+)?\s*[mMbB]\b|\blands?\s+\$" +
+        // Dutch feeds (Emerce, MT/Sprout, …): financieringsronde, investering, miljoen opgehaald, €12M…
+        @"|\bfinancierings?(?:ronde)?\b|\binvesterings?(?:ronde)?\b|\bopgehaald\b|\bophalen\b|\bmiljoen\b|€\s*\d+(?:[.,]\d+)?\s*(?:miljoen|mln|[mMkK]\b)",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private readonly FundingOptions _o = niche.Funding;
@@ -22,7 +24,7 @@ internal sealed class FundingRssSource(HttpClient http, NicheOptions niche) : IL
     public double ScoreWeight => 1.0;
     public bool Enabled => _o.Enabled;
 
-    public async Task<IReadOnlyList<RawItem>> FetchAsync(CancellationToken ct)
+    public async Task<IReadOnlyList<RawItem>> FetchAsync(NicheOptions runNiche, CancellationToken ct)
     {
         var items = new List<RawItem>();
         foreach (var feed in _o.Feeds)

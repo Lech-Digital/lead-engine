@@ -27,6 +27,7 @@ public static class DependencyInjection
         services.TryAddSingleton<Application.Harvest.NicheOptions>();
         services.AddScoped<Application.Harvest.ILeadSource, Harvest.HackerNewsSource>();
         services.AddScoped<Application.Harvest.ILeadSource, Harvest.FundingRssSource>();
+        services.AddScoped<Application.Harvest.ILeadSource, Harvest.AdzunaSource>();
         services.AddScoped<Application.Harvest.ILeadEnricher, Harvest.GroqLeadEnricher>();
         services.AddScoped<Application.Notifications.IBriefingChannel, Notifications.SlackBriefingChannel>();
         services.AddScoped<Application.Notifications.IBriefingChannel, Notifications.TwilioWhatsAppChannel>();

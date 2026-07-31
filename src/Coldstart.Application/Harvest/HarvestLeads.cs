@@ -45,7 +45,7 @@ internal sealed class HarvestLeads(
         foreach (var source in sources.Where(s => s.Enabled))
         {
             IReadOnlyList<RawItem> items;
-            try { items = await source.FetchAsync(ct); }
+            try { items = await source.FetchAsync(runNiche, ct); }
             catch { continue; }   // a failing source must not abort the run
             foreach (var item in items)
             {
@@ -105,6 +105,7 @@ internal sealed class HarvestLeads(
         MaxEnrichPerRun = t.MaxEnrichPerRun,
         HackerNews = niche.HackerNews,
         Funding = niche.Funding,
+        Adzuna = niche.Adzuna,
     };
 
     private async Task<Customer> ResolveTargetCustomerAsync(CancellationToken ct)
