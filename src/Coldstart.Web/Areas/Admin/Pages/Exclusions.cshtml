@@ -1,0 +1,61 @@
+@page "/admin/exclusions"
+@model Coldstart.Web.Areas.Admin.Pages.ExclusionsModel
+@{ ViewData["Title"] = "Admin · Exclusions"; Layout = "/Pages/Shared/_Layout.cshtml"; }
+
+<header class="app-bar">
+  <a class="wordmark" href="/">coldstart<i>*</i></a>
+  <nav class="app-nav">
+    <a href="/admin">Admin</a>
+    <a href="/admin/mailbox">Mailbox</a>
+    <form method="post" asp-page="/Account/Logout" asp-area="Identity"><button class="btn btn-ghost" type="submit">Log out</button></form>
+  </nav>
+</header>
+
+<main class="wrap app-zone">
+  <h1 class="cz-h1">Exclusions</h1>
+  <p class="settings-note">Companies that objected to processing (GDPR art. 21). Anything matching these values — case-insensitive, substring — never enters a harvest again, for any customer. Add the company name as it appears in the wild; add the domain as a second entry when known.</p>
+
+  @if (Model.StatusMessage is not null) { <p class="form-status">@Model.StatusMessage</p> }
+
+  <section class="panel">
+    <form method="post" asp-page-handler="Add" class="cz-search" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <input type="text" name="value" placeholder="Company name or domain (min. 3 chars)" required minlength="3" maxlength="200" style="flex:1;min-width:220px;">
+      <input type="text" name="note" placeholder="Note (who objected, when)" maxlength="500" style="flex:1;min-width:220px;">
+      <button class="btn btn-primary" type="submit">Exclude</button>
+    </form>
+  </section>
+
+  <section class="panel">
+    @if (Model.Rows.Count == 0)
+    {
+      <p class="settings-note">No exclusions yet. When an objection arrives at info@getcoldstart.nl, add it here the same day.</p>
+    }
+    else
+    {
+      <table style="width:100%;border-collapse:collapse;">
+        <thead><tr>
+          <th style="text-align:left;padding:8px 6px;">Value</th>
+          <th style="text-align:left;padding:8px 6px;">Note</th>
+          <th style="text-align:left;padding:8px 6px;">Added</th>
+          <th></th>
+        </tr></thead>
+        <tbody>
+        @foreach (var row in Model.Rows)
+        {
+          <tr style="border-top:1px solid var(--line-soft);">
+            <td style="padding:8px 6px;"><code>@row.Value</code></td>
+            <td style="padding:8px 6px;">@row.Note</td>
+            <td style="padding:8px 6px;">@row.CreatedAt.ToString("d MMM yyyy")</td>
+            <td style="padding:8px 6px;text-align:right;">
+              <form method="post" asp-page-handler="Remove" style="display:inline;">
+                <input type="hidden" name="id" value="@row.Id">
+                <button class="btn btn-ghost" type="submit">Remove</button>
+              </form>
+            </td>
+          </tr>
+        }
+        </tbody>
+      </table>
+    }
+  </section>
+</main>

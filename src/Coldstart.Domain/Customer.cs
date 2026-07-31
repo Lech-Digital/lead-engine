@@ -21,6 +21,10 @@ public sealed class Customer
     // Trial follow-up nudges (Free plan): highest stage already sent (0 = none), and opt-out.
     public int FollowUpStage { get; private set; }
     public bool FollowUpsOptOut { get; private set; }
+    // Retention clock (privacy policy §7): when a paid subscription ended, and whether the
+    // operator has been reminded that the 60-day deletion window is closing.
+    public DateTimeOffset? SubscriptionEndedAt { get; private set; }
+    public bool RetentionReminderSent { get; private set; }
     public IReadOnlyList<Lead> Leads => _leads.AsReadOnly();
 
     private Customer() { } // EF materialization
@@ -65,7 +69,11 @@ public sealed class Customer
         Plan = CustomerPlan.Full;
         StripeSubscriptionId = subscriptionId;
         PlanRenewsAt = renewsAt;
+        SubscriptionEndedAt = null;         // re-subscribing stops the retention clock
+        RetentionReminderSent = false;
     }
+
+    public void MarkRetentionReminderSent() => RetentionReminderSent = true;
 
     public void ConfigureSources(IReadOnlyCollection<string>? sourceNames) =>
         EnabledSourcesCsv = sourceNames is null || sourceNames.Count == 0
@@ -82,8 +90,11 @@ public sealed class Customer
         WhatsAppNumber = string.IsNullOrWhiteSpace(whatsAppNumber) ? null : whatsAppNumber.Trim();
     }
 
-    public void DowngradeToFree()
+    public void DowngradeToFree(DateTimeOffset? endedAt = null)
     {
+        // Only a real subscription start the retention clock — a Free account that never paid
+        // has no "subscription end" in the privacy-policy sense.
+        if (Plan == CustomerPlan.Full) SubscriptionEndedAt = endedAt;
         Plan = CustomerPlan.Free;
         StripeSubscriptionId = null;
         PlanRenewsAt = null;

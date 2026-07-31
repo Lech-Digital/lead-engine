@@ -30,7 +30,7 @@ internal sealed class ApplySubscriptionChange(ICustomerRepository customers, ITe
         if (change.State == SubscriptionState.Active)
             customer.ActivateFull(change.SubscriptionId ?? customer.StripeSubscriptionId ?? "", change.RenewsAt);
         else
-            customer.DowngradeToFree();
+            customer.DowngradeToFree(DateTimeOffset.UtcNow);   // starts the 60-day retention clock
 
         await customers.UpdateAsync(customer, ct);
     }

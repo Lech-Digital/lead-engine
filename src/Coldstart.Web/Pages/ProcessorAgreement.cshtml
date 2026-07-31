@@ -1,0 +1,49 @@
+@page "/verwerkersovereenkomst"
+@model Coldstart.Web.Pages.ProcessorAgreementModel
+@{
+    ViewData["Title"] = "Processor agreement (verwerkersovereenkomst) — Coldstart";
+    Layout = "/Pages/Shared/_Layout.cshtml";
+}
+<partial name="_PublicNav" />
+<main class="legal">
+  <div class="wrap wrap-narrow">
+    <h1>Processor agreement</h1>
+    <p class="legal-banner">Verwerkersovereenkomst · Version 1.0 · 31 July 2026 · Forms part of the <a href="/terms">Terms &amp; conditions</a> (art. 9). A countersigned copy is available on request via <a href="mailto:info@getcoldstart.nl">info@getcoldstart.nl</a>.</p>
+
+    <h2>1. Parties and scope</h2>
+    <p>This agreement is between the Customer (the <strong>controller</strong>) and Coldstart, Schiedam, the Netherlands, KvK 42125737 (the <strong>processor</strong>), and governs all personal data Coldstart processes on the Customer's behalf under the main agreement. It implements Article 28(3) GDPR. Where this agreement and the Terms conflict on data protection, this agreement prevails.</p>
+
+    <h2>2. What we process, and why</h2>
+    <p><strong>Subject matter and purpose:</strong> identifying companies that plausibly need what the Customer sells, and drafting opening emails to them. <strong>Nature:</strong> collection of publicly available business information, automated analysis, storage, and display to the Customer. <strong>Categories of data:</strong> business contact data of people at identified companies (name, role, business email address, public statements). <strong>Data subjects:</strong> employees and representatives of the identified companies. <strong>Duration:</strong> the term of the main agreement plus the deletion window in clause 8.</p>
+
+    <h2>3. Instructions</h2>
+    <p>We process this data only on the Customer's documented instructions — the configuration of the Customer's account (niche, keywords, sources) counts as such an instruction — and never for our own purposes. We inform the Customer immediately if we believe an instruction violates the GDPR.</p>
+
+    <h2>4. Confidentiality and personnel</h2>
+    <p>Access is limited to persons who need it to provide the Service (currently: the founder), who are bound to confidentiality.</p>
+
+    <h2>5. Security (art. 32 GDPR)</h2>
+    <p>Measures in place: EU-only hosting and backups (Hetzner, Germany); TLS for all data in transit; tenant isolation enforced at the database layer; rate-limited authentication with modern password policy; encrypted backups rotating out after 14 days; production access restricted by SSH key. We adapt these measures as risk and the state of the art evolve, never below this level.</p>
+
+    <h2>6. Sub-processors</h2>
+    <p>The Customer authorizes the sub-processors listed in the <a href="/privacy">privacy policy</a> (section 6): Hetzner (hosting, DE), Resend (email delivery, EU region), Stripe (payments), Google Gemini API (analysis of public post text), Twilio (WhatsApp notifications, only when enabled), and Adzuna (job-market queries, receives no personal data). We announce changes to this list at least 14 days ahead by email; the Customer may object on reasonable grounds, in which case we find an alternative or the Customer may cancel the affected part of the Service. Sub-processors are bound by written terms no weaker than this agreement.</p>
+
+    <h2>7. Assistance</h2>
+    <p>We assist the Customer, taking into account the nature of the processing, with data-subject requests (access, correction, deletion, objection) and with the Customer's own art. 32–36 obligations (security, breach notification, DPIAs). Requests reaching us directly are forwarded to the Customer without undue delay. Companies or persons who object are additionally placed on Coldstart's global exclusion list, so they are not processed again for any customer.</p>
+
+    <h2>8. Personal data breaches</h2>
+    <p>We inform the Customer without undue delay — at the latest within 48 hours of becoming aware — of any personal data breach affecting the Customer's data, with the information the Customer needs for its own notification duties, and we cooperate in limiting the damage.</p>
+
+    <h2>9. Deletion and return</h2>
+    <p>On termination of the main agreement we delete the Customer's personal data within 60 days, unless law requires longer retention. Up to 30 days after termination the Customer can request an export (the in-app CSV export remains the fastest route while the account is active).</p>
+
+    <h2>10. Audits</h2>
+    <p>We make available the information reasonably necessary to demonstrate compliance with this agreement, and we allow audits — at most once per year, announced 30 days ahead, during business hours, at the Customer's cost — by the Customer or an auditor it mandates who is not a competitor of Coldstart.</p>
+
+    <h2>11. Location of processing</h2>
+    <p>Processing takes place within the EU/EEA. Where a sub-processor processes data outside the EEA (e.g. Stripe, Google, Twilio under their global infrastructure), it does so under the European Commission's Standard Contractual Clauses or an adequacy decision.</p>
+
+    <h2>12. Liability and duration</h2>
+    <p>The liability arrangement of the Terms (art. 12) applies to this agreement. This agreement takes effect with the main agreement and ends when the processing under clause 9 is complete.</p>
+  </div>
+</main>

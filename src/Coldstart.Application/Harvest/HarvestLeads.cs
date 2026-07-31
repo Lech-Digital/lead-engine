@@ -8,6 +8,7 @@ internal sealed class HarvestLeads(
     ILeadEnricher enricher,
     ILeadRepository leads,
     ICustomerRepository customers,
+    ISuppressionRepository suppressions,
     NicheOptions niche,
     ITenantScope tenantScope) : IHarvestLeads
 {
@@ -38,6 +39,8 @@ internal sealed class HarvestLeads(
         var runNiche = BuildRunNiche(targeting);
         int harvested = 0, scoredIn = 0, deduped = 0, enriched = 0, saved = 0, rejected = 0;
         var savedLeads = new List<SavedLead>();
+        // GDPR objection list (privacy policy §5): matching items never enter the pipeline.
+        var suppressed = await suppressions.ValuesAsync(ct);
 
         // Phase 1: harvest + cheap score gate + dedup (no LLM spend yet).
         var candidates = new List<(RawItem item, SignalResult signal)>();
@@ -50,6 +53,7 @@ internal sealed class HarvestLeads(
             foreach (var item in items)
             {
                 harvested++;
+                if (SuppressionMatcher.IsMatch(suppressed, item.Title, item.Author)) continue;
                 var signal = SignalScorer.Score(item, runNiche, source.BaseScore, source.ScoreWeight);
                 if (signal.Score < runNiche.MinScore) continue;
                 scoredIn++;
@@ -69,6 +73,8 @@ internal sealed class HarvestLeads(
             if (result is null) continue;         // LLM failed/empty → retried next run
             enriched++;
             var company = string.IsNullOrWhiteSpace(result.Company) || result.Company == "-" ? item.Author : result.Company;
+            // Second gate: the true company name is often only known after enrichment.
+            if (SuppressionMatcher.IsMatch(suppressed, company)) continue;
             // Real fits get the sender's hardcoded pitch/CTA appended; rejected drafts are "-".
             var draft = result.Fit == Fit.No ? result.Draft : DraftComposer.Compose(result.Draft, sender, company, result.ProspectNiche, result.ProspectSells);
             var subject = result.Fit == Fit.No ? result.Subject : DraftComposer.ComposeSubject(result.Subject, sender, company, result.ProspectNiche, result.ProspectSells);

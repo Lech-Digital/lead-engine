@@ -17,6 +17,8 @@ public static class DependencyInjection
         services.AddScoped<ILeadRepository, LeadRepository>();
         services.AddScoped<ICustomerRepository, CustomerRepository>();
         services.AddScoped<IInquiryRepository, Repositories.InquiryRepository>();
+        services.AddScoped<ISuppressionRepository, Repositories.SuppressionRepository>();
+        services.AddScoped<Retention.RetentionSweeper>();
         services.AddScoped<IEmailSender, Email.SmtpEmailSender>();
         services.AddScoped<Application.Outreach.IOutreachMailer, Outreach.SmtpOutreachMailer>();
         services.AddScoped<Application.Mailbox.IMailbox, Mailbox.ImapMailbox>();
@@ -55,6 +57,7 @@ public static class DependencyInjection
         services.AddHostedService<Harvest.HarvestQueueService>();
         services.AddHostedService<Harvest.NightlyHarvestScheduler>();
         services.AddHostedService<FollowUps.TrialFollowUpScheduler>();
+        services.AddHostedService<Retention.RetentionCleanupService>();
         return services;
     }
 }

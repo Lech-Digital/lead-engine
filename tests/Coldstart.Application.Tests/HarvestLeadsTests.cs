@@ -40,7 +40,7 @@ public class HarvestLeadsTests
         Customer? target = null;
         customers.AddAsync(Arg.Do<Customer>(c => target = c), Arg.Any<CancellationToken>()).Returns(Task.CompletedTask);
         var tenantScope = Substitute.For<ITenantScope>();
-        var sut = new HarvestLeads([source], enricher, leads, customers, Niche(), tenantScope);
+        var sut = new HarvestLeads([source], enricher, leads, customers, NoSuppressions(), Niche(), tenantScope);
 
         // Act
         var report = await sut.RunAsync(CancellationToken.None);
@@ -66,7 +66,7 @@ public class HarvestLeadsTests
         leads.ExistsByFingerprintAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(false);
         var customers = Substitute.For<ICustomerRepository>();
         customers.GetByNameAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns((Customer?)null);
-        var sut = new HarvestLeads([new FakeSource(first, again)], enricher, leads, customers, Niche(), Substitute.For<ITenantScope>());
+        var sut = new HarvestLeads([new FakeSource(first, again)], enricher, leads, customers, NoSuppressions(), Niche(), Substitute.For<ITenantScope>());
 
         // Act
         var report = await sut.RunAsync(CancellationToken.None);
@@ -94,7 +94,7 @@ public class HarvestLeadsTests
         leads.ExistsByFingerprintAsync(no.Fingerprint, Arg.Any<CancellationToken>()).Returns(false);
         var customers = Substitute.For<ICustomerRepository>();
         customers.GetByNameAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns((Customer?)null);
-        var sut = new HarvestLeads([new FakeSource(dup, no)], enricher, leads, customers, Niche(), Substitute.For<ITenantScope>());
+        var sut = new HarvestLeads([new FakeSource(dup, no)], enricher, leads, customers, NoSuppressions(), Niche(), Substitute.For<ITenantScope>());
 
         // Act
         var report = await sut.RunAsync(CancellationToken.None);
@@ -131,7 +131,7 @@ public class HarvestLeadsTests
         target.UpdateProfile(new CompanyProfile(null, null, null, null, null, null, null, "We help dentists.", true));
         var customers = Substitute.For<ICustomerRepository>();
         customers.GetByNameAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(target);
-        var sut = new HarvestLeads([source], enricher, leads, customers, Niche(), Substitute.For<ITenantScope>());
+        var sut = new HarvestLeads([source], enricher, leads, customers, NoSuppressions(), Niche(), Substitute.For<ITenantScope>());
 
         // Act
         await sut.RunAsync(CancellationToken.None);
@@ -166,7 +166,7 @@ public class HarvestLeadsTests
 
         var globalNiche = new NicheOptions();   // provides HackerNews/Funding source config
         var scope = Substitute.For<ITenantScope>();
-        var sut = new HarvestLeads(new[] { source }, enricher, leads, customers, globalNiche, scope);
+        var sut = new HarvestLeads(new[] { source }, enricher, leads, customers, NoSuppressions(), globalNiche, scope);
         var targeting = new HarvestTargeting("offer", ["dentist"], ["hiring"], [], "Acme", "", 0.4, 30);
 
         // Act
@@ -176,5 +176,12 @@ public class HarvestLeadsTests
         scope.Received().SetCurrent(cid);
         report.Saved.Should().Be(1);
         await leads.Received().AddAsync(Arg.Is<Lead>(l => l.CustomerId.Value == cid && l.Company == "Acme"), Arg.Any<CancellationToken>());
+    }
+
+    private static ISuppressionRepository NoSuppressions()
+    {
+        var repo = Substitute.For<ISuppressionRepository>();
+        repo.ValuesAsync(Arg.Any<CancellationToken>()).Returns([]);
+        return repo;
     }
 }

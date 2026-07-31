@@ -22,6 +22,7 @@ builder.Services.Configure<Coldstart.Infrastructure.Harvest.LlmOptions>(builder.
 builder.Services.Configure<Coldstart.Infrastructure.Outreach.OutreachMailboxOptions>(builder.Configuration.GetSection("OutreachMailbox"));
 builder.Services.Configure<Coldstart.Infrastructure.Harvest.HarvestScheduleOptions>(builder.Configuration.GetSection("HarvestSchedule"));
 builder.Services.Configure<Coldstart.Infrastructure.FollowUps.FollowUpOptions>(builder.Configuration.GetSection("FollowUps"));
+builder.Services.Configure<Coldstart.Infrastructure.Retention.RetentionOptions>(builder.Configuration.GetSection("Retention"));
 builder.Services.Configure<Coldstart.Infrastructure.Billing.StripeOptions>(builder.Configuration.GetSection("Stripe"));
 builder.Services.Configure<Coldstart.Infrastructure.Notifications.NotificationsOptions>(builder.Configuration.GetSection("Notifications"));
 builder.Services.Configure<Coldstart.Infrastructure.Notifications.TwilioOptions>(builder.Configuration.GetSection("Twilio"));

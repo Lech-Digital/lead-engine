@@ -41,7 +41,7 @@ public class HarvestEndToEndTests(PostgresFixture fixture) : IClassFixture<Postg
         enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<CancellationToken>())
             .Returns(new EnrichmentResult(Fit.Yes, "sum", "subj", "draft", "Acme"));
         HarvestLeads Sut(ColdstartDbContext ctx, MutableTenantContext scope) =>
-            new([new OneSource(item)], enricher, new LeadRepository(ctx), new CustomerRepository(ctx), niche, scope);
+            new([new OneSource(item)], enricher, new LeadRepository(ctx), new CustomerRepository(ctx), new SuppressionRepository(ctx), niche, scope);
 
         // Act
         var first = await Sut(db, tenantScope).RunAsync(CancellationToken.None);

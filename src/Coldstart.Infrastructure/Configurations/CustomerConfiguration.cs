@@ -53,6 +53,8 @@ internal sealed class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         builder.Property(c => c.EnabledSourcesCsv);
         builder.Property(c => c.FollowUpStage).HasDefaultValue(0);
         builder.Property(c => c.FollowUpsOptOut).HasDefaultValue(false);
+        builder.Property(c => c.SubscriptionEndedAt);
+        builder.Property(c => c.RetentionReminderSent).HasDefaultValue(false);
         builder.Property(c => c.WhatsAppNumber);
         builder.Navigation(c => c.Profile).IsRequired();   // Profile is never null (defaults to Empty)
     }

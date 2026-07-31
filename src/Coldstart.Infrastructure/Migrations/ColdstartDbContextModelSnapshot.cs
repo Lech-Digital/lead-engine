@@ -64,6 +64,11 @@ namespace Coldstart.Infrastructure.Migrations
                     b.Property<DateTimeOffset?>("PlanRenewsAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<bool>("RetentionReminderSent")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("SlackWebhookUrl")
                         .HasColumnType("text");
 
@@ -74,6 +79,9 @@ namespace Coldstart.Infrastructure.Migrations
                     b.Property<string>("StripeSubscriptionId")
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset?>("SubscriptionEndedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("WhatsAppNumber")
                         .HasColumnType("text");
@@ -190,6 +198,32 @@ namespace Coldstart.Infrastructure.Migrations
                         .HasFilter("\"Fingerprint\" <> ''");
 
                     b.ToTable("leads", (string)null);
+                });
+
+            modelBuilder.Entity("Coldstart.Domain.Suppression", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Value")
+                        .IsUnique();
+
+                    b.ToTable("suppressions", (string)null);
                 });
 
             modelBuilder.Entity("Coldstart.Infrastructure.Identity.ApplicationUser", b =>
