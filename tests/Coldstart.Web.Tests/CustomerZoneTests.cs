@@ -438,4 +438,21 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Assert
         result.Succeeded.Should().BeFalse();
     }
+
+    [Fact]
+    public async Task SettingsBilling_ShowsPlanStatus_AndTheRightAction()
+    {
+        // Arrange — a fresh customer is on the Free plan
+        var client = factory.CreateClient();
+        await TestAuth.SignInAsync(factory, client, $"sub-{Guid.NewGuid():N}@test.com", "Passw0rd!long");
+
+        // Act
+        var html = await client.GetStringAsync("/app/settings/billing");
+
+        // Assert — free status with the upgrade action posting to the shared /Billing handlers
+        html.Should().Contain("Free plan");
+        html.Should().Contain("Upgrade to Full");
+        html.Should().Contain("handler=Checkout");
+        html.Should().Contain("settings-nav");
+    }
 }

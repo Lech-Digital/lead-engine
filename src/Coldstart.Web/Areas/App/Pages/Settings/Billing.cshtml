@@ -1,0 +1,50 @@
+@page "/app/settings/billing"
+@model Coldstart.Web.Areas.App.Pages.Settings.BillingSettingsModel
+@{ ViewData["Title"] = "Settings · Subscription"; Layout = "/Pages/Shared/_Layout.cshtml"; ViewData["SettingsTab"] = "billing"; }
+
+<partial name="_SettingsHeader" />
+<main class="wrap app-zone settings-page">
+  <section class="app-briefing"><h1>Settings</h1></section>
+  <partial name="_SettingsNav" />
+
+  <section class="panel" id="billing">
+    <h2 class="app-group-head">Subscription</h2>
+    @if (Model.Plan == Coldstart.Domain.CustomerPlan.Full)
+    {
+      <p class="settings-note">
+        <span class="plan-badge plan-full">Full plan</span>
+        @if (Model.RenewsAt is { } renews)
+        {
+          <span> — active · next payment on <strong>@renews.ToString("d MMMM yyyy")</strong></span>
+        }
+        else
+        {
+          <span> — active</span>
+        }
+      </p>
+      <p class="settings-note">Cancel, change your payment method, or download invoices in the secure billing portal. Cancelling takes effect at the end of the paid month — no notice period.</p>
+      <div class="settings-actions">
+        <form method="post" asp-page="/Billing" asp-area="App" asp-page-handler="Portal">
+          <button class="btn btn-primary" type="submit">Manage or cancel subscription →</button>
+        </form>
+      </div>
+    }
+    else
+    {
+      <p class="settings-note"><span class="plan-badge plan-free">Free plan</span> — sample leads only.</p>
+      <p class="settings-note">The Full plan delivers every lead the engine finds, every morning — €750/month + €350 one-time setup (ex VAT), cancel anytime.</p>
+      <div class="settings-actions">
+        <form method="post" asp-page="/Billing" asp-area="App" asp-page-handler="Checkout">
+          <button class="btn btn-primary" type="submit">Upgrade to Full →</button>
+        </form>
+        @if (Model.HasStripeCustomer)
+        {
+          <form method="post" asp-page="/Billing" asp-area="App" asp-page-handler="Portal">
+            <button class="btn btn-ghost" type="submit">Billing history</button>
+          </form>
+        }
+      </div>
+    }
+    @if (Model.StatusMessage is not null) { <p class="form-status">@Model.StatusMessage</p> }
+  </section>
+</main>

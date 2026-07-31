@@ -11,7 +11,7 @@
     <a class="app-navlink" href="/app/history">History</a>
     @if (Model.Plan == Coldstart.Domain.CustomerPlan.Full)
     {
-      <a class="app-navlink" href="/app/billing">Billing</a>
+      <a class="app-navlink" href="/app/settings/billing">Billing</a>
     }
     <a class="cz-id" href="/app/settings">@(string.IsNullOrWhiteSpace(Model.Profile.CompanyName) ? Model.CustomerName : Model.Profile.CompanyName) <span class="cz-chev">▾</span></a>
     <form method="post" asp-page="/Account/Logout" asp-area="Identity"><button class="btn btn-ghost" type="submit">Log out</button></form>

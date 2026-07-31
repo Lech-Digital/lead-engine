@@ -4,5 +4,18 @@
   <a href="/app/settings/outreach" class="@(active == "outreach" ? "active" : null)">Outreach</a>
   <a href="/app/settings/sources" class="@(active == "sources" ? "active" : null)">Sources</a>
   <a href="/app/settings/notifications" class="@(active == "notifications" ? "active" : null)">Notifications</a>
+  <a href="/app/settings/billing" class="@(active == "billing" ? "active" : null)">Subscription</a>
   <a href="/app/settings/account" class="@(active == "account" ? "active" : null)">Account</a>
 </nav>
+<script>
+  // Tab switches are full page loads — carry the scroll position across so the
+  // pills behave like real tabs instead of jumping to the top.
+  (function () {
+    var KEY = "coldstart-settings-scroll";
+    var saved = sessionStorage.getItem(KEY);
+    if (saved !== null) { sessionStorage.removeItem(KEY); window.scrollTo(0, parseInt(saved, 10) || 0); }
+    document.currentScript.previousElementSibling.addEventListener("click", function (e) {
+      if (e.target.closest("a")) sessionStorage.setItem(KEY, String(window.scrollY));
+    });
+  })();
+</script>
