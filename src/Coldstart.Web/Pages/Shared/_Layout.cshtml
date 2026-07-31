@@ -1,3 +1,4 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 <!doctype html>
 <html lang="en">
 <head>
@@ -16,6 +17,14 @@
 <link rel="preload" href="~/fonts/CabinetGrotesk-Variable.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="~/fonts/Switzer-Variable.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="~/css/site.css" asp-append-version="true">
+@{
+    var analyticsId = Configuration["Analytics:WebsiteId"];
+    var isPublic = !Context.Request.Path.StartsWithSegments("/app") && !Context.Request.Path.StartsWithSegments("/admin") && !Context.Request.Path.StartsWithSegments("/Identity");
+}
+@if (isPublic && !string.IsNullOrEmpty(analyticsId))
+{
+    <script defer src="@Configuration["Analytics:ScriptUrl"]" data-website-id="@analyticsId"></script>
+}
 </head>
 <body>
 

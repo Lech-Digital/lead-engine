@@ -8,3 +8,8 @@ getcoldstart.nl {
 www.getcoldstart.nl {
 	redir https://getcoldstart.nl{uri} permanent
 }
+
+# Self-hosted, cookieless analytics (Umami) — first-party on our own box.
+stats.getcoldstart.nl {
+	reverse_proxy umami:3000
+}

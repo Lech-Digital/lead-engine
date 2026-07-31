@@ -28,6 +28,7 @@
     status.textContent = "Sending…";
     fetch(form.action, { method: "POST", body: new FormData(form) })
       .then(function (res) {
+        if (res.ok && window.umami) { try { window.umami.track("sample-request-success"); } catch (e) {} }
         if (!res.ok) throw new Error("bad status " + res.status);
         status.className = "lp-form-status ok";
         status.textContent = "Done — your 3 sample leads are being prepared. Check your inbox in a day or two.";

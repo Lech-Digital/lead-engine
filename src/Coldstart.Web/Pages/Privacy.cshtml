@@ -1,39 +1,45 @@
 @page
 @model PrivacyModel
 @{
-    ViewData["Title"] = "Privacy — Coldstart";
+    ViewData["Title"] = "Privacy policy — Coldstart";
     Layout = "_Layout";
 }
 <partial name="_PublicNav" />
 <main class="legal">
   <div class="wrap wrap-narrow">
     <h1>Privacy policy</h1>
-    <p class="legal-banner">Draft — pending review, not legal advice. This is a starter policy while Coldstart finalizes its legal details.</p>
+    <p class="legal-banner">Version 1.1 · 31 July 2026 · Plain language, full coverage.</p>
 
-    <h2>Who we are</h2>
-    <p>Coldstart is based in Schiedam, the Netherlands, and is the controller for the data described here. KvK: 42125737. VAT: —. Contact: info@getcoldstart.nl.</p>
+    <h2>1. Who is responsible</h2>
+    <p>Coldstart, based in Schiedam, the Netherlands (KvK 42125737), is the controller for the processing described here, except where we act as processor for our customers (see section 5). Contact for anything privacy-related: <a href="mailto:info@getcoldstart.nl">info@getcoldstart.nl</a>.</p>
 
-    <h2>What we collect, and why</h2>
-    <ul>
-      <li><strong>Contact-form inquiries</strong> — name, email, your niche, what you sell, and an optional message. Legal basis: our legitimate interest in answering you (art. 6(1)(f) GDPR).</li>
-      <li><strong>Account data</strong> — your email address, company profile details you add (address, VAT, KvK, niche, website), and authentication cookies that keep you signed in. Legal basis: performing our contract with you (art. 6(1)(b)).</li>
-      <li><strong>Lead data</strong> — company names and publicly available facts about companies, collected from public sources (job boards, funding announcements, public feeds). Where a lead involves a person's business contact details, we process them under our and our customers' legitimate interest in business-to-business contact (art. 6(1)(f)).</li>
-    </ul>
+    <h2>2. Visitors of this website</h2>
+    <p>We measure how the site is used with <strong>Umami, a cookieless analytics tool we host ourselves on our own EU server</strong>. It counts page views and button clicks in aggregate; it sets no cookies, stores no IP addresses, builds no profiles, and shares nothing with third parties — which is why you don't see a cookie banner here. The only cookies this site uses are the strictly necessary ones that keep customers signed in to their portal (session and anti-forgery).</p>
 
-    <h2>Who processes it for us</h2>
-    <ul>
-      <li><strong>Resend</strong> — sends our transactional email.</li>
-      <li><strong>Hetzner</strong> — hosts our servers in the EU.</li>
-    </ul>
-    <p>We don't sell data, and we don't use it for advertising.</p>
+    <h2>3. When you request sample leads</h2>
+    <p>The sample-leads form asks for your name, email, company, and what you sell — with an explicit consent checkbox. We use these details only to run the engine for your niche and send you the samples, and we record when you gave consent. You can withdraw at any time via <a href="mailto:info@getcoldstart.nl">info@getcoldstart.nl</a>; we then delete your inquiry. Legal basis: your consent (art. 6(1)(a) GDPR).</p>
 
-    <h2>How long we keep it</h2>
-    <p>Contact inquiries: up to 12 months after our last exchange. Account and lead data: for as long as your account exists, then deleted within 30 days of account closure. You can request deletion earlier at any time.</p>
+    <h2>4. When you contact us</h2>
+    <p>Messages through the contact page (name, email, message) go straight to our mailbox and are used only to answer you. Legal basis: our legitimate interest in responding, or steps prior to a contract (art. 6(1)(b)/(f)).</p>
 
-    <h2>Cookies</h2>
-    <p>We use only functional cookies: the session cookie that keeps you signed in and the security (anti-forgery) cookie. No tracking, no analytics cookies, no third-party advertising.</p>
+    <h2>5. Customers and the leads we find for them</h2>
+    <p><strong>Account data</strong> — your email, company profile, notification settings, and sign-in cookies. Legal basis: performing our contract (art. 6(1)(b)). Payment details are handled by Stripe; we never see card numbers.</p>
+    <p><strong>Lead data</strong> — the engine reads publicly available business information (job postings, funding news, company announcements) and may thereby process business contact data of people at the companies it identifies. When it does this for a customer's account we act as that customer's <strong>processor</strong> under art. 28 GDPR (a verwerkersovereenkomst is available on request); for our own outreach we are the controller, with legitimate interest in business-to-business prospecting (art. 6(1)(f)) as the basis. We only use public sources, never guess or fabricate email addresses, and honour objections immediately: one email to <a href="mailto:info@getcoldstart.nl">info@getcoldstart.nl</a> and a company or person is excluded from future processing.</p>
+    <p><strong>No automated decisions with legal effect:</strong> the engine suggests and drafts; a human reviews and decides on every email that is sent.</p>
 
-    <h2>Your rights</h2>
-    <p>You can ask us for access to, correction of, deletion of, or a copy (portability) of your data, and you can object to processing based on legitimate interest. Email info@getcoldstart.nl and we'll respond within one month. You also have the right to complain to the Dutch supervisory authority, the <strong>Autoriteit Persoonsgegevens</strong> (autoriteitpersoonsgegevens.nl).</p>
+    <h2>6. Who helps us process (sub-processors)</h2>
+    <p>We keep the chain short and European where possible: <strong>Hetzner</strong> (hosting and backups, Germany), <strong>Resend</strong> (transactional email, EU region), <strong>Stripe</strong> (payments), <strong>Google Gemini API</strong> (analyzes the text of public posts to qualify leads and draft emails — it receives the public content and your outreach profile, not your account data), <strong>Twilio</strong> (WhatsApp notifications, only when enabled), and <strong>Adzuna</strong> (we send search keywords, never personal data). We don't sell data, and we don't use it for advertising.</p>
+
+    <h2>7. How long we keep things</h2>
+    <p>Inquiries: until handled, at most 12 months. Account and lead data: for the duration of your subscription, deleted within 60 days after it ends (export available up to 30 days after the end, on request). Backups rotate out after 14 days. Consent records: as long as the law requires us to be able to demonstrate them.</p>
+
+    <h2>8. Security</h2>
+    <p>Data lives on EU servers, everything is TLS-encrypted in transit, access is limited to the founder, accounts are protected with rate-limited sign-in and modern password rules, and tenants are isolated at the database level. No system is perfect; if a breach ever affects your data we will inform you and the Autoriteit Persoonsgegevens as the law requires.</p>
+
+    <h2>9. Your rights</h2>
+    <p>You can ask for access to, correction of, deletion of, restriction of, or a copy (portability) of your data, and you can object to processing based on legitimate interest — all via <a href="mailto:info@getcoldstart.nl">info@getcoldstart.nl</a>, answered within one month. You can also complain to the Dutch supervisory authority, the <a href="https://autoriteitpersoonsgegevens.nl" rel="noopener">Autoriteit Persoonsgegevens</a>.</p>
+
+    <h2>10. Changes</h2>
+    <p>When this policy changes materially we announce it to customers by email at least 30 days ahead; the version and date at the top always tell you what you're reading.</p>
   </div>
 </main>

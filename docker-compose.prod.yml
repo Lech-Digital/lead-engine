@@ -77,10 +77,26 @@ services:
       # Adzuna job-signal source (free developer key). Soft-degrade: unset -> source off.
       Niche__Adzuna__AppId: ${ADZUNA_APP_ID:-}
       Niche__Adzuna__AppKey: ${ADZUNA_APP_KEY:-}
+      # Cookieless self-hosted analytics; empty website id = no tracking script.
+      Analytics__ScriptUrl: ${ANALYTICS_SCRIPT_URL:-https://stats.getcoldstart.nl/script.js}
+      Analytics__WebsiteId: ${ANALYTICS_WEBSITE_ID:-}
     volumes:
       - coldstart-dpkeys:/app/keys
     expose:
       - "8080"
+
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgresql://coldstart:${POSTGRES_PASSWORD}@db:5432/umami"
+      DATABASE_TYPE: postgresql
+      APP_SECRET: ${UMAMI_APP_SECRET:?set UMAMI_APP_SECRET in deploy/.env.prod}
+    expose:
+      - "3000"
 
   db-backup:
     image: postgres:17
