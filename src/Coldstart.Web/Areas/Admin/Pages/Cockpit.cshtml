@@ -1,0 +1,64 @@
+@page "/admin/cockpit"
+@model Coldstart.Web.Areas.Admin.Pages.CockpitModel
+@{ ViewData["Title"] = "Admin · Cockpit"; Layout = "/Pages/Shared/_Layout.cshtml"; }
+
+<header class="app-bar">
+  <a class="wordmark" href="/">coldstart<i>*</i></a>
+  <nav class="app-nav">
+    <a href="/admin">Admin</a>
+    <a href="/admin/mailbox">Mailbox</a>
+    <a href="/admin/exclusions">Exclusions</a>
+    <form method="post" asp-page="/Account/Logout" asp-area="Identity"><button class="btn btn-ghost" type="submit">Log out</button></form>
+  </nav>
+</header>
+
+<main class="wrap app-zone">
+  <h1 class="cz-h1">Cockpit</h1>
+  <p class="settings-note">Last 7 days at a glance. External dashboards: <a href="https://stats.getcoldstart.nl" target="_blank" rel="noopener">visitors</a> · <a href="https://dashboard.stripe.com" target="_blank" rel="noopener">money</a>.</p>
+
+  <section class="panel">
+    <div style="display:flex;gap:26px;flex-wrap:wrap;">
+      <div><span style="font-size:1.6rem;font-weight:800;">@Model.PayingCustomers</span><br><span class="ts">paying customers</span></div>
+      <div><span style="font-size:1.6rem;font-weight:800;">@Model.FoundThisWeek</span><br><span class="ts">leads found</span></div>
+      <div><span style="font-size:1.6rem;font-weight:800;">@Model.SentThisWeek</span><br><span class="ts">emails sent</span></div>
+      <div><span style="font-size:1.6rem;font-weight:800;">@Model.OutcomesThisWeek</span><br><span class="ts">outcomes</span></div>
+      <div><span style="font-size:1.6rem;font-weight:800;">@Model.InquiriesThisWeek</span><br><span class="ts">inquiries</span></div>
+      <div><span style="font-size:1.6rem;font-weight:800;">@Model.RunsThisWeek</span><br><span class="ts">engine runs · @Model.SignalsReadThisWeek signals</span></div>
+      <div><span style="font-size:1.6rem;font-weight:800;">@Model.Exclusions</span><br><span class="ts">exclusions</span></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 class="app-group-head">Engine health per customer</h2>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr>
+        <th style="text-align:left;padding:8px 6px;">Customer</th>
+        <th style="text-align:left;padding:8px 6px;">Plan</th>
+        <th style="text-align:left;padding:8px 6px;">Last harvest</th>
+        <th style="text-align:right;padding:8px 6px;">Leads</th>
+        <th style="text-align:right;padding:8px 6px;">Pending</th>
+        <th style="text-align:right;padding:8px 6px;">Sent</th>
+        <th style="text-align:right;padding:8px 6px;">Outcomes</th>
+        <th style="text-align:left;padding:8px 6px;">Flags</th>
+      </tr></thead>
+      <tbody>
+      @foreach (var row in Model.Customers)
+      {
+        <tr style="border-top:1px solid var(--line-soft);@(row.Alarm ? "background:#FDF0EC;" : "")">
+          <td style="padding:8px 6px;font-weight:600;">@row.Name</td>
+          <td style="padding:8px 6px;"><span class="plan-badge @(row.Plan == "Full" ? "plan-full" : "plan-free")">@row.Plan</span></td>
+          <td style="padding:8px 6px;">@row.HarvestStatus@(row.LastHarvestAt is { } at ? $" · {at:dd MMM HH:mm}" : "")</td>
+          <td style="padding:8px 6px;text-align:right;">@row.TotalLeads</td>
+          <td style="padding:8px 6px;text-align:right;">@row.PendingLeads</td>
+          <td style="padding:8px 6px;text-align:right;">@row.SentLeads</td>
+          <td style="padding:8px 6px;text-align:right;">@row.Outcomes</td>
+          <td style="padding:8px 6px;">
+            @if (row.Alarm) { <span title="Failed harvest or stale engine">⚠️</span> }
+            @if (row.RetentionDeadline is { } deadline) { <span class="ts">🗑 delete by @deadline.ToString("dd MMM")</span> }
+          </td>
+        </tr>
+      }
+      </tbody>
+    </table>
+  </section>
+</main>
