@@ -213,6 +213,15 @@
 </section>
 
 <!-- Act 6 · Transparent pricing (daylight) -->
+@if (Model.EngineWeek.Read > 0)
+{
+  <section class="lp-act">
+    <div class="wrap wrap-narrow" data-reveal>
+      <p class="lp-ticker">This week the engine read <strong>@Model.EngineWeek.Read.ToString("N0", System.Globalization.CultureInfo.InvariantCulture) public signals</strong> and kept <strong>@Model.EngineWeek.Kept</strong>. The rest never reached anyone's inbox — that's the point.</p>
+    </div>
+  </section>
+}
+
 <section class="lp-act lp-pricing-act">
   <div class="wrap wrap-narrow" data-reveal>
     <h2>What it costs. All of it.</h2>

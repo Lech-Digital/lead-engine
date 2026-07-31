@@ -52,6 +52,10 @@ internal sealed class HarvestQueueService(
         {
             var report = await sp.GetRequiredService<IHarvestLeads>().RunForCustomerAsync(job.CustomerId, targeting, ct);
             customer.MarkHarvest(HarvestStatus.Done, DateTimeOffset.UtcNow);
+            // Aggregate telemetry for the public engine ticker + operator cockpit.
+            var statsDb = sp.GetRequiredService<ColdstartDbContext>();
+            statsDb.HarvestRunStats.Add(Domain.HarvestRunStat.Record(DateTimeOffset.UtcNow, report.Harvested, report.Saved));
+            await statsDb.SaveChangesAsync(ct);
             if (report.NewLeads.Count > 0)
             {
                 // Push the briefing to the customer's configured channels. Best-effort by

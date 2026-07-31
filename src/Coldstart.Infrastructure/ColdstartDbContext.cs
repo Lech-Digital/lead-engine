@@ -17,6 +17,7 @@ public sealed class ColdstartDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Lead> Leads => Set<Lead>();
     public DbSet<Inquiry> Inquiries => Set<Inquiry>();
     public DbSet<Suppression> Suppressions => Set<Suppression>();
+    public DbSet<HarvestRunStat> HarvestRunStats => Set<HarvestRunStat>();
 
     // Current tenant as the domain key type, for query filters. Null => no rows match (fail closed).
     public CustomerId? CurrentCustomerId => _tenant.CustomerId is { } id ? new CustomerId(id) : null;

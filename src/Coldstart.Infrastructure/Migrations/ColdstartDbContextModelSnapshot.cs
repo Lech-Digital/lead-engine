@@ -91,6 +91,28 @@ namespace Coldstart.Infrastructure.Migrations
                     b.ToTable("customers", (string)null);
                 });
 
+            modelBuilder.Entity("Coldstart.Domain.HarvestRunStat", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Harvested")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("RanAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Saved")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RanAt");
+
+                    b.ToTable("harvest_run_stats", (string)null);
+                });
+
             modelBuilder.Entity("Coldstart.Domain.Inquiry", b =>
                 {
                     b.Property<Guid>("Id")

@@ -262,6 +262,8 @@
 .lp-sunrise .lp-time { color: #FFE9D2; }
 .lp-sunrise-sub { color: #4A4237; font-weight: 500; margin-top: 14px; }
 .lp-punch { font-weight: 600; color: var(--ink); }
+.lp-ticker { text-align: center; font-size: 1.1rem; color: var(--body-muted); border: 1px dashed var(--line-soft); border-radius: 12px; padding: 18px 22px; background: #fff; }
+.lp-ticker strong { color: var(--ink); }
 .lp-pricing { background: #fff; border: 1px solid var(--line-soft); border-radius: 14px; padding: 30px 34px; }
 .lp-price { display: flex; align-items: baseline; gap: 12px; }
 .lp-amt { font-family: var(--display); font-weight: 800; font-size: 2.6rem; color: var(--ink); }
