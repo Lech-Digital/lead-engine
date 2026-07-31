@@ -1,20 +1,12 @@
 @page "/admin/cockpit"
 @model Coldstart.Web.Areas.Admin.Pages.CockpitModel
-@{ ViewData["Title"] = "Admin · Cockpit"; Layout = "/Pages/Shared/_Layout.cshtml"; }
+@{ ViewData["Title"] = "Admin · Cockpit"; Layout = "/Pages/Shared/_Layout.cshtml"; ViewData["AdminTab"] = "cockpit"; }
 
-<header class="app-bar">
-  <a class="wordmark" href="/">coldstart<i>*</i></a>
-  <nav class="app-nav">
-    <a href="/admin">Admin</a>
-    <a href="/admin/mailbox">Mailbox</a>
-    <a href="/admin/exclusions">Exclusions</a>
-    <form method="post" asp-page="/Account/Logout" asp-area="Identity"><button class="btn btn-ghost" type="submit">Log out</button></form>
-  </nav>
-</header>
+<partial name="_AdminHeader" />
 
 <main class="wrap app-zone">
   <h1 class="cz-h1">Cockpit</h1>
-  <p class="settings-note">Last 7 days at a glance. External dashboards: <a href="https://stats.getcoldstart.nl" target="_blank" rel="noopener">visitors</a> · <a href="https://dashboard.stripe.com" target="_blank" rel="noopener">money</a>.</p>
+  <p class="settings-note">Last 7 days at a glance.</p>
 
   <section class="panel">
     <div style="display:flex;gap:26px;flex-wrap:wrap;">

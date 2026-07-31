@@ -1,15 +1,8 @@
 @page "/admin/mailbox"
 @model Coldstart.Web.Areas.Admin.Pages.Mailbox.IndexModel
-@{ ViewData["Title"] = "Mailbox — Coldstart admin"; Layout = "/Pages/Shared/_Layout.cshtml"; }
+@{ ViewData["Title"] = "Mailbox — Coldstart admin"; Layout = "/Pages/Shared/_Layout.cshtml"; ViewData["AdminTab"] = "mailbox"; }
 
-<header class="app-bar">
-  <a class="wordmark" href="/">coldstart<i>*</i></a>
-  <nav class="app-nav">
-    <a href="/admin">Admin</a>
-    <a href="/admin/mailbox" aria-current="page">Mailbox</a>
-    <form method="post" asp-page="/Account/Logout" asp-area="Identity"><button class="btn btn-ghost" type="submit">Log out</button></form>
-  </nav>
-</header>
+<partial name="_AdminHeader" />
 
 <main class="wrap app-zone">
   <section class="app-briefing">
