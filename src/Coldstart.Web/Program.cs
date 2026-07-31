@@ -24,6 +24,8 @@ builder.Services.Configure<Coldstart.Infrastructure.Harvest.HarvestScheduleOptio
 builder.Services.Configure<Coldstart.Infrastructure.Billing.StripeOptions>(builder.Configuration.GetSection("Stripe"));
 builder.Services.Configure<Coldstart.Infrastructure.Notifications.NotificationsOptions>(builder.Configuration.GetSection("Notifications"));
 builder.Services.Configure<Coldstart.Infrastructure.Notifications.TwilioOptions>(builder.Configuration.GetSection("Twilio"));
+builder.Services.Configure<Coldstart.Infrastructure.OpsOptions>(builder.Configuration.GetSection("Ops"));
+builder.Services.AddScoped<Coldstart.Application.Notifications.IBriefingChannel, Coldstart.Web.Email.EmailBriefingChannel>();
 builder.Services.Configure<Coldstart.Web.Api.AdminApiOptions>(builder.Configuration.GetSection("AdminApi"));
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<Coldstart.Web.Admin.AdminUserService>();

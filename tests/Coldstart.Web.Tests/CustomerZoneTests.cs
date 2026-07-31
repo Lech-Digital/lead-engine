@@ -455,4 +455,32 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         html.Should().Contain("handler=Checkout");
         html.Should().Contain("settings-nav");
     }
+
+    [Fact]
+    public async Task Briefing_EmailChannel_SendsMorningDigestToTheAccountAddress()
+    {
+        // Arrange — a signed-in tenant; the email channel is always on
+        var client = factory.CreateClient();
+        var email = $"digest-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
+        var before = factory.Email.Sent.Count;
+
+        using var scope = factory.Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var customerId = (await users.FindByEmailAsync(email))!.CustomerId!.Value;
+        var notifier = scope.ServiceProvider.GetRequiredService<Coldstart.Application.Notifications.INotifyBriefing>();
+        // The customer lookup is tenant-filtered (fail closed); production callers set the
+        // tenant first (harvest scope / HTTP claim) — mirror that here.
+        scope.ServiceProvider.GetRequiredService<Coldstart.Application.Ports.ITenantScope>().SetCurrent(customerId);
+
+        // Act
+        var sent = await notifier.NotifyAsync(customerId,
+            [new Coldstart.Application.Harvest.SavedLead(Guid.NewGuid(), "Acme", "Congrats + an idea")],
+            channelFilter: "email", CancellationToken.None);
+
+        // Assert
+        sent.Should().Contain("email");
+        factory.Email.Sent.Skip(before).Should().Contain(m =>
+            m.To == email && m.Subject.Contains("morning briefing") && m.TextBody.Contains("Acme"));
+    }
 }

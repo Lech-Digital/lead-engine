@@ -12,6 +12,7 @@ namespace Coldstart.Infrastructure.Harvest;
 internal sealed class HarvestQueueService(
     HarvestQueue queue,
     IServiceScopeFactory scopes,
+    Microsoft.Extensions.Options.IOptions<OpsOptions> ops,
     ILogger<HarvestQueueService> log) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -39,6 +40,9 @@ internal sealed class HarvestQueueService(
             // No usable search profile (generation failed at invite) → mark failed, no bogus leads.
             customer.MarkHarvest(HarvestStatus.Failed, DateTimeOffset.UtcNow);
             await customers.UpdateAsync(customer, ct);
+            await AlertOperatorAsync(sp,
+                $"Harvest failed for {customer.Name} — no search keywords",
+                $"Customer {customer.Name} ({job.CustomerId}) has no usable search profile; the harvest was marked Failed. Fix the profile keywords and re-run.", ct);
             return;
         }
 
@@ -57,6 +61,13 @@ internal sealed class HarvestQueueService(
                 if (sentTo.Count > 0)
                     log.LogInformation("Briefing for {CustomerId} pushed to: {Channels}", job.CustomerId, string.Join(",", sentTo));
             }
+            if (report.Enriched == 0 && report.ScoredIn > 0)
+            {
+                // Candidates existed but nothing enriched — almost always the LLM quota/keys.
+                await AlertOperatorAsync(sp,
+                    $"Harvest enriched 0 of {report.ScoredIn} for {customer.Name} — LLM quota?",
+                    $"The run for {customer.Name} ({job.CustomerId}) had {report.ScoredIn} candidates but every enrichment call failed. Check the LLM provider quota/keys.", ct);
+            }
             log.LogInformation(
                 "Harvest for {CustomerId}: harvested {Harvested}, scored-in {ScoredIn}, deduped {Deduped}, enriched {Enriched}, saved {Saved}, rejected {Rejected}",
                 job.CustomerId, report.Harvested, report.ScoredIn, report.Deduped, report.Enriched, report.Saved, report.Rejected);
@@ -65,7 +76,25 @@ internal sealed class HarvestQueueService(
         {
             log.LogError(ex, "Harvest run for customer {CustomerId} failed", job.CustomerId);
             customer.MarkHarvest(HarvestStatus.Failed, DateTimeOffset.UtcNow);
+            await AlertOperatorAsync(sp,
+                $"Harvest crashed for {customer.Name}",
+                $"The run for {customer.Name} ({job.CustomerId}) threw:\n\n{ex}", ct);
         }
         await customers.UpdateAsync(customer, ct);
+    }
+
+    // Ops alert to the operator's mailbox. Best-effort: an alert failure must never
+    // affect the harvest itself.
+    private async Task AlertOperatorAsync(IServiceProvider sp, string subject, string body, CancellationToken ct)
+    {
+        try
+        {
+            await sp.GetRequiredService<Coldstart.Application.Ports.IEmailSender>()
+                .SendAsync(ops.Value.AlertEmail, $"⚠️ {subject}", body, null, ct);
+        }
+        catch (Exception ex)
+        {
+            log.LogError(ex, "Operator alert failed to send");
+        }
     }
 }
