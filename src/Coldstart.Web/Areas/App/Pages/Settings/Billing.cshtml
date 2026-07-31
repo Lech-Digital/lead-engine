@@ -32,15 +32,10 @@
     else
     {
       <p class="settings-note"><span class="plan-badge plan-free">Free plan</span> — sample leads only.</p>
-      <p class="settings-note">The Full plan delivers every lead the engine finds, every morning — €750/month + €350 one-time setup (ex VAT), cancel anytime. Pay by card, iDEAL, or Google Pay.</p>
+      <p class="settings-note">The Full plan delivers every lead the engine finds, every morning. Pay by card, iDEAL, or Google Pay.</p>
       <div class="settings-actions">
-        <form method="post" asp-page="/Billing" asp-area="App" asp-page-handler="Checkout" class="settings-inline-form">
-          <label class="form-label" for="currency">Billing currency</label>
-          <select name="currency" id="currency" class="form-input" style="max-width:16rem;">
-            <option value="eur" selected>EUR — €750/mo + €350 setup</option>
-            <option value="usd">USD — $850/mo + $400 setup</option>
-            <option value="gbp">GBP — £650/mo + £300 setup</option>
-          </select>
+        <form method="post" asp-page="/Billing" asp-area="App" asp-page-handler="Checkout">
+          <partial name="_CurrencyPicker" model='"settings"' />
           <button class="btn btn-primary" type="submit">Upgrade to Full →</button>
         </form>
         @if (Model.HasStripeCustomer)

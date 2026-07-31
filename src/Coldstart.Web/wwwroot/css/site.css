@@ -424,6 +424,23 @@
   .lead-row.locked .lead-row-main { filter: blur(4.5px); user-select: none; }
   .cz-lock { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: inline-flex; align-items: center; gap: 6px; font-size: 0.74rem; font-weight: 600; color: var(--ink); background: rgba(255,255,255,.86); border: 1px solid var(--line-soft); border-radius: 999px; padding: 5px 12px; backdrop-filter: blur(1px); }
   .cz-foilcta { text-align: center; margin-top: 4px; }
+
+  /* billing currency picker (settings + paywall + upgrade modal) */
+  .currency-picker { margin: 2px 0 14px; }
+  .currency-seg { display: inline-flex; gap: 3px; padding: 4px; background: #FBF8F1; border: 1px solid var(--line-soft); border-radius: 999px; }
+  .currency-seg input { position: absolute; opacity: 0; pointer-events: none; }
+  .currency-seg label { padding: 7px 16px; border-radius: 999px; font-size: 0.85rem; font-weight: 700; color: var(--body-muted); cursor: pointer; line-height: 1; transition: color .12s ease, background .12s ease, box-shadow .12s ease; }
+  .currency-seg label:hover { color: var(--ink); }
+  .currency-seg input:checked + label { background: var(--ink); color: #fff; box-shadow: 0 1px 4px rgba(22,25,43,.25); }
+  .currency-seg input:focus-visible + label { outline: 3px solid var(--sunrise); outline-offset: 2px; }
+  .currency-price { margin: 10px 0 0; font-size: 0.9rem; color: var(--body-muted); }
+  .currency-price strong { color: var(--ink); font-weight: 700; }
+  .currency-price .cp-eur, .currency-price .cp-usd, .currency-price .cp-gbp { display: none; }
+  .currency-picker:has(input[value="eur"]:checked) .cp-eur,
+  .currency-picker:has(input[value="usd"]:checked) .cp-usd,
+  .currency-picker:has(input[value="gbp"]:checked) .cp-gbp { display: inline; }
+  /* ancient browsers without :has() still see the default (EUR) price line */
+  @supports not selector(:has(*)) { .currency-price .cp-eur { display: inline; } }
   /* ===== end daily briefing queue ===== */
 
   /* ===== History page (/app/history) ===== */

@@ -136,6 +136,7 @@
       <p>@Model.LockedCount more @(Model.LockedCount == 1 ? "lead" : "leads") behind your plan.</p>
       <div class="cz-foilcta">
         <form method="post" asp-page="/Billing" asp-area="App" asp-page-handler="Checkout">
+          <partial name="_CurrencyPicker" model='"foil"' />
           <button class="btn btn-primary" type="submit">Unlock all @Model.LockedCount @(Model.LockedCount == 1 ? "lead" : "leads")</button>
         </form>
       </div>
@@ -148,9 +149,10 @@
     <div class="lead-modal-card">
       <p class="lead-modal-eyebrow">Free plan</p>
       <h2 class="lead-modal-title" id="upgrade-title">Unlock every lead</h2>
-      <p class="lead-modal-detail">Your free plan shows a sample. The Full plan gives you every lead we find, every morning — €750/mo + €350 one-time setup, cancel anytime.</p>
+      <p class="lead-modal-detail">Your free plan shows a sample. The Full plan gives you every lead we find, every morning.</p>
       <div class="lead-modal-actions">
         <form method="post" asp-page="/Billing" asp-area="App" asp-page-handler="Checkout">
+          <partial name="_CurrencyPicker" model='"modal"' />
           <button class="btn btn-primary" type="submit" autofocus>Subscribe — unlock every lead</button>
         </form>
         <form method="dialog"><button class="btn btn-ghost" value="cancel">Not now</button></form>

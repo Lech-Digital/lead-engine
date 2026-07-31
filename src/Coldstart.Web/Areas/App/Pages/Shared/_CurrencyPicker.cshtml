@@ -1,0 +1,19 @@
+@model string
+@* Segmented billing-currency control. Render INSIDE a checkout <form>; the checked
+   radio posts as `currency`. Model = unique id suffix (a page can hold several). *@
+<div class="currency-picker">
+  <div class="currency-seg" role="radiogroup" aria-label="Billing currency">
+    <input type="radio" name="currency" value="eur" id="cur-eur-@Model" checked>
+    <label for="cur-eur-@Model">&euro; EUR</label>
+    <input type="radio" name="currency" value="usd" id="cur-usd-@Model">
+    <label for="cur-usd-@Model">&dollar; USD</label>
+    <input type="radio" name="currency" value="gbp" id="cur-gbp-@Model">
+    <label for="cur-gbp-@Model">&pound; GBP</label>
+  </div>
+  <p class="currency-price">
+    <span class="cp-eur"><strong>€750</strong>/month + €350 one-time setup</span>
+    <span class="cp-usd"><strong>$850</strong>/month + $400 one-time setup</span>
+    <span class="cp-gbp"><strong>£650</strong>/month + £300 one-time setup</span>
+    <span class="cp-tail">· ex VAT · cancel any month</span>
+  </p>
+</div>

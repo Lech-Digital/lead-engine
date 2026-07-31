@@ -31,8 +31,9 @@
   else
   {
     <p>You're on the <b>Free</b> plan — a sample of the leads we find.</p>
-    <p>Full plan: every lead, every morning. €750/mo + €350 one-time setup, cancel anytime.</p>
+    <p>Full plan: every lead, every morning.</p>
     <form method="post" asp-page-handler="Checkout">
+      <partial name="_CurrencyPicker" model='"page"' />
       <button class="btn btn-primary" type="submit">Subscribe — unlock every lead</button>
     </form>
   }
