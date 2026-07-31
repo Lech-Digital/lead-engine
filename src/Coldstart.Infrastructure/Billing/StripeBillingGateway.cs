@@ -22,11 +22,16 @@ internal sealed class StripeBillingGateway(IOptions<StripeOptions> options) : IB
         if (_opts.PriceSetupId.Length > 0)
             lineItems.Add(new SessionLineItemOptions { Price = _opts.PriceSetupId, Quantity = 1 });
 
+        // EUR: pin the method list — Stripe's dynamic selection silently drops iDEAL for
+        // subscriptions (iDEAL→Wero transition), while an explicit request works. Google Pay /
+        // Apple Pay ride on "card" either way. Non-EUR stays dynamic (iDEAL is euro-only).
+        var isEur = req.Currency is null or "eur";
         var createOptions = new SessionCreateOptions
         {
             Mode = "subscription",
             LineItems = lineItems,
             Currency = req.Currency,
+            PaymentMethodTypes = isEur ? ["card", "ideal", "sepa_debit"] : null,
             AutomaticTax = new SessionAutomaticTaxOptions { Enabled = true },
             TaxIdCollection = new SessionTaxIdCollectionOptions { Enabled = true },
             ClientReferenceId = req.CustomerId.ToString(),
