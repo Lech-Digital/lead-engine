@@ -14,7 +14,8 @@ internal sealed class ListLeads(ILeadRepository leads) : IListLeads
                 l.Id.Value, l.Company, l.Fit.ToString(), l.Status.ToString(),
                 l.RecipientEmail?.Value, l.EmailConfidence.ToString(), l.Subject, l.Draft,
                 l.Source, l.Score, l.CreatedAt, l.MatchedSignals,
-                Locked: locked.Contains(l.Id.Value)))
+                Locked: locked.Contains(l.Id.Value),
+                Outcome: l.Outcome.ToString(), SentAt: l.SentAt, SkipReason: l.SkipReason))
             .ToList();
     }
 }

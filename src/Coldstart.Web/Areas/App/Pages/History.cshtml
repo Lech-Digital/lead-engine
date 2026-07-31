@@ -47,10 +47,16 @@
               @if (lead.Status == "Sent")
               {
                 <span class="cz-stbadge st-sent">SENT · @lead.CreatedAt.ToString("dd MMM", System.Globalization.CultureInfo.InvariantCulture)</span>
+                @switch (lead.Outcome)
+                {
+                  case "Replied": <span class="cz-stbadge st-sent">💬 REPLIED</span> break;
+                  case "MeetingBooked": <span class="cz-stbadge st-sent">📅 MEETING</span> break;
+                  case "Won": <span class="cz-stbadge st-sent">🏆 WON</span> break;
+                }
               }
               else if (lead.Status is "Shelved" or "Rejected")
               {
-                <span class="cz-stbadge st-skip">SKIPPED · @(lead.Status == "Shelved" ? "you" : "not a fit")</span>
+                <span class="cz-stbadge st-skip">SKIPPED · @(lead.SkipReason ?? (lead.Status == "Shelved" ? "you" : "not a fit"))</span>
               }
               else if (isOlder)
               {

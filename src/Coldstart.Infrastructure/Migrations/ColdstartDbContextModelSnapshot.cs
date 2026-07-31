@@ -164,6 +164,16 @@ namespace Coldstart.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Outcome")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasDefaultValue("None");
+
+                    b.Property<DateTimeOffset?>("OutcomeAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("RecipientEmail")
                         .HasColumnType("text");
 
@@ -172,6 +182,10 @@ namespace Coldstart.Infrastructure.Migrations
 
                     b.Property<DateTimeOffset?>("SentAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SkipReason")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
 
                     b.Property<string>("Source")
                         .IsRequired()

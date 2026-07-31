@@ -115,6 +115,13 @@ internal sealed class GroqLeadEnricher : ILeadEnricher
         {sender.Brief}
         """)}
 
+        {(string.IsNullOrWhiteSpace(sender.SkipFeedback) ? "" : $"""
+
+        LEARNED PREFERENCES — the sender recently REJECTED these leads for the stated reasons.
+        Treat similar companies as NOT a fit, even when the niche keywords match:
+        {sender.SkipFeedback}
+        """)}
+
         WHO IS A GOOD FIT:
         (niche described by keywords: {string.Join(", ", n.TargetKeywords)})
 

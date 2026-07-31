@@ -15,4 +15,5 @@ public sealed record LeadDetail(
     IReadOnlyList<ContactLink> ContactLinks,
     string MatchedSignals,
     string EmailConfidence,
-    IReadOnlyList<LeadNoteView> Notes);
+    IReadOnlyList<LeadNoteView> Notes,
+    string Outcome = "None");

@@ -30,7 +30,8 @@ internal sealed class HarvestLeads(
             ? SenderContext.None
             : new SenderContext(customer.Profile.Brief, customer.Profile.MentionSourceTool,
                 customer.Profile.PitchLine, customer.Profile.CtaLine, customer.Profile.CtaButtonUrl,
-                customer.Profile.IntroLine, customer.Profile.SubjectTemplate);
+                customer.Profile.IntroLine, customer.Profile.SubjectTemplate,
+                SkipFeedback: await BuildSkipFeedbackAsync(cid, ct));
         return await RunPipelineAsync(cid, targeting, sender, customer is null ? _ => true : customer.AllowsSource, ct);
     }
 
@@ -99,6 +100,20 @@ internal sealed class HarvestLeads(
     }
 
     // Per-run options: per-customer targeting + the injected global source config.
+    // The flywheel: the customer's recent skip reasons, formatted for the enricher prompt.
+    // Null when there's nothing to learn from (no reasons given yet).
+    private async Task<string?> BuildSkipFeedbackAsync(CustomerId cid, CancellationToken ct)
+    {
+        var all = await leads.ForCustomerAsync(cid, ct);
+        var lines = all
+            .Where(l => l.Status == LeadStatus.Shelved && !string.IsNullOrWhiteSpace(l.SkipReason))
+            .OrderByDescending(l => l.CreatedAt)
+            .Take(12)
+            .Select(l => $"- {l.Company}: {l.SkipReason}")
+            .ToList();
+        return lines.Count == 0 ? null : string.Join("\n", lines);
+    }
+
     private NicheOptions BuildRunNiche(HarvestTargeting t) => new()
     {
         Offer = t.Offer,

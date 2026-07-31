@@ -18,6 +18,10 @@ public sealed class Lead
     public string Fingerprint { get; private set; } = "";
     public double Score { get; private set; }
     public string MatchedSignals { get; private set; } = "";
+    // Post-send outcome (customer-reported) and why a skipped lead was skipped (feeds the enricher).
+    public LeadOutcome Outcome { get; private set; }
+    public DateTimeOffset? OutcomeAt { get; private set; }
+    public string? SkipReason { get; private set; }
 
     private readonly List<LeadNote> _notes = [];
     public IReadOnlyList<LeadNote> Notes => _notes;
@@ -80,11 +84,12 @@ public sealed class Lead
         Draft = draft ?? "";
     }
 
-    public void Discard()
+    public void Discard(string? reason = null)
     {
         if (Status == LeadStatus.Sent)
             throw new DomainException("Cannot discard a lead that has already been sent.");
         Status = LeadStatus.Shelved;
+        SkipReason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
     }
 
     public void Reopen()
@@ -92,6 +97,15 @@ public sealed class Lead
         if (Status == LeadStatus.Sent)
             throw new DomainException("Cannot reopen a lead that has already been sent.");
         Status = LeadStatus.PendingReview;
+        SkipReason = null;
+    }
+
+    public void RecordOutcome(LeadOutcome outcome, DateTimeOffset when)
+    {
+        if (Status != LeadStatus.Sent)
+            throw new DomainException("An outcome can only be recorded on a sent lead.");
+        Outcome = outcome;
+        OutcomeAt = outcome == LeadOutcome.None ? null : when;
     }
 
     public void Reject() => Status = LeadStatus.Rejected;

@@ -13,4 +13,7 @@ public sealed record LeadSummary(
     double Score,
     DateTimeOffset CreatedAt,
     string MatchedSignals,
-    bool Locked = false);
+    bool Locked = false,
+    string Outcome = "None",
+    DateTimeOffset? SentAt = null,
+    string? SkipReason = null);

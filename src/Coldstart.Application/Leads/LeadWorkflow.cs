@@ -26,8 +26,11 @@ internal sealed class LeadWorkflow(ILeadRepository leads, IOutreachMailer outrea
     public Task<LeadActionResult> ApproveAsync(Guid customerId, Guid leadId, CancellationToken ct) =>
         MutateAsync(customerId, leadId, ct, lead => { lead.Approve(); return LeadActionResult.Ok; });
 
-    public Task<LeadActionResult> DiscardAsync(Guid customerId, Guid leadId, CancellationToken ct) =>
-        MutateAsync(customerId, leadId, ct, lead => { lead.Discard(); return LeadActionResult.Ok; });
+    public Task<LeadActionResult> DiscardAsync(Guid customerId, Guid leadId, CancellationToken ct, string? reason = null) =>
+        MutateAsync(customerId, leadId, ct, lead => { lead.Discard(reason); return LeadActionResult.Ok; });
+
+    public Task<LeadActionResult> RecordOutcomeAsync(Guid customerId, Guid leadId, LeadOutcome outcome, CancellationToken ct) =>
+        MutateAsync(customerId, leadId, ct, lead => { lead.RecordOutcome(outcome, DateTimeOffset.UtcNow); return LeadActionResult.Ok; });
 
     public Task<LeadActionResult> ReopenAsync(Guid customerId, Guid leadId, CancellationToken ct) =>
         MutateAsync(customerId, leadId, ct, lead => { lead.Reopen(); return LeadActionResult.Ok; });

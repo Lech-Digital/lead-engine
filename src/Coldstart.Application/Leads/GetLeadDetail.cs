@@ -25,6 +25,7 @@ internal sealed class GetLeadDetail(ILeadRepository leads, ICustomerRepository c
             ContactLinkBuilder.Build(lead.Company, lead.SourceUrl),
             lead.MatchedSignals,
             lead.EmailConfidence.ToString(),
-            lead.Notes.OrderByDescending(n => n.CreatedAt).Select(n => new LeadNoteView(n.Id, n.Text, n.CreatedAt, n.UpdatedAt)).ToList());
+            lead.Notes.OrderByDescending(n => n.CreatedAt).Select(n => new LeadNoteView(n.Id, n.Text, n.CreatedAt, n.UpdatedAt)).ToList(),
+            lead.Outcome.ToString());
     }
 }

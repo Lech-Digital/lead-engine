@@ -130,6 +130,11 @@
     <p class="cz-older">+ @Model.OlderUnreviewedCount older @(Model.OlderUnreviewedCount == 1 ? "lead" : "leads") waiting · <a href="/app/history">see them in History →</a></p>
   }
 
+  @if (Model.QuietSentCount > 0)
+  {
+    <p class="cz-older">🔕 @Model.QuietSentCount sent @(Model.QuietSentCount == 1 ? "email has" : "emails have") gone quiet — a follow-up bump is ready on each · <a href="/app/history?filter=sent">open them →</a></p>
+  }
+
   @if (Model.LockedCount > 0)
   {
     <div class="app-foil">

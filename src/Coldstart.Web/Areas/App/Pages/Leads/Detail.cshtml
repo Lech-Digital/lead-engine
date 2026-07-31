@@ -12,6 +12,13 @@
     var skipped = status is "Shelved" or "Rejected";
     var hasRecipient = !string.IsNullOrWhiteSpace(lead.RecipientEmail);
     var decisionMaker = lead.ContactLinks.Count > 0 ? lead.ContactLinks[0] : null;
+    var quietDays = sent && lead.SentAt is { } sentAt ? (int)(DateTimeOffset.UtcNow - sentAt).TotalDays : 0;
+    var showBump = sent && lead.Outcome == "None" && quietDays >= 4;
+    var bumpSubject = $"Re: {lead.Subject}";
+    var bumpBody = "Hi —\n\nJust floating my note back to the top of your inbox — I know how these weeks disappear. " +
+                   "If the timing's off, ignore me; if it's worth a chat, replying takes ten seconds.\n";
+    var bumpMailto = $"mailto:{lead.RecipientEmail}?subject={Uri.EscapeDataString(bumpSubject)}&body={Uri.EscapeDataString(bumpBody)}";
+    var bumpGmail = $"https://mail.google.com/mail/?view=cm&fs=1&to={Uri.EscapeDataString(lead.RecipientEmail ?? "")}&su={Uri.EscapeDataString(bumpSubject)}&body={Uri.EscapeDataString(bumpBody)}";
 }
 @functions {
     // Only http(s) URLs are safe to render as a href — everything else (javascript:, data:, etc.)
@@ -78,6 +85,20 @@
           <div class="field"><label for="lead-body">Draft — edit anything before it goes</label>
             <textarea asp-for="Input.Draft" id="lead-body" rows="8" disabled="@sent"></textarea></div>
 
+          @if (!sent && !skipped)
+          {
+            <div class="field" style="margin-top:6px;">
+              <label for="skip-reason">If you skip — why? <span class="ts">(optional, tunes the engine's taste)</span></label>
+              <select name="skipReason" id="skip-reason" class="form-input" style="max-width:16rem;">
+                <option value="">—</option>
+                <option>Too big</option>
+                <option>Wrong industry</option>
+                <option>Not a buyer</option>
+                <option>Bad timing</option>
+                <option>Weak draft</option>
+              </select>
+            </div>
+          }
           @if (!sent)
           {
             <div class="ld-actions">
@@ -117,6 +138,37 @@
             </div>
           }
         </section>
+      }
+      else
+      {
+        <section class="panel ld-send cz-sendbox">
+          <h4>What happened?</h4>
+          <p class="cz-sendhead">Sent @(lead.SentAt is { } sd ? sd.ToString("d MMM") : "")@(lead.Outcome != "None" ? " — nice one!" : " — tell the engine how it went.")</p>
+          <form method="post" asp-page-handler="Outcome" class="ld-send-btns cz-sendrow">
+            <button class="btn @(lead.Outcome == "Replied" ? "btn-primary" : "btn-ghost")" name="outcome" value="Replied" type="submit">💬 They replied</button>
+            <button class="btn @(lead.Outcome == "MeetingBooked" ? "btn-primary" : "btn-ghost")" name="outcome" value="MeetingBooked" type="submit">📅 Meeting booked</button>
+            <button class="btn @(lead.Outcome == "Won" ? "btn-primary" : "btn-ghost")" name="outcome" value="Won" type="submit">🏆 Won the deal</button>
+            @if (lead.Outcome != "None") { <button class="btn btn-ghost" name="outcome" value="None" type="submit" title="Clear outcome">✕</button> }
+          </form>
+        </section>
+
+        @if (showBump)
+        {
+          <section class="panel ld-send cz-sendbox">
+            <h4>Quiet for @quietDays days — bump it</h4>
+            <p class="cz-sendhead">No reply yet? A short, friendly second touch is where most replies actually come from. This one's ready:</p>
+            <blockquote class="ld-why-text" style="white-space:pre-line;margin:0 0 12px;">@bumpBody</blockquote>
+            <div class="ld-send-btns cz-sendrow">
+              @if (hasRecipient)
+              {
+                <a class="btn btn-ghost" href="@bumpGmail" target="_blank" rel="noopener">✉ Open in Gmail</a>
+                <a class="btn btn-ghost" href="@bumpMailto">✉ Open in email app</a>
+              }
+              else { <span class="ts">No recipient on file — copy the text above into your reply thread.</span> }
+            </div>
+            <p class="ts">Send it as a reply in the same thread — that's what the “Re:” subject does.</p>
+          </section>
+        }
       }
     </div>
 

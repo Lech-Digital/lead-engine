@@ -22,6 +22,8 @@ internal sealed class LeadConfiguration : IEntityTypeConfiguration<Lead>
         builder.Property(l => l.Fit).HasConversion<string>();
         builder.Property(l => l.Status).HasConversion<string>();
         builder.Property(l => l.EmailConfidence).HasConversion<string>();
+        builder.Property(l => l.Outcome).HasConversion<string>().HasMaxLength(16).HasDefaultValue(LeadOutcome.None);
+        builder.Property(l => l.SkipReason).HasMaxLength(120);
         builder.Property(l => l.RecipientEmail)
             .HasConversion(
                 email => email!.Value,

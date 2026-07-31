@@ -29,6 +29,7 @@ public sealed class IndexModel(UserManager<ApplicationUser> users, IGetLeadInbox
     public Coldstart.Domain.CustomerPlan Plan { get; private set; }
     public Coldstart.Domain.HarvestStatus HarvestStatus { get; private set; }
     public int LockedCount { get; private set; }
+    public int QuietSentCount { get; private set; }
     public int TotalLeads { get; private set; }
 
     public async Task OnGetAsync(CancellationToken ct)
@@ -59,6 +60,9 @@ public sealed class IndexModel(UserManager<ApplicationUser> users, IGetLeadInbox
             .ThenByDescending(l => l.CreatedAt).ToList();
         Queue = unfinished.Take(LeadBriefing.QueueCap).ToList();
         OlderUnreviewedCount = Math.Max(0, unfinished.Count - LeadBriefing.QueueCap);
+        // Sent, no outcome reported, quiet for 4+ days → a follow-up bump is waiting on each.
+        QuietSentCount = result.Leads.Count(l =>
+            l.Status == "Sent" && l.Outcome == "None" && l.SentAt is { } s && (DateTimeOffset.UtcNow - s).TotalDays >= 4);
 
         var todayUtc = DateTime.UtcNow.Date;
         OvernightCount = unfinished.Count(l => l.CreatedAt.UtcDateTime.Date == todayUtc);

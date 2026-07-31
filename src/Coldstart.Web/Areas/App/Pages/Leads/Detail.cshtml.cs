@@ -1,4 +1,5 @@
 using Coldstart.Application.Leads;
+using Coldstart.Domain;
 using Coldstart.Infrastructure.Identity;
 using Coldstart.Web;
 using Microsoft.AspNetCore.Authorization;
@@ -44,14 +45,21 @@ public sealed class DetailModel(UserManager<ApplicationUser> users, IGetLeadDeta
     public Task<IActionResult> OnPostSaveAsync(Guid id, CancellationToken ct) =>
         RunAsync(id, ct, cid => workflow.SaveDraftAsync(cid, id, Input.Subject, Input.Draft, Input.Recipient, ct));
 
-    public Task<IActionResult> OnPostDiscardAsync(Guid id, string? run, CancellationToken ct)
+    public Task<IActionResult> OnPostDiscardAsync(Guid id, string? run, string? skipReason, CancellationToken ct)
     {
         Run = run == "1";
-        return RunAsync(id, ct, cid => workflow.DiscardAsync(cid, id, ct), NextOrAppAsync);
+        return RunAsync(id, ct, cid => workflow.DiscardAsync(cid, id, ct, skipReason), NextOrAppAsync);
     }
 
     public Task<IActionResult> OnPostReopenAsync(Guid id, CancellationToken ct) =>
         RunAsync(id, ct, cid => workflow.ReopenAsync(cid, id, ct));
+
+    public Task<IActionResult> OnPostOutcomeAsync(Guid id, string? outcome, CancellationToken ct)
+    {
+        // Unknown values fall back to None (clears) rather than erroring — it's a toggle row.
+        var parsed = Enum.TryParse<LeadOutcome>(outcome, ignoreCase: true, out var o) ? o : LeadOutcome.None;
+        return RunAsync(id, ct, cid => workflow.RecordOutcomeAsync(cid, id, parsed, ct));
+    }
 
     // Send/mark actions post the email form's current fields and persist them FIRST, so they
     // always act on what the operator sees — not a stale stored recipient/draft they edited
