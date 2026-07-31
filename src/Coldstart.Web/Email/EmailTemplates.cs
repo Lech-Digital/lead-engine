@@ -83,6 +83,31 @@ internal static class EmailTemplates
 
     private static string Enc(string s) => WebUtility.HtmlEncode(s);
 
+    internal static EmailContent WeeklyDigest(string company, int found, int sent, int replies, string appUrl)
+    {
+        string Row(string label, int n) => $"  {label}: {n}\n";
+        var replyLine = replies > 0
+            ? $"And the best number of all: {replies} {(replies == 1 ? "outcome" : "outcomes")} reported. That's the engine doing its job."
+            : "No outcomes reported yet — when a reply lands, mark it on the lead so your numbers tell the real story.";
+        return new(
+            Subject: $"Your week with Coldstart — {found} found · {sent} sent" + (replies > 0 ? $" · {replies} replies" : ""),
+            TextBody:
+                $"Good morning — here's what the engine did for {company} last week:\n\n" +
+                Row("Leads found", found) + Row("Emails sent", sent) + Row("Outcomes reported", replies) + "\n" +
+                replyLine + $"\n\nYour briefing: {appUrl}",
+            HtmlBody: Shell(
+                heading: "Your week with Coldstart",
+                introHtml: $"Here's what the engine did for <strong>{Enc(company)}</strong> last week:" +
+                           "<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin:14px 0 4px;\">" +
+                           $"<tr><td style=\"padding:6px 18px 6px 0;color:#5D5A50;\">Leads found</td><td style=\"font-weight:700;color:#16192B;\">{found}</td></tr>" +
+                           $"<tr><td style=\"padding:6px 18px 6px 0;color:#5D5A50;\">Emails sent</td><td style=\"font-weight:700;color:#16192B;\">{sent}</td></tr>" +
+                           $"<tr><td style=\"padding:6px 18px 6px 0;color:#5D5A50;\">Outcomes reported</td><td style=\"font-weight:700;color:#16192B;\">{replies}</td></tr>" +
+                           "</table>" + Enc(replyLine),
+                ctaText: "Open your briefing",
+                ctaUrl: appUrl,
+                footnote: "You get this once a week, only when there's something to report."));
+    }
+
     internal static EmailContent TrialFollowUpDay2(string company, int lockedCount, string appUrl, string optOutUrl)
     {
         var lockedText = lockedCount > 0
