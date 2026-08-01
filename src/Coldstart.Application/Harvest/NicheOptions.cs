@@ -16,6 +16,23 @@ public sealed class NicheOptions
     // The Dutch feed set, exposed to customers as its own source ("funding-nl").
     public FundingOptions FundingNl { get; set; } = new();
     public AdzunaOptions Adzuna { get; set; } = new();
+    public WebSearchOptions WebSearch { get; set; } = new();
+}
+
+public sealed class WebSearchOptions
+{
+    public bool Enabled { get; set; } = true;
+    // serper.dev API key; empty = source off (soft-degrade), same contract as Adzuna.
+    public string ApiKey { get; set; } = "";
+    public string Gl { get; set; } = "nl";       // result country bias
+    public string Hl { get; set; } = "en";
+    public string Freshness { get; set; } = "qdr:w";   // past week — signals, not archaeology
+    public int MaxQueries { get; set; } = 6;
+    public int ResultsPerQuery { get; set; } = 10;
+    // Below the score gate on purpose: a news hit must ALSO match profile keywords in its
+    // own text to survive the deterministic filter.
+    public double BaseScore { get; set; } = 0.35;
+    public double ScoreWeight { get; set; } = 0.8;
 }
 
 public sealed class HackerNewsOptions

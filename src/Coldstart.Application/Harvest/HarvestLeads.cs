@@ -128,6 +128,7 @@ internal sealed class HarvestLeads(
         Funding = niche.Funding,
         FundingNl = niche.FundingNl,
         Adzuna = niche.Adzuna,
+        WebSearch = niche.WebSearch,
     };
 
     private async Task<Customer> ResolveTargetCustomerAsync(CancellationToken ct)

@@ -77,6 +77,8 @@ services:
       # Adzuna job-signal source (free developer key). Soft-degrade: unset -> source off.
       Niche__Adzuna__AppId: ${ADZUNA_APP_ID:-}
       Niche__Adzuna__AppKey: ${ADZUNA_APP_KEY:-}
+      # serper.dev key for the targeted web-search source; empty = source off (soft-degrade)
+      Niche__WebSearch__ApiKey: ${SERPER_API_KEY:-}
       # Cookieless self-hosted analytics; empty website id = no tracking script.
       Analytics__ScriptUrl: ${ANALYTICS_SCRIPT_URL:-https://stats.getcoldstart.nl/script.js}
       Analytics__WebsiteId: ${ANALYTICS_WEBSITE_ID:-}

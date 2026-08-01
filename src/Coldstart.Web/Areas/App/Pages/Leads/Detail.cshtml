@@ -87,16 +87,15 @@
 
           @if (!sent && !skipped)
           {
-            <div class="field" style="margin-top:6px;">
-              <label for="skip-reason">If you skip — why? <span class="ts">(optional, tunes the engine's taste)</span></label>
-              <select name="skipReason" id="skip-reason" class="form-input" style="max-width:16rem;">
-                <option value="">—</option>
-                <option>Too big</option>
-                <option>Wrong industry</option>
-                <option>Not a buyer</option>
-                <option>Bad timing</option>
-                <option>Weak draft</option>
-              </select>
+            <div class="skip-why">
+              <span class="skip-why-label">If you skip — why? <span class="ts">(optional, tunes the engine's taste)</span></span>
+              <div class="reason-seg" role="radiogroup" aria-label="Skip reason">
+                <input type="radio" name="skipReason" value="Too big" id="skip-big"><label for="skip-big">Too big</label>
+                <input type="radio" name="skipReason" value="Wrong industry" id="skip-industry"><label for="skip-industry">Wrong industry</label>
+                <input type="radio" name="skipReason" value="Not a buyer" id="skip-buyer"><label for="skip-buyer">Not a buyer</label>
+                <input type="radio" name="skipReason" value="Bad timing" id="skip-timing"><label for="skip-timing">Bad timing</label>
+                <input type="radio" name="skipReason" value="Weak draft" id="skip-draft"><label for="skip-draft">Weak draft</label>
+              </div>
             </div>
           }
           @if (!sent)

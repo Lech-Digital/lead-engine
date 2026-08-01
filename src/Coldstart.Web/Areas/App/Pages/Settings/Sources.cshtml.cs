@@ -24,6 +24,7 @@ public sealed class SourcesSettingsModel(
         ("funding", "Global funding news", "TechCrunch, tech.eu, EU-Startups — companies that just raised."),
         ("funding-nl", "Dutch business news", "Silicon Canals, Emerce, MT/Sprout — Dutch raises and launches."),
         ("adzuna", "Dutch job postings", "Companies in the Netherlands hiring right now for roles that match your niche."),
+        ("websearch", "Targeted web search", "This week's news, searched with your keywords — companies making moves beyond the curated feeds."),
     ];
 
     [TempData] public string? StatusMessage { get; set; }
