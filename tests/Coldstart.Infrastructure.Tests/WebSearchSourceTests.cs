@@ -12,26 +12,28 @@ public class WebSearchSourceTests
     private sealed class CapturingHandler(string body) : HttpMessageHandler
     {
         public List<string> Urls { get; } = [];
+        public List<string?> Tokens { get; } = [];
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage r, CancellationToken ct)
         {
             Urls.Add(r.RequestUri!.ToString());
+            Tokens.Add(r.Headers.TryGetValues("X-Subscription-Token", out var v) ? v.First() : null);
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
             { Content = new StringContent(body, Encoding.UTF8, "application/json") });
         }
     }
 
     private const string Json = """
-    {"items":[
-      {"title":"Fietsly raises €2M seed to fix bike logistics","link":"https://news.example/fietsly",
-       "snippet":"The Amsterdam startup hires its first sales rep.","displayLink":"siliconcanals.com"},
-      {"title":"","link":"https://news.example/broken","snippet":"no title","displayLink":"x.com"}
-    ]}
+    {"web":{"results":[
+      {"title":"Fietsly raises €2M seed to fix bike logistics","url":"https://news.example/fietsly",
+       "description":"The Amsterdam startup hires its first sales rep.","age":"2 days ago","profile":{"name":"Silicon Canals"}},
+      {"title":"","url":"https://news.example/broken","description":"no title"}
+    ]}}
     """;
 
-    private static NicheOptions Niche(string apiKey = "g-key", string cx = "cx-1") => new()
+    private static NicheOptions Niche(string apiKey = "brave-key") => new()
     {
         TargetKeywords = ["first sales hire", "SDR"],
-        WebSearch = new WebSearchOptions { ApiKey = apiKey, Cx = cx, MaxQueries = 2, Gl = "nl" },
+        WebSearch = new WebSearchOptions { ApiKey = apiKey, MaxQueries = 2, Country = "nl" },
     };
 
     [Fact]
@@ -44,33 +46,31 @@ public class WebSearchSourceTests
         // Act
         var items = await sut.FetchAsync(Niche(), CancellationToken.None);
 
-        // Assert — one query per keyword with freshness + key + cx; titleless hits dropped
+        // Assert — one query per keyword with freshness + token on every request; titleless hits dropped
         handler.Urls.Should().HaveCount(2);
-        handler.Urls[0].Should().Contain("first sales hire").And.Contain("dateRestrict=w1")
-            .And.Contain("key=g-key").And.Contain("cx=cx-1");
+        handler.Urls[0].Should().Contain("first sales hire").And.Contain("freshness=pw").And.Contain("country=nl");
         handler.Urls[1].Should().Contain("q=SDR");
+        handler.Tokens.Should().AllBe("brave-key");
         items.Should().HaveCount(2);   // the good hit, once per query
         items[0].Title.Should().Contain("Fietsly");
-        items[0].Text.Should().StartWith(WebSearchSource.Sentinel).And.Contain("siliconcanals.com");
+        items[0].Text.Should().StartWith(WebSearchSource.Sentinel).And.Contain("Silicon Canals");
         items[0].Url.Should().Be("https://news.example/fietsly");
     }
 
-    [Theory]
-    [InlineData("", "cx-1")]
-    [InlineData("g-key", "")]
-    public void Enabled_WithoutKeyOrCx_IsFalse(string key, string cx)
+    [Fact]
+    public void Enabled_WithoutApiKey_IsFalse()
     {
         // Arrange
-        var sut = new WebSearchSource(new HttpClient(new CapturingHandler(Json)), Niche(key, cx));
+        var sut = new WebSearchSource(new HttpClient(new CapturingHandler(Json)), Niche(apiKey: ""));
 
-        // Act & Assert — soft-degrade: incomplete config means off, never a crash
+        // Act & Assert — soft-degrade: no key means off, never a crash
         sut.Enabled.Should().BeFalse();
     }
 
     [Fact]
     public async Task FetchAsync_WhenApiErrors_ReturnsEmptyInsteadOfThrowing()
     {
-        // Arrange — daily quota exhausted
+        // Arrange — monthly quota exhausted
         var handler = new ErrorHandler();
         var sut = new WebSearchSource(new HttpClient(handler), Niche());
 

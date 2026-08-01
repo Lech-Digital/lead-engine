@@ -77,10 +77,9 @@ services:
       # Adzuna job-signal source (free developer key). Soft-degrade: unset -> source off.
       Niche__Adzuna__AppId: ${ADZUNA_APP_ID:-}
       Niche__Adzuna__AppKey: ${ADZUNA_APP_KEY:-}
-      # Google Custom Search (official, free 100/day) for the targeted web-search source;
-      # either empty = source off (soft-degrade)
-      Niche__WebSearch__ApiKey: ${GOOGLE_SEARCH_KEY:-}
-      Niche__WebSearch__Cx: ${GOOGLE_SEARCH_CX:-}
+      # Brave Search API key (free 2000/mo) for the targeted web-search source;
+      # empty = source off (soft-degrade)
+      Niche__WebSearch__ApiKey: ${BRAVE_SEARCH_KEY:-}
       # Cookieless self-hosted analytics; empty website id = no tracking script.
       Analytics__ScriptUrl: ${ANALYTICS_SCRIPT_URL:-https://stats.getcoldstart.nl/script.js}
       Analytics__WebsiteId: ${ANALYTICS_WEBSITE_ID:-}

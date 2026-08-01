@@ -22,14 +22,12 @@ public sealed class NicheOptions
 public sealed class WebSearchOptions
 {
     public bool Enabled { get; set; } = true;
-    // Google Custom Search JSON API (official; free 100 queries/day): API key from the Cloud
-    // console + the Programmable Search Engine id (cx). Either empty = source off (soft-degrade).
+    // Brave Search API key (free tier: 2,000 queries/month); empty = source off (soft-degrade).
     public string ApiKey { get; set; } = "";
-    public string Cx { get; set; } = "";
-    public string Gl { get; set; } = "nl";             // result country bias
-    public string DateRestrict { get; set; } = "w1";   // past week — signals, not archaeology
+    public string Country { get; set; } = "nl";     // result country bias
+    public string Freshness { get; set; } = "pw";   // past week — signals, not archaeology
     public int MaxQueries { get; set; } = 6;
-    public int ResultsPerQuery { get; set; } = 10;     // CSE hard cap per request
+    public int ResultsPerQuery { get; set; } = 10;
     // Below the score gate on purpose: a search hit must ALSO match profile keywords in its
     // own text to survive the deterministic filter.
     public double BaseScore { get; set; } = 0.35;
