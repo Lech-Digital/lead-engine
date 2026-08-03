@@ -1,4 +1,4 @@
-# Web-search source on Scrapingdog + honest harvest alerts
+# Web-search on Scrapingdog + LangSearch background source + honest harvest alerts
 
 **Date:** 2026-08-03 · **Status:** Accepted
 
@@ -23,6 +23,15 @@ Scrapingdog's Google Search API was verified live (2026-08-03):
 - Account: free plan, **200 credits/month**, one search = 5 credits → ~40 searches/month.
   Current config (6 queries/night) would exhaust the quota by day 7.
 
+LangSearch (free, `POST https://api.langsearch.com/v1/web-search`, Bearer key) was also
+verified live (2026-08-03): relevant results under `data.webPages.value[]`
+(`name`/`url`/`snippet`), but its `freshness` parameter is **decorative** — `oneDay` and
+`noLimit` return near-identical result sets topped by a November-2025 article, and
+`datePublished` is null on every hit, so recency cannot be filtered client-side either.
+Snippets arrive with mangled tokenization ("part ni fy secures € 1 . 8 m"). It therefore
+cannot power the week-fresh signal source, but it is acceptable as a free, wider
+*background-evidence* source when framed honestly.
+
 ## Decision
 
 1. **`WebSearchSource` targets Scrapingdog** instead of Brave: GET
@@ -38,9 +47,19 @@ Scrapingdog's Google Search API was verified live (2026-08-03):
    keyword is covered across a week instead of only the first. Clock injected via an
    internal test-seam constructor, mirroring `GroqLeadEnricher`'s delay seam.
 3. **`Freshness` default `"pw"` → `"qdr:w"`** (tbs syntax replaces Brave syntax).
-4. **Env plumbing:** `docker-compose.prod.yml` and `deploy/.env.prod.example` rename
-   `BRAVE_SEARCH_KEY` → `SCRAPINGDOG_KEY`; the real key goes into the prod `.env`.
-5. **Honest alerts in `HarvestQueueService`:** the "LLM quota?" alert fires only when
+4. **New `LangSearchSource`** (`Name = "langsearch"`), a second independent `ILeadSource`:
+   POST with Bearer key, per-run keywords rotated the same day-of-year way, `count` 1-10.
+   Its sentinel must NOT claim freshness — it states the publication date is unknown, the
+   page may be months old, and the LLM must not congratulate or treat any event as
+   current; background evidence of fit only. Lower score defaults than the week-fresh
+   source (`BaseScore 0.25`, `ScoreWeight 0.7` vs. websearch's 0.35/0.8). `freshness:
+   "oneWeek"` is still sent — harmless now, free upside if LangSearch ever fixes it.
+   Soft-degrades without a key. New `LangSearchOptions` on `NicheOptions` (`Enabled`,
+   `ApiKey`, `MaxQueries` default 6 — it is free, `Count` default 10, scores).
+5. **Env plumbing:** `docker-compose.prod.yml` and `deploy/.env.prod.example` rename
+   `BRAVE_SEARCH_KEY` → `SCRAPINGDOG_KEY` and add `LANGSEARCH_KEY`
+   (`Niche__LangSearch__ApiKey`); the real keys go into the prod `.env`.
+6. **Honest alerts in `HarvestQueueService`:** the "LLM quota?" alert fires only when
    post-dedup candidates existed (`ScoredIn − Deduped > 0`, `Enriched == 0`). A new
    distinct alert covers the incident that actually happened: `ScoredIn > 0` and all of
    it deduped — "sources produced nothing new", pointing the operator at source
@@ -49,8 +68,10 @@ Scrapingdog's Google Search API was verified live (2026-08-03):
 ## Consequences
 
 **Positive:** web-search runs in production at last (fresh weekly Google net, no credit
-card); quota cannot silently exhaust mid-month; the two zero-enrichment failure modes
-(LLM down vs. content starvation) are now distinguishable from the alert inbox.
+card); LangSearch adds a free, unmetered wide net on top without polluting the
+"this week" framing; quota cannot silently exhaust mid-month; the two zero-enrichment
+failure modes (LLM down vs. content starvation) are now distinguishable from the alert
+inbox.
 
 **Negative:** one query/night is thin coverage — a Full customer with many keywords waits
 up to a week for a given keyword's turn; more Full customers multiply the burn (revisit

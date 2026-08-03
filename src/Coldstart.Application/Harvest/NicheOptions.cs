@@ -17,21 +17,38 @@ public sealed class NicheOptions
     public FundingOptions FundingNl { get; set; } = new();
     public AdzunaOptions Adzuna { get; set; } = new();
     public WebSearchOptions WebSearch { get; set; } = new();
+    public LangSearchOptions LangSearch { get; set; } = new();
 }
 
 public sealed class WebSearchOptions
 {
     public bool Enabled { get; set; } = true;
-    // Brave Search API key (free tier: 2,000 queries/month); empty = source off (soft-degrade).
+    // Scrapingdog API key (free tier: 200 credits/month, 5 per search → ~40 searches);
+    // empty = source off (soft-degrade).
     public string ApiKey { get; set; } = "";
-    public string Country { get; set; } = "nl";     // result country bias
-    public string Freshness { get; set; } = "pw";   // past week — signals, not archaeology
-    public int MaxQueries { get; set; } = 6;
+    public string Country { get; set; } = "nl";        // result country bias
+    public string Freshness { get; set; } = "qdr:w";   // Google tbs syntax: past week — signals, not archaeology
+    // The free credit budget only stretches to ONE search a night; the keyword window
+    // rotates by day so the whole profile is still covered across a week.
+    public int MaxQueries { get; set; } = 1;
     public int ResultsPerQuery { get; set; } = 10;
     // Below the score gate on purpose: a search hit must ALSO match profile keywords in its
     // own text to survive the deterministic filter.
     public double BaseScore { get; set; } = 0.35;
     public double ScoreWeight { get; set; } = 0.8;
+}
+
+public sealed class LangSearchOptions
+{
+    public bool Enabled { get; set; } = true;
+    // LangSearch API key (free, unmetered); empty = source off (soft-degrade).
+    public string ApiKey { get; set; } = "";
+    public int MaxQueries { get; set; } = 6;
+    public int Count { get; set; } = 10;   // results per query (API max 10)
+    // Result dates are unreliable (the freshness filter is decorative), so hits are a
+    // weaker signal than the week-fresh websearch source — scored below it on purpose.
+    public double BaseScore { get; set; } = 0.25;
+    public double ScoreWeight { get; set; } = 0.7;
 }
 
 public sealed class HackerNewsOptions

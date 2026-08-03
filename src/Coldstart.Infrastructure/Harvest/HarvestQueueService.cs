@@ -65,13 +65,8 @@ internal sealed class HarvestQueueService(
                 if (sentTo.Count > 0)
                     log.LogInformation("Briefing for {CustomerId} pushed to: {Channels}", job.CustomerId, string.Join(",", sentTo));
             }
-            if (report.Enriched == 0 && report.ScoredIn > 0)
-            {
-                // Candidates existed but nothing enriched — almost always the LLM quota/keys.
-                await AlertOperatorAsync(sp,
-                    $"Harvest enriched 0 of {report.ScoredIn} for {customer.Name} — LLM quota?",
-                    $"The run for {customer.Name} ({job.CustomerId}) had {report.ScoredIn} candidates but every enrichment call failed. Check the LLM provider quota/keys.", ct);
-            }
+            if (HarvestRunAlert.For(report, customer.Name, job.CustomerId) is { } alert)
+                await AlertOperatorAsync(sp, alert.Subject, alert.Body, ct);
             log.LogInformation(
                 "Harvest for {CustomerId}: harvested {Harvested}, scored-in {ScoredIn}, deduped {Deduped}, enriched {Enriched}, saved {Saved}, rejected {Rejected}",
                 job.CustomerId, report.Harvested, report.ScoredIn, report.Deduped, report.Enriched, report.Saved, report.Rejected);

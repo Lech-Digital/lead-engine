@@ -4,17 +4,34 @@ using Coldstart.Application.Harvest;
 
 namespace Coldstart.Infrastructure.Harvest;
 
-// Targeted week-fresh web search via the Brave Search API: every run searches the RUN's own
-// profile keywords — a far wider net than the curated RSS feeds, same honest framing.
-// (Google's Custom Search JSON API closed to new customers in 2026 and retires 2027-01-01.)
-// Free tier: 2,000 queries/month. Soft-degrades to off without a key, like Adzuna.
-internal sealed class WebSearchSource(HttpClient http, NicheOptions niche) : ILeadSource
+// Targeted week-fresh web search via Scrapingdog's Google Search API: every run searches
+// the RUN's own profile keywords — a far wider net than the curated RSS feeds, same honest
+// framing. (Brave requires a credit card; Google's own Custom Search JSON API closed to new
+// customers in 2026.) The `tbs=qdr:w` week filter is enforced by Google itself, which is
+// what keeps the Sentinel's "this week" claim true. Free tier: 200 credits/month at 5 per
+// search → ~40 searches; MaxQueries defaults to 1 with day-rotation to stay inside that.
+// Soft-degrades to off without a key, like Adzuna. NOTE: the endpoint is /search — the
+// documented /google/ path returns a different, organic-less payload.
+internal sealed class WebSearchSource : ILeadSource
 {
     internal const string Sentinel =
         "WEB SIGNAL — this page about the company was published or updated this week, a " +
         "concrete, current indicator of what is happening there right now:";
 
-    private readonly WebSearchOptions _o = niche.WebSearch;
+    private readonly HttpClient _http;
+    private readonly WebSearchOptions _o;
+    private readonly Func<DateTimeOffset> _clock;
+
+    public WebSearchSource(HttpClient http, NicheOptions niche)
+        : this(http, niche, () => DateTimeOffset.UtcNow) { }
+
+    // Test seam: a fixed clock makes the day-of-year keyword rotation deterministic.
+    internal WebSearchSource(HttpClient http, NicheOptions niche, Func<DateTimeOffset> clock)
+    {
+        _http = http;
+        _o = niche.WebSearch;
+        _clock = clock;
+    }
 
     public string Name => "websearch";
     public double BaseScore => _o.BaseScore;
@@ -24,33 +41,29 @@ internal sealed class WebSearchSource(HttpClient http, NicheOptions niche) : ILe
     public async Task<IReadOnlyList<RawItem>> FetchAsync(NicheOptions runNiche, CancellationToken ct)
     {
         var items = new List<RawItem>();
-        foreach (var keyword in runNiche.TargetKeywords.Take(_o.MaxQueries))
+        foreach (var keyword in KeywordRotation.Window(runNiche.TargetKeywords, _o.MaxQueries, _clock()))
         {
-            var url = "https://api.search.brave.com/res/v1/web/search" +
-                      $"?q={Uri.EscapeDataString(keyword)}&count={Math.Clamp(_o.ResultsPerQuery, 1, 20)}" +
-                      $"&country={Uri.EscapeDataString(_o.Country)}&freshness={Uri.EscapeDataString(_o.Freshness)}";
-            using var request = new HttpRequestMessage(HttpMethod.Get, url);
-            request.Headers.Add("X-Subscription-Token", _o.ApiKey);
-            request.Headers.Add("Accept", "application/json");
+            var url = "https://api.scrapingdog.com/search" +
+                      $"?api_key={Uri.EscapeDataString(_o.ApiKey)}&query={Uri.EscapeDataString(keyword)}" +
+                      $"&results={Math.Clamp(_o.ResultsPerQuery, 1, 20)}" +
+                      $"&country={Uri.EscapeDataString(_o.Country)}&tbs={Uri.EscapeDataString(_o.Freshness)}";
             try
             {
-                using var response = await http.SendAsync(request, ct);
+                using var response = await _http.GetAsync(url, ct);
                 if (!response.IsSuccessStatusCode) continue;   // quota/key trouble must not kill the run
                 var root = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: ct);
-                if (!root.TryGetProperty("web", out var web) ||
-                    !web.TryGetProperty("results", out var hits) || hits.ValueKind != JsonValueKind.Array)
+                if (!root.TryGetProperty("organic_results", out var hits) || hits.ValueKind != JsonValueKind.Array)
                     continue;
                 foreach (var hit in hits.EnumerateArray())
                 {
                     var title = Str(hit, "title");
-                    var link = Str(hit, "url");
-                    var description = Str(hit, "description");
-                    var age = Str(hit, "age");
-                    var site = hit.TryGetProperty("profile", out var p) ? Str(p, "name") : "";
+                    var link = Str(hit, "link");
+                    var snippet = Str(hit, "snippet");
+                    var site = Str(hit, "source") is { Length: > 0 } s ? s : Str(hit, "displayed_link");
                     if (string.IsNullOrEmpty(title) || string.IsNullOrEmpty(link)) continue;
                     items.Add(new RawItem("websearch", link, title,
-                        $"{Sentinel} {site}: {title}. {description}".Trim(),
-                        site, link, age));
+                        $"{Sentinel} {site}: {title}. {snippet}".Trim(),
+                        site, link, ""));
                 }
             }
             catch
