@@ -113,6 +113,10 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapRazorPages();
 app.MapHealthChecks("/health");
+// Behind Caddy without forwarded-headers middleware the request scheme/host are
+// unreliable, so the sitemap's absolute URLs come from config instead.
+var publicBaseUrl = app.Configuration["PublicBaseUrl"] ?? "https://getcoldstart.nl";
+app.MapGet("/sitemap.xml", () => Results.Content(Coldstart.Web.Sitemap.Xml(publicBaseUrl), "application/xml"));
 app.MapAdminApi();
 
 // Anonymous by design: authenticated by the Stripe signature inside Parse. Plan flips

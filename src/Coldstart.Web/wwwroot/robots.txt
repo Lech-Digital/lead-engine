@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /app
+Disallow: /admin
+Disallow: /Identity/
+Disallow: /followups/
+Disallow: /webhooks/
+Disallow: /Error
+
+Sitemap: https://getcoldstart.nl/sitemap.xml
