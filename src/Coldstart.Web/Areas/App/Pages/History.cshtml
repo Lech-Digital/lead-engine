@@ -43,7 +43,7 @@
           <span class="cz-dot"></span>
           <div class="cz-main">
             <div class="cz-head">
-              <span class="cz-co">@lead.Company</span>
+              <a class="cz-co cz-co-link" href="/app/leads/@lead.Id">@lead.Company</a>
               @if (lead.Status == "Sent")
               {
                 <span class="cz-stbadge st-sent">SENT · @lead.CreatedAt.ToString("dd MMM", System.Globalization.CultureInfo.InvariantCulture)</span>
@@ -57,6 +57,10 @@
               else if (lead.Status is "Shelved" or "Rejected")
               {
                 <span class="cz-stbadge st-skip">SKIPPED · @(lead.SkipReason ?? (lead.Status == "Shelved" ? "you" : "not a fit"))</span>
+                <form method="post" asp-page-handler="Reopen" class="cz-reopen-form">
+                  <input type="hidden" name="id" value="@lead.Id">
+                  <button class="cz-why" type="submit">reopen →</button>
+                </form>
               }
               else if (isOlder)
               {
@@ -67,7 +71,7 @@
                 </form>
               }
             </div>
-            <div class="cz-subj">@lead.Subject</div>
+            <div class="cz-subj"><a class="cz-subj-link" href="/app/leads/@lead.Id">@lead.Subject</a></div>
           </div>
         </div>
       }
