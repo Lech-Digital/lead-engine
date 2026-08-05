@@ -89,6 +89,8 @@ public class ApplySubscriptionChangeTests
             Task.FromResult(_c?.StripeCustomerId == sid ? _c : null);
         public Task<Customer?> GetAsync(CustomerId id, CancellationToken ct) =>
             Task.FromResult(_c is not null && _c.Id == id ? _c : null);
+        public Task<Customer?> GetForSystemAsync(CustomerId id, CancellationToken ct) =>
+            Task.FromResult(_c is not null && _c.Id == id ? _c : null);
         public Task UpdateAsync(Customer c, CancellationToken ct) => Task.CompletedTask;
         // The rest are unused here — throw NotImplementedException.
         public Task<IReadOnlyList<Customer>> AllAsync(CancellationToken ct) => throw new NotImplementedException();

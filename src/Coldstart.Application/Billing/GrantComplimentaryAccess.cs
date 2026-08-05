@@ -17,7 +17,7 @@ internal sealed class GrantComplimentaryAccess(ICustomerRepository customers) : 
         if (days < 1)
             return new(false, "A complimentary grant needs at least 1 day.");
 
-        var customer = await customers.GetAsync(new CustomerId(customerId), ct);
+        var customer = await customers.GetForSystemAsync(new CustomerId(customerId), ct);
         if (customer is null)
             return new(false, "No such customer.");
 

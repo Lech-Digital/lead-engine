@@ -24,6 +24,10 @@ internal sealed class CustomerRepository(ColdstartDbContext db) : ICustomerRepos
     public async Task<Customer?> GetByStripeCustomerIdAsync(string stripeCustomerId, CancellationToken ct) =>
         await db.Customers.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.StripeCustomerId == stripeCustomerId, ct);
 
+    // System-level (admin API, no tenant context): see interface doc — GetAsync stays fail-closed.
+    public async Task<Customer?> GetForSystemAsync(CustomerId id, CancellationToken ct) =>
+        await db.Customers.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.Id == id, ct);
+
     public async Task UpdateAsync(Customer customer, CancellationToken ct)
     {
         db.Customers.Update(customer);

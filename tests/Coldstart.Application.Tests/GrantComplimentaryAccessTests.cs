@@ -16,7 +16,7 @@ public class GrantComplimentaryAccessTests
     {
         // Arrange
         var customer = Customer.Create("Independent");
-        _customers.GetAsync(customer.Id, Arg.Any<CancellationToken>()).Returns(customer);
+        _customers.GetForSystemAsync(customer.Id, Arg.Any<CancellationToken>()).Returns(customer);
         var sut = new GrantComplimentaryAccess(_customers);
 
         // Act
@@ -33,7 +33,7 @@ public class GrantComplimentaryAccessTests
     public async Task ExecuteAsync_UnknownCustomer_ReturnsNotFound()
     {
         // Arrange
-        _customers.GetAsync(Arg.Any<CustomerId>(), Arg.Any<CancellationToken>()).Returns((Customer?)null);
+        _customers.GetForSystemAsync(Arg.Any<CustomerId>(), Arg.Any<CancellationToken>()).Returns((Customer?)null);
         var sut = new GrantComplimentaryAccess(_customers);
 
         // Act
@@ -64,7 +64,7 @@ public class GrantComplimentaryAccessTests
         // Arrange
         var customer = Customer.Create("Paying Co");
         customer.ActivateFull("sub_1", null);
-        _customers.GetAsync(customer.Id, Arg.Any<CancellationToken>()).Returns(customer);
+        _customers.GetForSystemAsync(customer.Id, Arg.Any<CancellationToken>()).Returns(customer);
         var sut = new GrantComplimentaryAccess(_customers);
 
         // Act

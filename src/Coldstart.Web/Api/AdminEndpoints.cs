@@ -80,14 +80,9 @@ internal static class AdminEndpoints
             Guid id, ComplimentaryRequestDto body,
             Coldstart.Application.Billing.IGrantComplimentaryAccess grant,
             ColdstartDbContext db, Coldstart.Application.Ports.IEmailSender email,
-            Coldstart.Application.Ports.ITenantScope tenantScope,
             IOptions<Coldstart.Infrastructure.Notifications.NotificationsOptions> notifications,
             ILogger<Program> log, CancellationToken ct) =>
         {
-            // Admin API requests carry no tenant claim; establish it explicitly so the
-            // Customer query filter (fail-closed with no tenant) lets this lookup through —
-            // same pattern as the anonymous follow-up opt-out page.
-            tenantScope.SetCurrent(id);
             var result = await grant.ExecuteAsync(id, body.Days, ct);
             if (!result.Succeeded)
                 return result.Message.Contains("No such customer")
