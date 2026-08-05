@@ -755,3 +755,27 @@
 .plan-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; }
 .plan-full { background: #EAF6EC; color: #22543D; border: 1px solid #BFDCC5; }
 .plan-free { background: #FFF3EC; color: #B3671A; border: 1px solid #F5CDB8; }
+
+/* ---- app rail (sidebar shell for /app and /admin) ---- */
+.rail-shell { display: flex; min-height: 100vh; }
+.rail { width: 216px; flex-shrink: 0; background: #171513; color: #f5f1ea; display: flex; flex-direction: column; padding: 18px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.rail-wordmark { font-weight: 800; font-size: 1.05rem; color: #f5f1ea; text-decoration: none; padding: 0 20px 18px; letter-spacing: .02em; }
+.rail-wordmark i { color: var(--sunrise, #f0a05a); font-style: normal; }
+.rail-wordmark .rail-tag { font-family: var(--mono); font-size: .6rem; letter-spacing: .12em; color: #8d867a; margin-left: 6px; vertical-align: 2px; }
+.rail-nav { display: flex; flex-direction: column; flex: 1; }
+.rail-group { font-family: var(--mono); font-size: .62rem; letter-spacing: .14em; text-transform: uppercase; color: #8d867a; padding: 18px 20px 6px; }
+.rail-item { display: block; padding: 9px 20px; color: #cfc9bf; text-decoration: none; font-size: .92rem; border-left: 3px solid transparent; }
+.rail-item:hover { color: #fff; background: #221f1b; }
+.rail-item.active { background: #2b2723; color: #fff; border-left-color: var(--sunrise, #f0a05a); }
+.rail-logout { margin-top: auto; padding: 9px 20px; color: #e8a9a0; background: none; border: none; border-top: 1px solid #2b2723; width: 100%; text-align: left; font-size: .92rem; cursor: pointer; }
+.rail-logout:hover { color: #fff; background: #221f1b; }
+.rail-main { flex: 1; min-width: 0; }
+.rail-topbar { display: none; }
+@media (max-width: 860px) {
+  .rail-shell { display: block; }
+  .rail { position: fixed; inset: 0 auto 0 0; z-index: 40; transform: translateX(-100%); transition: transform .2s ease; width: 246px; }
+  .rail.open { transform: none; box-shadow: 0 0 40px rgba(0,0,0,.4); }
+  .rail-topbar { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: #171513; color: #f5f1ea; position: sticky; top: 0; z-index: 30; }
+  .rail-topbar .rail-wordmark { padding: 0; }
+  .rail-burger { background: none; border: 1px solid #3a352f; color: #f5f1ea; border-radius: 8px; padding: 6px 10px; font-size: 1rem; cursor: pointer; }
+}
