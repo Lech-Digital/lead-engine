@@ -56,4 +56,83 @@ public class CustomerBillingTests
         c.StripeCustomerId.Should().Be("cus_1");
         c.Plan.Should().Be(CustomerPlan.Free);
     }
+
+    [Fact]
+    public void GrantComplimentary_FreeCustomer_BecomesFullUntilDate()
+    {
+        // Arrange
+        var customer = Customer.Create("Independent");
+        var now = DateTimeOffset.UtcNow;
+        var until = now.AddDays(5);
+
+        // Act
+        customer.GrantComplimentary(until, now);
+
+        // Assert
+        customer.Plan.Should().Be(CustomerPlan.Full);
+        customer.ComplimentaryUntil.Should().Be(until);
+        customer.SubscriptionEndedAt.Should().BeNull();
+    }
+
+    [Fact]
+    public void GrantComplimentary_WithLiveStripeSubscription_Throws()
+    {
+        // Arrange
+        var customer = Customer.Create("Paying Co");
+        customer.ActivateFull("sub_123", DateTimeOffset.UtcNow.AddMonths(1));
+        var now = DateTimeOffset.UtcNow;
+
+        // Act
+        Action act = () => customer.GrantComplimentary(now.AddDays(5), now);
+
+        // Assert
+        act.Should().Throw<DomainException>().WithMessage("*already has a paid subscription*");
+    }
+
+    [Fact]
+    public void GrantComplimentary_UntilInThePast_Throws()
+    {
+        // Arrange
+        var customer = Customer.Create("Late Co");
+        var now = DateTimeOffset.UtcNow;
+
+        // Act
+        Action act = () => customer.GrantComplimentary(now.AddDays(-1), now);
+
+        // Assert
+        act.Should().Throw<DomainException>().WithMessage("*must be in the future*");
+    }
+
+    [Fact]
+    public void ActivateFull_DuringComplimentaryTrial_ClearsComplimentaryUntil()
+    {
+        // Arrange
+        var customer = Customer.Create("Converted Co");
+        var now = DateTimeOffset.UtcNow;
+        customer.GrantComplimentary(now.AddDays(5), now);
+
+        // Act
+        customer.ActivateFull("sub_456", now.AddMonths(1));
+
+        // Assert
+        customer.ComplimentaryUntil.Should().BeNull();
+        customer.Plan.Should().Be(CustomerPlan.Full);
+    }
+
+    [Fact]
+    public void DowngradeToFree_AfterComplimentaryTrial_ClearsTrialAndKeepsRetentionClockUnset()
+    {
+        // Arrange — a comp trial never paid, so the 60-day retention clock must not start
+        var customer = Customer.Create("Lapsed Co");
+        var now = DateTimeOffset.UtcNow;
+        customer.GrantComplimentary(now.AddDays(5), now);
+
+        // Act
+        customer.DowngradeToFree(endedAt: null);
+
+        // Assert
+        customer.Plan.Should().Be(CustomerPlan.Free);
+        customer.ComplimentaryUntil.Should().BeNull();
+        customer.SubscriptionEndedAt.Should().BeNull();
+    }
 }
