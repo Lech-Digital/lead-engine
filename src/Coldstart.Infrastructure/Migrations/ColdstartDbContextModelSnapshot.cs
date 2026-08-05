@@ -27,6 +27,9 @@ namespace Coldstart.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTimeOffset?>("ComplimentaryUntil")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("EnabledSourcesCsv")
                         .HasColumnType("text");
 
