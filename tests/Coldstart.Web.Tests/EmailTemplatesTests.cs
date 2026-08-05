@@ -114,4 +114,21 @@ public class EmailTemplatesTests
         content.HtmlBody.Should().Contain("A &amp; B &lt;Ltd&gt;");
         content.HtmlBody.Should().NotContain("<script>");
     }
+
+    [Fact]
+    public void ComplimentaryGranted_ContainsPlanEndDateAndAppLink()
+    {
+        // Arrange
+        var until = new DateTimeOffset(2026, 8, 10, 0, 0, 0, TimeSpan.Zero);
+
+        // Act
+        var content = EmailTemplates.ComplimentaryGranted("Independent", until, "https://getcoldstart.nl/app");
+
+        // Assert
+        content.Subject.Should().Contain("full plan");
+        content.TextBody.Should().Contain("10 August 2026");
+        content.TextBody.Should().Contain("https://getcoldstart.nl/app");
+        content.TextBody.Should().Contain("No card needed");
+        content.HtmlBody.Should().Contain("Independent");
+    }
 }

@@ -19,6 +19,7 @@ internal static class CommandRunner
           remove <email> --yes         Delete a user AND their tenant data
           harvest <company|id>         Enqueue a harvest for one customer
           harvest --due                Run the nightly top-up sweep now
+          comp <company|id> --days <n> Grant complimentary full plan for n days (emails the customer)
 
         Options:
           --json                       Print the raw API response (read commands)
@@ -54,6 +55,10 @@ internal static class CommandRunner
                 ["harvest"] when args.Contains("--due") =>
                     await ActAsync(api.PostAsync("/api/admin/harvest/due"), stdout, stderr),
                 ["harvest", var target] => await HarvestAsync(target, api, stdout, stderr),
+
+                ["comp", var target, ..] when GetOption(args, "--days") is { } daysRaw && int.TryParse(daysRaw, out var days) =>
+                    await CompAsync(target, days, api, stdout, stderr),
+                ["comp", ..] => UsageError(stderr, "comp requires <company|id> --days <n>."),
 
                 _ => UsageError(stderr),
             };
@@ -118,25 +123,43 @@ internal static class CommandRunner
 
     private static async Task<int> HarvestAsync(string target, AdminApiClient api, TextWriter stdout, TextWriter stderr)
     {
-        if (!Guid.TryParse(target, out var id))
+        var (id, error) = await ResolveCustomerIdAsync(target, api);
+        if (error is not null)
         {
-            var customers = await api.GetAsync("/api/admin/customers");
-            if (!customers.Ok)
-            {
-                await stderr.WriteLineAsync($"HTTP {customers.Status}: {customers.Body}");
-                return 1;
-            }
-            using var doc = JsonDocument.Parse(customers.Body);
-            var match = doc.RootElement.EnumerateArray().FirstOrDefault(c =>
-                string.Equals(c.GetProperty("name").GetString(), target, StringComparison.OrdinalIgnoreCase));
-            if (match.ValueKind != JsonValueKind.Object)
-            {
-                await stderr.WriteLineAsync($"No customer named '{target}'. Run `coldstart customers` to see names.");
-                return 1;
-            }
-            id = match.GetProperty("id").GetGuid();
+            await stderr.WriteLineAsync(error);
+            return 1;
         }
         return await ActAsync(api.PostAsync($"/api/admin/harvest/{id}"), stdout, stderr);
+    }
+
+    private static async Task<int> CompAsync(string target, int days, AdminApiClient api, TextWriter stdout, TextWriter stderr)
+    {
+        var (id, error) = await ResolveCustomerIdAsync(target, api);
+        if (error is not null)
+        {
+            await stderr.WriteLineAsync(error);
+            return 1;
+        }
+        return await ActAsync(api.PostAsync($"/api/admin/customers/{id}/complimentary", new { days }), stdout, stderr);
+    }
+
+    // Resolves a company name (case-insensitive) or a raw guid to a customer id via GET /api/admin/customers.
+    private static async Task<(Guid Id, string? Error)> ResolveCustomerIdAsync(string target, AdminApiClient api)
+    {
+        if (Guid.TryParse(target, out var id))
+            return (id, null);
+
+        var customers = await api.GetAsync("/api/admin/customers");
+        if (!customers.Ok)
+            return (Guid.Empty, $"HTTP {customers.Status}: {customers.Body}");
+
+        using var doc = JsonDocument.Parse(customers.Body);
+        var match = doc.RootElement.EnumerateArray().FirstOrDefault(c =>
+            string.Equals(c.GetProperty("name").GetString(), target, StringComparison.OrdinalIgnoreCase));
+        if (match.ValueKind != JsonValueKind.Object)
+            return (Guid.Empty, $"No customer named '{target}'. Run `coldstart customers` to see names.");
+
+        return (match.GetProperty("id").GetGuid(), null);
     }
 
     private static string RenderStats(JsonElement root) => Table.Render(

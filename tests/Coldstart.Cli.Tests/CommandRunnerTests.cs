@@ -165,6 +165,48 @@ public sealed class CommandRunnerTests
     }
 
     [Fact]
+    public async Task RunAsync_CompByCompanyName_ShouldResolveIdThenPostDays()
+    {
+        // Arrange
+        var api = StubHandler.Client(req => req.RequestUri!.AbsolutePath switch
+        {
+            "/api/admin/customers" => (HttpStatusCode.OK, CustomersJson),
+            "/api/admin/customers/11111111-1111-1111-1111-111111111111/complimentary" =>
+                (HttpStatusCode.OK, """{"message":"Granted the full plan to Acme BV until 2026-08-10.","until":"2026-08-10T00:00:00+00:00","emailSent":true}"""),
+            _ => (HttpStatusCode.NotFound, ""),
+        }, out var handler);
+        var stdout = new StringWriter();
+
+        // Act
+        var exit = await CommandRunner.RunAsync(["comp", "acme bv", "--days", "5"], api, stdout, new StringWriter());
+
+        // Assert
+        exit.Should().Be(0);
+        handler.Requests.Should().HaveCount(2);
+        var compRequest = handler.Requests.Last();
+        compRequest.RequestUri!.AbsolutePath.Should().Be("/api/admin/customers/11111111-1111-1111-1111-111111111111/complimentary");
+        var sent = await compRequest.Content!.ReadAsStringAsync();
+        sent.Should().Contain("\"days\":5");
+        stdout.ToString().Should().Contain("Granted the full plan");
+    }
+
+    [Fact]
+    public async Task RunAsync_CompWithoutDays_ShouldPrintUsageAndExit2()
+    {
+        // Arrange
+        var api = StubHandler.Client(_ => (HttpStatusCode.OK, "{}"), out var handler);
+        var stderr = new StringWriter();
+
+        // Act
+        var exit = await CommandRunner.RunAsync(["comp", "acme bv"], api, new StringWriter(), stderr);
+
+        // Assert
+        exit.Should().Be(2);
+        stderr.ToString().Should().Contain("Usage");
+        handler.Requests.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task RunAsync_WhenApiTimesOut_ShouldReturn1WithTimeoutMessage()
     {
         // Arrange
