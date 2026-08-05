@@ -60,6 +60,7 @@ public static class DependencyInjection
         services.AddHostedService<Harvest.NightlyHarvestScheduler>();
         services.AddHostedService<FollowUps.TrialFollowUpScheduler>();
         services.AddHostedService<Retention.RetentionCleanupService>();
+        services.AddHostedService<Billing.ComplimentaryExpiryService>();
         return services;
     }
 }
