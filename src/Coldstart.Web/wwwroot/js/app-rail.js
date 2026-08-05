@@ -8,7 +8,7 @@
     burger.setAttribute("aria-expanded", String(open));
   });
   document.addEventListener("click", function (e) {
-    if (rail.classList.contains("open") && !rail.contains(e.target) && e.target !== burger)
+    if (rail.classList.contains("open") && !rail.contains(e.target) && !burger.contains(e.target))
       rail.classList.remove("open");
   });
 })();
