@@ -181,9 +181,9 @@
           <p class="ld-why-text">@lead.MatchedSignals.Split(',')[0].Trim()</p>
         }
         <dl class="ld-facts">
-          <div><dt>Signals</dt><dd class="ts">@lead.MatchedSignals</dd></div>
+          <div><dt>Signals</dt><dd class="ts">@(string.IsNullOrWhiteSpace(lead.MatchedSignals) ? "none beyond the source itself" : lead.MatchedSignals)</dd></div>
           <div><dt>Source</dt><dd>@lead.Source @if (IsSafeHttpUrl(lead.SourceUrl)) { <a class="lnk" href="@lead.SourceUrl" target="_blank" rel="noopener">→</a> }</dd></div>
-          <div><dt>Score</dt><dd>@lead.Score.ToString("0.00") · @lead.EmailConfidence.ToLower()</dd></div>
+          <div><dt>Score</dt><dd>@lead.Score.ToString("0.00")@if (string.IsNullOrWhiteSpace(lead.MatchedSignals)) { <text> · baseline — source signal only</text> } · @lead.EmailConfidence.ToLower()</dd></div>
         </dl>
       </section>
 

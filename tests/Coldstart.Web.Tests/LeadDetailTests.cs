@@ -408,6 +408,22 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
     }
 
     [Fact]
+    public async Task Detail_NoMatchedSignals_ShowsBaselineScoreLabel()
+    {
+        // Arrange — a lead whose score came only from the source floor (no keyword hits)
+        var client = factory.CreateClient();
+        var email = $"detail-base-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
+        var id = await AddLeadWithNoMatchedSignalsAsync(email, "Floor Co", "fp-" + Guid.NewGuid().ToString("N"));
+
+        // Act
+        var html = await client.GetStringAsync($"/app/leads/{id}");
+
+        // Assert
+        html.Should().Contain("baseline — source signal only");
+    }
+
+    [Fact]
     public async Task Detail_WithJavascriptSchemeSourceUrl_SuppressesTheLink()
     {
         // Arrange
@@ -519,6 +535,21 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         var user = await users.FindByEmailAsync(email);
         var lead = Lead.CreateHarvested(new CustomerId(user!.CustomerId!.Value), company, Fit.Yes,
             "subj", "body", "hackernews", "https://x/1", fingerprint, 0.7, "outbound", DateTimeOffset.UtcNow);
+        db.Leads.Add(lead);
+        await db.SaveChangesAsync();
+        return lead.Id.Value;
+    }
+
+    private async Task<Guid> AddLeadWithNoMatchedSignalsAsync(string email, string company, string fingerprint)
+    {
+        // Mirrors AddLeadForUserAsync but with an empty MatchedSignals, i.e. a lead whose score is
+        // the bare source floor with no keyword hits — the "baseline" case this task labels honestly.
+        using var scope = factory.Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var db = scope.ServiceProvider.GetRequiredService<ColdstartDbContext>();
+        var user = await users.FindByEmailAsync(email);
+        var lead = Lead.CreateHarvested(new CustomerId(user!.CustomerId!.Value), company, Fit.Yes,
+            "subj", "body", "hackernews", "https://x/1", fingerprint, 0.5, "", DateTimeOffset.UtcNow);
         db.Leads.Add(lead);
         await db.SaveChangesAsync();
         return lead.Id.Value;
