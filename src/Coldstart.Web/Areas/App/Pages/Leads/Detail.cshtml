@@ -1,6 +1,7 @@
 @page "/app/leads/{id:guid}"
 @model Coldstart.Web.Areas.App.Pages.Leads.DetailModel
 @using Coldstart.Web
+@using Coldstart.Web.Areas.App.Pages
 @{
     ViewData["Title"] = "Lead";
     Layout = "/Pages/Shared/_Layout.cshtml";
@@ -38,52 +39,45 @@
   <div class="rail-main">
 <main class="wrap app-zone lead-detail">
 
-  @if (Model.Run)
-  {
-    <div class="cz-runbar">
-      <span>Reviewing <b>@Model.RunPosition of @Model.RunTotal</b> from this morning</span>
-      <button class="btn btn-ghost btn-sm" type="submit" form="lead-edit" asp-page-handler="Discard"
-              data-confirm="It moves to History under “Skipped” — you can reopen it anytime."
-              data-confirm-title="Skip @lead.Company?" data-confirm-ok="Skip lead">Skip → next</button>
+  <div class="pz-head">
+    <div>
+      <h1>@lead.Company</h1>
+      <p class="pz-sub">
+        <span class="pz-pill @FitLabel.PillClass(lead.Fit)">@FitLabel.Text(lead.Fit)</span>
+        @if (!string.IsNullOrWhiteSpace(lead.MatchedSignals))
+        {
+          <span class="pz-why">⚡ @lead.MatchedSignals.Split(',')[0].Trim()</span>
+        }
+        · @(pending ? "to review" : approved ? "approved" : sent ? $"sent{(lead.SentAt is null ? "" : " on " + lead.SentAt.Value.ToString("dd MMM yyyy", System.Globalization.CultureInfo.InvariantCulture))}" : "skipped")
+      </p>
     </div>
-  }
-
-  <div class="cz-review-head">
-    <h1 class="ld-co">@lead.Company</h1>
-    <span class="fit fit-@lead.Fit.ToLower()">@lead.Fit</span>
+    @if (Model.Run)
+    {
+      <div>
+        <span class="pz-count">Reviewing @Model.RunPosition of @Model.RunTotal</span>
+        <button class="pz-btn pz-btn-quiet" type="submit" form="lead-edit" asp-page-handler="Discard"
+                data-confirm="It moves to History under “Skipped” — you can reopen it anytime."
+                data-confirm-title="Skip @lead.Company?" data-confirm-ok="Skip lead">Skip → next</button>
+      </div>
+    }
   </div>
-  <p class="cz-review-why">
-    @if (!string.IsNullOrWhiteSpace(lead.MatchedSignals))
-    {
-      <span>⚡ <b>@lead.MatchedSignals.Split(',')[0].Trim()</b> · </span>
-    }
-    @(pending ? "to review" : approved ? "approved" : sent ? $"sent{(lead.SentAt is null ? "" : " on " + lead.SentAt.Value.ToString("dd MMM yyyy", System.Globalization.CultureInfo.InvariantCulture))}" : "skipped")
-    @if (decisionMaker is not null)
-    {
-      <span> · decision-maker: <b>
-        @if (IsSafeHttpUrl(decisionMaker.Url))
-        { <a class="lnk" href="@decisionMaker.Url" target="_blank" rel="noopener">@decisionMaker.Label</a> }
-        else
-        { @decisionMaker.Label }
-      </b></span>
-    }
-  </p>
 
   <div asp-validation-summary="All" class="field-error"></div>
   @if (Model.Notice is not null) { <p class="mail-flash">@Model.Notice</p> }
 
-  <div class="ld-grid">
-    <!-- LEFT: the email -->
-    <div class="ld-col">
-      <section class="panel">
-        <h4>The email</h4>
+  <div class="pz-detail">
+    <!-- LEFT: the email is the page -->
+    <div>
+      <div class="pz-card">
+        <h2>Your email</h2>
+        <p class="pz-hint">Edit anything before it goes. Nothing sends without you.</p>
         <form method="post" id="lead-edit">
           @if (Model.Run) { <input type="hidden" name="run" value="1"> }
-          <div class="field"><label for="lead-recipient">Send to</label>
+          <div class="pz-field"><label for="lead-recipient">Send to</label>
             <input asp-for="Input.Recipient" id="lead-recipient" type="email" placeholder="name@company.com — set before sending" disabled="@sent"></div>
-          <div class="field"><label for="lead-subject">Subject</label>
+          <div class="pz-field"><label for="lead-subject">Subject</label>
             <input asp-for="Input.Subject" id="lead-subject" disabled="@sent"></div>
-          <div class="field"><label for="lead-body">Draft — edit anything before it goes</label>
+          <div class="pz-field"><label for="lead-body">Message</label>
             <textarea asp-for="Input.Draft" id="lead-body" rows="8" disabled="@sent"></textarea></div>
 
           @if (!sent && !skipped)
@@ -99,105 +93,97 @@
               </div>
             </div>
           }
+
           @if (!sent)
           {
-            <div class="ld-actions">
-              <button class="btn btn-ghost" type="submit" asp-page-handler="Save">Save draft</button>
-              @if (approved || shelved) { <button class="btn btn-ghost" type="submit" asp-page-handler="Reopen">Move back to review</button> }
-              @if (!skipped) { <button class="btn btn-ghost" type="submit" asp-page-handler="Discard" data-confirm="It moves to History under “Skipped” — you can reopen it anytime." data-confirm-title="Skip @lead.Company?" data-confirm-ok="Skip lead">Skip</button> }
+            <div class="pz-actions">
+              <a class="pz-btn pz-btn-quiet" id="handoff-gmail" target="_blank" rel="noopener">✉ Open in Gmail</a>
+              <a class="pz-btn pz-btn-quiet" id="handoff-mailto">✉ Open in email app</a>
+              <button class="pz-btn pz-btn-quiet" id="handoff-copy" type="button">⧉ Copy email</button>
+              <span class="ld-copied ts" id="handoff-copied" hidden>Copied ✓</span>
+              <button class="pz-btn pz-btn-primary" type="submit" form="lead-edit" asp-page-handler="MarkSent" id="btn-marksent" disabled="@(!hasRecipient)"
+                      data-confirm="This marks the lead as sent and locks it — you won't be able to edit it afterward." data-confirm-title="Mark as sent?" data-confirm-ok="Mark as sent">Mark as sent ✓@(Model.Run ? " → next" : "")</button>
+              <span class="ts" id="need-recipient" @(hasRecipient ? "hidden" : null)>Add a recipient first.</span>
+              @if (User.IsInRole(ColdstartRoles.SuperAdmin))
+              {
+                <button class="pz-btn pz-btn-quiet" type="submit" form="lead-edit" asp-page-handler="SendFromColdstart" id="btn-sendcoldstart" disabled="@(!hasRecipient)"
+                        data-confirm="Coldstart will send this email now, from your address. This can't be undone." data-confirm-title="Send this email now?" data-confirm-ok="Send email">Send from Coldstart ✓</button>
+                <span class="ts">Sends the current draft from your Coldstart address, branded.</span>
+              }
+              <span class="spacer"></span>
+              <button class="pz-btn pz-btn-quiet" type="submit" asp-page-handler="Save">Save draft</button>
+              @if (approved || shelved) { <button class="pz-btn pz-btn-quiet" type="submit" asp-page-handler="Reopen">Move back to review</button> }
+              @if (!skipped) { <button class="pz-btn pz-btn-danger" type="submit" asp-page-handler="Discard" data-confirm="It moves to History under “Skipped” — you can reopen it anytime." data-confirm-title="Skip @lead.Company?" data-confirm-ok="Skip lead">Skip</button> }
             </div>
+            <p class="pz-hint">Send from your own inbox — <b>@lead.Company sees you, never Coldstart.</b></p>
           }
           else { <p class="app-sub">This lead was sent and is read-only.</p> }
         </form>
-      </section>
+      </div>
 
-      @if (!sent)
+      @if (sent)
       {
-        <section class="panel ld-send cz-sendbox">
-          <h4>Send from your own inbox</h4>
-          <p class="cz-sendhead">Send it from your own inbox — <b>@lead.Company sees you, never Coldstart.</b></p>
-          <div class="ld-send-btns cz-sendrow">
-            <a class="btn btn-ghost" id="handoff-gmail" target="_blank" rel="noopener">✉ Open in Gmail</a>
-            <a class="btn btn-ghost" id="handoff-mailto">✉ Open in email app</a>
-            <button class="btn btn-ghost" id="handoff-copy" type="button">⧉ Copy email</button>
-            <span class="ld-copied ts" id="handoff-copied" hidden>Copied ✓</span>
-          </div>
-          @* These submit the email form above (form="lead-edit"), so they send/mark what's currently
-             on screen — the server saves the fields first, then acts. *@
-          <div class="ld-marksent">
-            <button class="btn btn-primary" type="submit" form="lead-edit" asp-page-handler="MarkSent" id="btn-marksent" disabled="@(!hasRecipient)"
-                    data-confirm="This marks the lead as sent and locks it — you won't be able to edit it afterward." data-confirm-title="Mark as sent?" data-confirm-ok="Mark as sent">Mark as sent ✓@(Model.Run ? " → next" : "")</button>
-            <span class="ts" id="need-recipient" @(hasRecipient ? "hidden" : null)>Add a recipient first.</span>
-          </div>
-          @if (User.IsInRole(ColdstartRoles.SuperAdmin))
-          {
-            <div class="ld-marksent">
-              <button class="btn btn-primary" type="submit" form="lead-edit" asp-page-handler="SendFromColdstart" id="btn-sendcoldstart" disabled="@(!hasRecipient)"
-                      data-confirm="Coldstart will send this email now, from your address. This can't be undone." data-confirm-title="Send this email now?" data-confirm-ok="Send email">Send from Coldstart ✓</button>
-              <span class="ts">Sends the current draft from your Coldstart address, branded.</span>
-            </div>
-          }
-        </section>
-      }
-      else
-      {
-        <section class="panel ld-send cz-sendbox">
-          <h4>What happened?</h4>
-          <p class="cz-sendhead">Sent @(lead.SentAt is { } sd ? sd.ToString("d MMM") : "")@(lead.Outcome != "None" ? " — nice one!" : " — tell the engine how it went.")</p>
-          <form method="post" asp-page-handler="Outcome" class="ld-send-btns cz-sendrow">
-            <button class="btn @(lead.Outcome == "Replied" ? "btn-primary" : "btn-ghost")" name="outcome" value="Replied" type="submit">💬 They replied</button>
-            <button class="btn @(lead.Outcome == "MeetingBooked" ? "btn-primary" : "btn-ghost")" name="outcome" value="MeetingBooked" type="submit">📅 Meeting booked</button>
-            <button class="btn @(lead.Outcome == "Won" ? "btn-primary" : "btn-ghost")" name="outcome" value="Won" type="submit">🏆 Won the deal</button>
-            @if (lead.Outcome != "None") { <button class="btn btn-ghost" name="outcome" value="None" type="submit" title="Clear outcome">✕</button> }
+        <div class="pz-card">
+          <h2>What happened?</h2>
+          <p class="pz-hint">Sent @(lead.SentAt is { } sd ? sd.ToString("d MMM") : "")@(lead.Outcome != "None" ? " — nice one!" : " — tell the engine how it went.")</p>
+          <form method="post" asp-page-handler="Outcome" class="pz-actions">
+            <button class="pz-btn @(lead.Outcome == "Replied" ? "pz-btn-primary" : "pz-btn-quiet")" name="outcome" value="Replied" type="submit">💬 They replied</button>
+            <button class="pz-btn @(lead.Outcome == "MeetingBooked" ? "pz-btn-primary" : "pz-btn-quiet")" name="outcome" value="MeetingBooked" type="submit">📅 Meeting booked</button>
+            <button class="pz-btn @(lead.Outcome == "Won" ? "pz-btn-primary" : "pz-btn-quiet")" name="outcome" value="Won" type="submit">🏆 Won the deal</button>
+            @if (lead.Outcome != "None") { <button class="pz-btn pz-btn-quiet" name="outcome" value="None" type="submit" title="Clear outcome">✕</button> }
           </form>
-        </section>
+        </div>
 
         @if (showBump)
         {
-          <section class="panel ld-send cz-sendbox">
-            <h4>Quiet for @quietDays days — bump it</h4>
-            <p class="cz-sendhead">No reply yet? A short, friendly second touch is where most replies actually come from. This one's ready:</p>
-            <blockquote class="ld-why-text" style="white-space:pre-line;margin:0 0 12px;">@bumpBody</blockquote>
-            <div class="ld-send-btns cz-sendrow">
+          <div class="pz-card">
+            <h2>Quiet for @quietDays days — bump it</h2>
+            <p class="pz-hint">No reply yet? A short, friendly second touch is where most replies actually come from. This one's ready:</p>
+            <p class="pz-note">@Html.Raw(System.Net.WebUtility.HtmlEncode(bumpBody).Replace("\n", "<br>"))</p>
+            <div class="pz-actions">
               @if (hasRecipient)
               {
-                <a class="btn btn-ghost" href="@bumpGmail" target="_blank" rel="noopener">✉ Open in Gmail</a>
-                <a class="btn btn-ghost" href="@bumpMailto">✉ Open in email app</a>
+                <a class="pz-btn pz-btn-quiet" href="@bumpGmail" target="_blank" rel="noopener">✉ Open in Gmail</a>
+                <a class="pz-btn pz-btn-quiet" href="@bumpMailto">✉ Open in email app</a>
               }
               else { <span class="ts">No recipient on file — copy the text above into your reply thread.</span> }
             </div>
-            <p class="ts">Send it as a reply in the same thread — that's what the “Re:” subject does.</p>
-          </section>
+            <p class="pz-hint">Send it as a reply in the same thread — that's what the “Re:” subject does.</p>
+          </div>
         }
       }
     </div>
 
-    <!-- RIGHT: context (+ notes added in Task 6) -->
-    <div class="ld-col">
-      <section class="panel">
-        <h4>Why this lead</h4>
-        @if (!string.IsNullOrWhiteSpace(lead.MatchedSignals))
-        {
-          <p class="ld-why">⚡ Why now</p>
-          <p class="ld-why-text">@lead.MatchedSignals.Split(',')[0].Trim()</p>
-        }
-        <dl class="ld-facts">
-          <div><dt>Signals</dt><dd class="ts">@(string.IsNullOrWhiteSpace(lead.MatchedSignals) ? "none beyond the source itself" : lead.MatchedSignals)</dd></div>
-          <div><dt>Source</dt><dd>@lead.Source @if (IsSafeHttpUrl(lead.SourceUrl)) { <a class="lnk" href="@lead.SourceUrl" target="_blank" rel="noopener">→</a> }</dd></div>
-          <div><dt>Score</dt><dd>@lead.Score.ToString("0.00")@if (string.IsNullOrWhiteSpace(lead.MatchedSignals)) { <text> · baseline — source signal only</text> } · @lead.EmailConfidence.ToLower()</dd></div>
+    <!-- RIGHT: quiet context -->
+    <div>
+      <div class="pz-card">
+        <h2>Why this lead</h2>
+        <dl class="pz-facts">
+          <div class="pz-fact"><dt>Signals</dt><dd class="ts">@(string.IsNullOrWhiteSpace(lead.MatchedSignals) ? "none beyond the source itself" : lead.MatchedSignals)</dd></div>
+          <div class="pz-fact"><dt>Source</dt><dd>@lead.Source @if (IsSafeHttpUrl(lead.SourceUrl)) { <a class="lnk" href="@lead.SourceUrl" target="_blank" rel="noopener">→</a> }</dd></div>
+          <div class="pz-fact"><dt>Score</dt><dd>@lead.Score.ToString("0.00")@if (string.IsNullOrWhiteSpace(lead.MatchedSignals)) { <text> · baseline — source signal only</text> } · @lead.EmailConfidence.ToLower()</dd></div>
+          @if (decisionMaker is not null)
+          {
+            <div class="pz-fact"><dt>Decision-maker</dt><dd>
+              @if (IsSafeHttpUrl(decisionMaker.Url))
+              { <a class="lnk" href="@decisionMaker.Url" target="_blank" rel="noopener">@decisionMaker.Label</a> }
+              else
+              { @decisionMaker.Label }
+            </dd></div>
+          }
         </dl>
-      </section>
+      </div>
 
       @if (lead.ContactLinks.Count > 0)
       {
-        <section class="panel">
-          <h4>Find the decision-maker</h4>
+        <div class="pz-card">
+          <h2>Find the decision-maker</h2>
           <ul class="ld-links">@foreach (var link in lead.ContactLinks) { <li>@if (IsSafeHttpUrl(link.Url)) { <a class="lnk" href="@link.Url" target="_blank" rel="noopener">@link.Label</a> } else { @link.Label }</li> }</ul>
-        </section>
+        </div>
       }
 
-      <section class="panel ld-notes" id="notes">
-        <h4>Your notes</h4>
+      <div class="pz-card" id="notes">
+        <h2>Your notes</h2>
         @if (lead.Notes.Count > 0)
         {
           <ul class="ld-note-list">
@@ -218,9 +204,9 @@
         }
         <form method="post" asp-page-handler="AddNote" class="ld-note-add">
           <textarea asp-for="Input.NoteText" rows="2" placeholder="Private to you — 'called, follow up next week'…"></textarea>
-          <button type="submit" class="btn btn-ghost btn-sm">Add note</button>
+          <button type="submit" class="pz-btn pz-btn-quiet">Add note</button>
         </form>
-      </section>
+      </div>
     </div>
   </div>
 

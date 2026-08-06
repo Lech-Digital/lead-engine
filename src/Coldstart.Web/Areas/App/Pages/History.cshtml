@@ -10,7 +10,9 @@
   <partial name="_AppSidebar" />
   <div class="rail-main">
 <main class="wrap app-zone">
-  <h1 class="cz-h1">History</h1>
+  <div class="pz-head">
+    <div><h1>History</h1></div>
+  </div>
 
   <div class="cz-filters">
     <a class="cz-chip @(Model.Filter == "all" ? "on" : "")" href="/app/history?filter=all">All <span style="opacity:.6">@Model.AllCount</span></a>
@@ -41,17 +43,17 @@
               <a class="cz-co cz-co-link" href="/app/leads/@lead.Id">@lead.Company</a>
               @if (lead.Status == "Sent")
               {
-                <span class="cz-stbadge st-sent">SENT · @lead.CreatedAt.ToString("dd MMM", System.Globalization.CultureInfo.InvariantCulture)</span>
+                <span class="pz-pill pz-pill-sent">SENT · @lead.CreatedAt.ToString("dd MMM", System.Globalization.CultureInfo.InvariantCulture)</span>
                 @switch (lead.Outcome)
                 {
-                  case "Replied": <span class="cz-stbadge st-sent">💬 REPLIED</span> break;
-                  case "MeetingBooked": <span class="cz-stbadge st-sent">📅 MEETING</span> break;
-                  case "Won": <span class="cz-stbadge st-sent">🏆 WON</span> break;
+                  case "Replied": <span class="pz-pill pz-pill-sent">💬 REPLIED</span> break;
+                  case "MeetingBooked": <span class="pz-pill pz-pill-sent">📅 MEETING</span> break;
+                  case "Won": <span class="pz-pill pz-pill-sent">🏆 WON</span> break;
                 }
               }
               else if (lead.Status is "Shelved" or "Rejected")
               {
-                <span class="cz-stbadge st-skip">SKIPPED · @(lead.SkipReason ?? (lead.Status == "Shelved" ? "you" : "not a fit"))</span>
+                <span class="pz-pill pz-pill-sent">SKIPPED · @(lead.SkipReason ?? (lead.Status == "Shelved" ? "you" : "not a fit"))</span>
                 @* Only a lead YOU shelved can be reopened. A Rejected lead is one the engine
                    judged a non-fit: it was persisted with "-" for subject and draft, so
                    reopening it would put a blank lead in the briefing. *@
@@ -65,7 +67,7 @@
               }
               else if (isOlder)
               {
-                <span class="cz-stbadge st-old">OLDER · @lead.CreatedAt.ToString("dd MMM", System.Globalization.CultureInfo.InvariantCulture)</span>
+                <span class="pz-pill pz-pill-sent">OLDER · @lead.CreatedAt.ToString("dd MMM", System.Globalization.CultureInfo.InvariantCulture)</span>
                 <form method="post" asp-page-handler="Reopen" class="cz-reopen-form">
                   <input type="hidden" name="id" value="@lead.Id">
                   <button class="cz-why" type="submit">reopen →</button>

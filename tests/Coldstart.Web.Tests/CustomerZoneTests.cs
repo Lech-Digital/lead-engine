@@ -28,7 +28,8 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Assert
         html.Should().Contain("Patronus AI");
         html.Should().Contain("A thought after the $50M"); // subject renders
-        html.Should().Contain("lead-row"); // compact row markup, not the old plain table
+        html.Should().Contain("pz-lead"); // compact row markup (portal design system), not the old plain table
+        html.Should().Contain("Strong fit"); // Fit.Yes renders as plain language, not the raw enum name
     }
 
     [Fact]
@@ -44,7 +45,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         var html = await client.GetStringAsync("/app");
 
         // Assert
-        html.Should().Contain("lead-row-why"); // compact why-now indicator (icon + signal, no label text)
+        html.Should().Contain("pz-why"); // compact why-now indicator (icon + signal, no label text)
         html.Should().Contain("raised");
     }
 

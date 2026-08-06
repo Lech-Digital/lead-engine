@@ -58,7 +58,7 @@ public class LeadFoilTests(FoilWebFactory factory) : IClassFixture<FoilWebFactor
 
         // Assert — every unlocked row renders before the first locked row
         var firstLocked = html.IndexOf("class=\"lead-row locked\"", StringComparison.Ordinal);
-        var lastUnlocked = html.LastIndexOf("class=\"lead-row\"", StringComparison.Ordinal);
+        var lastUnlocked = html.LastIndexOf("class=\"pz-lead\"", StringComparison.Ordinal);
         firstLocked.Should().BeGreaterThan(0);
         lastUnlocked.Should().BeGreaterThan(0);
         lastUnlocked.Should().BeLessThan(firstLocked);
