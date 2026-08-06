@@ -314,9 +314,10 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Act
         var html = await client.GetStringAsync("/app/settings/outreach");
 
-        // Assert — full-height rail nav (like every other app page), grouped panels, no auth-card shell
+        // Assert — full-height rail nav (like every other app page), grouped cards (pz-card,
+        // the portal design system's panel equivalent), no auth-card shell
         html.Should().Contain("id=\"app-rail\"");
-        html.Should().Contain("panel");
+        html.Should().Contain("pz-card");
         html.Should().NotContain("auth-card");
     }
 

@@ -6,12 +6,17 @@
   <partial name="_AppSidebar" />
   <div class="rail-main">
 <main class="wrap app-zone settings-page">
-  <section class="app-briefing"><h1>Settings</h1></section>
+  <div class="pz-head">
+    <div>
+      <h1>Sources</h1>
+      <p class="pz-sub">Where the engine hunts for leads — turn off anything that doesn't fit, and the nightly run skips it.</p>
+    </div>
+  </div>
 
   <form method="post">
-    <section class="panel">
-      <h2 class="app-group-head">Where the engine hunts</h2>
-      <p class="settings-note">Pick the signal sources for your niche — the nightly run searches only what you keep on.</p>
+    <div class="pz-card">
+      <h2>Where the engine hunts</h2>
+      <p class="pz-hint">Pick the signal sources for your niche — the nightly run searches only what you keep on.</p>
       @for (var i = 0; i < Model.Sources.Count; i++)
       {
         <div class="source-row">
@@ -23,24 +28,25 @@
           </label>
         </div>
       }
-    </section>
-    <div class="profile-actions">
-      <button class="btn btn-primary" type="submit">Save →</button>
-      @if (Model.StatusMessage is not null) { <span class="form-status">@Model.StatusMessage</span> }
+      <div class="pz-actions">
+        <button class="pz-btn pz-btn-primary" type="submit">Save changes</button>
+        @if (Model.StatusMessage is not null) { <span class="form-status">@Model.StatusMessage</span> }
+      </div>
     </div>
   </form>
 
   <form method="post" asp-page-handler="Wish">
-    <section class="panel">
-      <h2 class="app-group-head">Missing something?</h2>
-      <p class="settings-note">A source we should hunt, a feature you wish existed — say it here and it goes straight to the founder, not into a ticket queue.</p>
-      <textarea name="wish" rows="3" minlength="3" maxlength="2000" required
-                placeholder="e.g. Belgian job boards, LinkedIn company announcements, a weekly summary email…"
-                style="width:100%;resize:vertical;"></textarea>
-      <div class="profile-actions" style="margin-top:10px;">
-        <button class="btn btn-ghost" type="submit">Send wish →</button>
+    <div class="pz-card">
+      <h2>Missing something?</h2>
+      <p class="pz-hint">A source we should hunt, a feature you wish existed — say it here and it goes straight to the founder, not into a ticket queue.</p>
+      <div class="pz-field full">
+        <textarea name="wish" rows="3" minlength="3" maxlength="2000" required
+                  placeholder="e.g. Belgian job boards, LinkedIn company announcements, a weekly summary email…"></textarea>
       </div>
-    </section>
+      <div class="pz-actions">
+        <button class="pz-btn pz-btn-quiet" type="submit">Send wish</button>
+      </div>
+    </div>
   </form>
 </main>
   </div>

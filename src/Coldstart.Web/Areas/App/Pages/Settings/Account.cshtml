@@ -6,25 +6,34 @@
   <partial name="_AppSidebar" />
   <div class="rail-main">
 <main class="wrap app-zone settings-page">
-  <section class="app-briefing"><h1>Settings</h1></section>
-
-  <section class="panel" id="account">
-    <h2 class="app-group-head">Account</h2>
-    <p class="settings-note">Signed in as <strong>@Model.SignedInEmail</strong></p>
-    <div class="settings-actions">
-      <a class="btn btn-ghost" href="/Identity/Account/ForgotPassword">Change password</a>
-      <form method="post" asp-page="/Account/Logout" asp-area="Identity"><button class="btn btn-ghost" type="submit">Log out</button></form>
+  <div class="pz-head">
+    <div>
+      <h1>Account</h1>
+      <p class="pz-sub">Your sign-in details and whether onboarding tips still show up.</p>
     </div>
-  </section>
+  </div>
 
-  <section class="panel profile-hints" id="hints">
-    <h2 class="app-group-head">Onboarding hints</h2>
-    <p>Want the getting-started tips again? They'll reappear one per day.</p>
+  <div class="pz-card" id="account">
+    <h2>Account</h2>
+    <dl class="pz-facts">
+      <div class="pz-fact"><dt>Signed in as</dt><dd>@Model.SignedInEmail</dd></div>
+    </dl>
+    <div class="pz-actions">
+      <a class="pz-btn pz-btn-quiet" href="/Identity/Account/ForgotPassword">Change password</a>
+      <form method="post" asp-page="/Account/Logout" asp-area="Identity"><button class="pz-btn pz-btn-quiet" type="submit">Log out</button></form>
+    </div>
+  </div>
+
+  <div class="pz-card" id="hints">
+    <h2>Onboarding hints</h2>
+    <p class="pz-hint">Want the getting-started tips again? They'll reappear one per day.</p>
     <form method="post" asp-page-handler="ShowHints">
-      <button type="submit" class="btn btn-ghost">Show hints again</button>
-      @if (Model.StatusMessage is not null) { <span class="form-status">@Model.StatusMessage</span> }
+      <div class="pz-actions">
+        <button type="submit" class="pz-btn pz-btn-quiet">Show hints again</button>
+        @if (Model.StatusMessage is not null) { <span class="form-status">@Model.StatusMessage</span> }
+      </div>
     </form>
-  </section>
+  </div>
 </main>
   </div>
 </div>

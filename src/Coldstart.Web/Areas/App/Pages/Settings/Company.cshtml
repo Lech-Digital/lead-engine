@@ -6,29 +6,34 @@
   <partial name="_AppSidebar" />
   <div class="rail-main">
 <main class="wrap app-zone settings-page">
-  <section class="app-briefing"><h1>Settings</h1></section>
+  <div class="pz-head">
+    <div>
+      <h1>Company</h1>
+      <p class="pz-sub">Your niche steers what the engine hunts for; the rest is your registration record.</p>
+    </div>
+  </div>
 
   <form method="post">
-    <section class="panel">
-      <h2 class="app-group-head">Company</h2>
-      <div class="profile-grid">
-        <div class="field"><label asp-for="Input.CompanyName">Company name</label><input asp-for="Input.CompanyName"></div>
-        <div class="field"><label asp-for="Input.Website">Website</label><input asp-for="Input.Website"></div>
-        <div class="field"><label asp-for="Input.Niche">Niche</label><input asp-for="Input.Niche"></div>
-        <div class="field"><label asp-for="Input.ContactEmail">Contact email</label><input asp-for="Input.ContactEmail" type="email"></div>
+    <div class="pz-card">
+      <h2>Company</h2>
+      <div class="pz-settings">
+        <div class="pz-field"><label asp-for="Input.CompanyName">Company name</label><input asp-for="Input.CompanyName"></div>
+        <div class="pz-field"><label asp-for="Input.Website">Website</label><input asp-for="Input.Website"></div>
+        <div class="pz-field"><label asp-for="Input.Niche">Niche</label><input asp-for="Input.Niche"></div>
+        <div class="pz-field"><label asp-for="Input.ContactEmail">Contact email</label><input asp-for="Input.ContactEmail" type="email"></div>
       </div>
-    </section>
-    <section class="panel">
-      <h2 class="app-group-head">Registration</h2>
-      <div class="profile-grid">
-        <div class="field profile-span-2"><label asp-for="Input.Address">Address</label><input asp-for="Input.Address"></div>
-        <div class="field"><label asp-for="Input.VatNumber">VAT number</label><input asp-for="Input.VatNumber"></div>
-        <div class="field"><label asp-for="Input.KvkNumber">KvK number</label><input asp-for="Input.KvkNumber"></div>
+    </div>
+    <div class="pz-card">
+      <h2>Registration</h2>
+      <div class="pz-settings">
+        <div class="pz-field full"><label asp-for="Input.Address">Address</label><input asp-for="Input.Address"></div>
+        <div class="pz-field"><label asp-for="Input.VatNumber">VAT number</label><input asp-for="Input.VatNumber"></div>
+        <div class="pz-field"><label asp-for="Input.KvkNumber">KvK number</label><input asp-for="Input.KvkNumber"></div>
       </div>
-    </section>
-    <div class="profile-actions">
-      <button class="btn btn-primary" type="submit">Save →</button>
-      @if (Model.StatusMessage is not null) { <span class="form-status">@Model.StatusMessage</span> }
+      <div class="pz-actions">
+        <button class="pz-btn pz-btn-primary" type="submit">Save changes</button>
+        @if (Model.StatusMessage is not null) { <span class="form-status">@Model.StatusMessage</span> }
+      </div>
     </div>
   </form>
 </main>

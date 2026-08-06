@@ -6,44 +6,53 @@
   <partial name="_AppSidebar" />
   <div class="rail-main">
 <main class="wrap app-zone settings-page">
-  <section class="app-briefing"><h1>Settings</h1></section>
+  <div class="pz-head">
+    <div>
+      <h1>Outreach</h1>
+      <p class="pz-sub">What the engine says about you when it writes — the brief feeds every draft, the pitch and intro go out word for word.</p>
+    </div>
+  </div>
 
   <form method="post">
     <button type="submit" hidden aria-hidden="true" tabindex="-1"></button>
-    <section class="panel" id="outreach">
-      <h2 class="app-group-head">Outreach voice</h2>
-      <div class="field">
-        <label asp-for="Input.Brief">Company brief <span class="field-hint">— a short "who we are" used as context in your outreach</span></label>
+    <div class="pz-card" id="outreach">
+      <h2>Outreach voice</h2>
+      <div class="pz-field">
+        <label asp-for="Input.Brief">Company brief</label>
         <textarea asp-for="Input.Brief" rows="4" autofocus="@Model.JustPolished"></textarea>
-        <button class="btn btn-ghost btn-sm profile-polish" type="submit" asp-page-handler="Polish">Polish with AI</button>
+        <p class="pz-hint">A short "who we are" used as context in your outreach.</p>
+        <button class="pz-btn pz-btn-quiet" type="submit" asp-page-handler="Polish">Polish with AI</button>
       </div>
-      <div class="field">
-        <label asp-for="Input.PitchLine">Pitch paragraph <span class="field-hint">— appended to every draft, word-for-word; the AI writes only the personal opener above it</span></label>
+      <div class="pz-field">
+        <label asp-for="Input.PitchLine">Pitch paragraph</label>
         <textarea asp-for="Input.PitchLine" rows="3"></textarea>
+        <p class="pz-hint">Appended to every draft, word for word — the AI writes only the personal opener above it.</p>
       </div>
-      <div class="field">
-        <label asp-for="Input.IntroLine">Intro line <span class="field-hint">— one sentence after the greeting explaining why you're writing</span></label>
+      <div class="pz-field">
+        <label asp-for="Input.IntroLine">Intro line</label>
         <textarea asp-for="Input.IntroLine" rows="2"></textarea>
+        <p class="pz-hint">One sentence after the greeting, explaining why you're writing.</p>
       </div>
       @if (User.IsInRole(Coldstart.Web.ColdstartRoles.SuperAdmin))
       {
-        <div class="field">
-          <label asp-for="Input.CtaLine">Call-to-action paragraph <span class="field-hint">— operator only</span></label>
+        <div class="pz-field">
+          <label asp-for="Input.CtaLine">Call-to-action paragraph</label>
           <textarea asp-for="Input.CtaLine" rows="2"></textarea>
+          <p class="pz-hint">Operator only.</p>
         </div>
-        <div class="profile-grid">
-          <div class="field"><label asp-for="Input.CtaButtonText">Button label</label><input asp-for="Input.CtaButtonText"></div>
-          <div class="field"><label asp-for="Input.CtaButtonUrl">Button link</label><input asp-for="Input.CtaButtonUrl"></div>
+        <div class="pz-settings">
+          <div class="pz-field"><label asp-for="Input.CtaButtonText">Button label</label><input asp-for="Input.CtaButtonText"></div>
+          <div class="pz-field"><label asp-for="Input.CtaButtonUrl">Button link</label><input asp-for="Input.CtaButtonUrl"></div>
         </div>
-        <div class="field"><label asp-for="Input.SubjectTemplate">Subject template</label><input asp-for="Input.SubjectTemplate"></div>
-        <div class="field field-check">
+        <div class="pz-field"><label asp-for="Input.SubjectTemplate">Subject template</label><input asp-for="Input.SubjectTemplate"></div>
+        <div class="field-check">
           <label><input asp-for="Input.MentionSourceTool" type="checkbox"> Mention leads were found via Coldstart</label>
         </div>
       }
-    </section>
-    <div class="profile-actions">
-      <button class="btn btn-primary" type="submit">Save →</button>
-      @if (Model.StatusMessage is not null) { <span class="form-status">@Model.StatusMessage</span> }
+      <div class="pz-actions">
+        <button class="pz-btn pz-btn-primary" type="submit">Save changes</button>
+        @if (Model.StatusMessage is not null) { <span class="form-status">@Model.StatusMessage</span> }
+      </div>
     </div>
   </form>
 </main>
