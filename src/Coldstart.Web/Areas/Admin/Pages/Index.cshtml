@@ -1,145 +1,106 @@
 @page "/admin"
 @model Coldstart.Web.Areas.Admin.Pages.IndexModel
+@using Coldstart.Domain
 @{ ViewData["Title"] = "Admin · Companies"; Layout = "/Pages/Shared/_Layout.cshtml"; ViewData["AdminTab"] = "companies"; }
 
 <div class="rail-shell">
   <partial name="_AdminSidebar" />
   <div class="rail-main">
 <main class="wrap app-zone">
-  <h1>Company admins</h1>
-  @if (Model.StatusMessage is not null) { <p class="form-status">@Model.StatusMessage</p> }
-  @if (Model.CopyLink is { } cl)
-  {
-    <div class="form-status">Set-password link for @cl.Email:<br><input class="copy-link" type="text" readonly value="@cl.Url" onclick="this.select()" style="width:100%;"></div>
-  }
+  <div class="pz-head">
+    <div>
+      <h1>Companies</h1>
+      <p class="pz-sub">Invite a new company, or open one below to manage its people, plan and harvest.</p>
+    </div>
+    <span class="pz-count">@Model.Rows.Count compan@(Model.Rows.Count == 1 ? "y" : "ies")</span>
+  </div>
 
-  <form method="post" asp-page-handler="Invite" class="admin-invite">
-    <div asp-validation-summary="All" class="field-error"></div>
-    <div class="field"><label asp-for="Input.Company">Company name</label><input asp-for="Input.Company" required></div>
-    <div class="field"><label asp-for="Input.Email">Admin email</label><input asp-for="Input.Email" type="email" required></div>
-    <div class="field"><label asp-for="Input.Niche">Who their customers are (niche)</label><input asp-for="Input.Niche" required placeholder="e.g. dental clinics in the Benelux"></div>
-    <div class="field"><label asp-for="Input.Info">What they sell / notes</label><textarea asp-for="Input.Info" rows="3" placeholder="from their inquiry, or a short description"></textarea></div>
-    <button class="btn btn-primary" type="submit">Send invite →</button>
-  </form>
+  @if (Model.StatusMessage is not null) { <p class="form-status">@Model.StatusMessage</p> }
+
+  <div class="pz-card">
+    <h2>Invite a company</h2>
+    <form method="post" asp-page-handler="Invite">
+      <div asp-validation-summary="All" class="field-error"></div>
+      <div class="pz-field"><label asp-for="Input.Company">Company name</label><input asp-for="Input.Company" required></div>
+      <div class="pz-field"><label asp-for="Input.Email">Admin email</label><input asp-for="Input.Email" type="email" required></div>
+      <div class="pz-field"><label asp-for="Input.Niche">Who their customers are (niche)</label><input asp-for="Input.Niche" required placeholder="e.g. dental clinics in the Benelux"></div>
+      <div class="pz-field"><label asp-for="Input.Info">What they sell / notes</label><textarea asp-for="Input.Info" rows="3" placeholder="from their inquiry, or a short description"></textarea></div>
+      <div class="pz-actions"><button class="pz-btn pz-btn-primary" type="submit">Send invite</button></div>
+    </form>
+  </div>
 
   @if (Model.Inquiries.Count > 0)
   {
-    <h2 class="app-group-head">Recent inquiries</h2>
-    <table class="admin-table">
-      <thead><tr><th>Name</th><th>Company</th><th>Email</th><th>Niche</th><th>Sells</th><th></th></tr></thead>
-      <tbody>
-      @foreach (var q in Model.Inquiries)
-      {
-        <tr>
-          <td>@q.Name</td>
-          <td>@(q.Company ?? "—")</td>
-          <td>@q.Email</td>
-          <td>@q.Niche</td>
-          <td>@q.WhatYouSell</td>
-          <td class="admin-actions"><a class="btn btn-ghost btn-sm" href="/admin?useInquiry=@q.Id">Use for invite</a></td>
-        </tr>
-      }
-      </tbody>
-    </table>
+    <div class="pz-card">
+      <h2>Recent inquiries</h2>
+      <div class="pz-table-wrap">
+        <table class="pz-table">
+          <thead><tr><th>Name</th><th>Company</th><th>Email</th><th>Niche</th><th>Sells</th><th></th></tr></thead>
+          <tbody>
+          @foreach (var q in Model.Inquiries)
+          {
+            <tr>
+              <td>@q.Name</td>
+              <td>@(q.Company ?? "—")</td>
+              <td>@q.Email</td>
+              <td>@q.Niche</td>
+              <td>@q.WhatYouSell</td>
+              <td><a class="pz-btn pz-btn-quiet" href="/admin?useInquiry=@q.Id">Use for invite</a></td>
+            </tr>
+          }
+          </tbody>
+        </table>
+      </div>
+    </div>
   }
 
-  <h2 class="app-group-head">Companies &amp; users</h2>
-  @if (Model.Rows.Count == 0) { <p class="app-group-empty">No accounts yet.</p> }
-  else
-  {
-    <table class="admin-table">
-      <thead><tr><th>Company</th><th>Email</th><th>Role</th><th>Status</th><th>Plan</th><th>Harvest</th><th>Actions</th></tr></thead>
-      <tbody>
-      @foreach (var r in Model.Rows)
-      {
-        <tr>
-          <td>@r.Company</td>
-          <td>@r.Email</td>
-          <td>@r.Role</td>
-          <td>@r.Status@(r.Status == "Pending" && r.DaysLeft is not null ? $" · {r.DaysLeft}d" : "")</td>
-          <td>
-            @if (r.CustomerId is null)
-            {
-              <span class="ts">—</span>
-            }
-            else if (r.ComplimentaryUntil is { } compUntil)
-            {
-              @* Comp grants are Plan==Full under the hood, but must read as their own state —
-                 not indistinguishable from a real paying customer — so an operator scanning
-                 the list immediately sees who is on a lapsing thank-you grant. *@
-              <span class="plan-badge plan-full">Full</span>
-              <br><span class="ts">comp · until @compUntil.ToString("d MMM") · @Math.Max(0, (int)Math.Ceiling((compUntil - DateTimeOffset.UtcNow).TotalDays))d left</span>
-            }
-            else if (r.Plan == Coldstart.Domain.CustomerPlan.Full)
-            {
-              <span class="plan-badge plan-full">Full</span>
-            }
-            else
-            {
-              <span class="plan-badge plan-free">Free</span>
-            }
-          </td>
-          <td>
-            @if (r.CustomerId is not null)
-            {
-              <span class="ts">@r.HarvestStatus@(r.LastHarvestAt is { } lastAt ? $" · {lastAt:dd MMM HH:mm}" : "")</span>
-            }
-          </td>
-          <td class="admin-actions">
-            @if (r.Status == "Pending")
-            {
-              <form method="post" asp-page-handler="Resend"><input type="hidden" name="email" value="@r.Email"><button class="btn btn-ghost btn-sm" type="submit">Resend</button></form>
-              <form method="post" asp-page-handler="CopyLink"><input type="hidden" name="email" value="@r.Email"><button class="btn btn-ghost btn-sm" type="submit">Copy link</button></form>
-              <form method="post" asp-page-handler="Revoke" onsubmit="return confirm('Revoke the invite for @r.Email?');"><input type="hidden" name="email" value="@r.Email"><button class="btn btn-ghost btn-sm" type="submit">Revoke</button></form>
-            }
-            @if (r.Status != "Pending" && r.CanManage)
-            {
-              @if (r.Status == "Blocked")
-              {
-                <form method="post" asp-page-handler="Unblock"><input type="hidden" name="id" value="@r.Id"><button class="btn btn-ghost btn-sm" type="submit">Unblock</button></form>
-              }
-              else
-              {
-                <form method="post" asp-page-handler="Block"><input type="hidden" name="id" value="@r.Id"><button class="btn btn-ghost btn-sm" type="submit">Block</button></form>
-              }
-              <form method="post" asp-page-handler="Remove" onsubmit="return confirm('Remove @r.Email and delete their data? This cannot be undone.');"><input type="hidden" name="id" value="@r.Id"><button class="btn btn-ghost btn-sm" type="submit">Remove</button></form>
-            }
-            @if (r.CustomerId is { } cid)
-            {
-              <form method="post" asp-page-handler="GrantComplimentary" style="display:inline-flex;gap:4px;align-items:center;">
-                <input type="hidden" name="customerId" value="@cid">
-                <input type="number" name="days" value="5" min="1" max="365" style="width:52px;"
-                       title="Sets a new complimentary end date this many days from today — this REPLACES any existing end date, it does not add to it.">
-                <button class="btn btn-ghost btn-sm" type="submit"
-                        title="Sets a new end date N days from today — replaces, not extends, any current grant.">Grant/extend comp</button>
-              </form>
-              @if (r.ComplimentaryUntil is not null)
-              {
-                <form method="post" asp-page-handler="CancelComplimentary">
-                  <input type="hidden" name="customerId" value="@cid">
-                  <button class="btn btn-ghost btn-sm" type="submit"
-                          data-confirm="This ends @r.Company's complimentary access immediately and returns them to the free plan. It does not send them an email."
-                          data-confirm-title="Cancel complimentary access?" data-confirm-ok="Cancel it">Cancel comp</button>
-                </form>
-              }
-              <form method="post" asp-page-handler="RunHarvest">
-                <input type="hidden" name="customerId" value="@cid">
-                @if (r.HarvestStatus is Coldstart.Domain.HarvestStatus.Pending or Coldstart.Domain.HarvestStatus.Running)
+  <div class="pz-card">
+    <h2>All companies</h2>
+    @if (Model.Rows.Count == 0)
+    {
+      <p class="pz-empty">No companies yet — invite one above.</p>
+    }
+    else
+    {
+      <div class="pz-table-wrap">
+        <table class="pz-table">
+          <thead><tr><th>Company</th><th>Plan</th><th>Harvest</th><th>Users</th><th>Leads</th><th></th></tr></thead>
+          <tbody>
+          @foreach (var r in Model.Rows)
+          {
+            <tr>
+              <td><a class="pz-row-link" href="/admin/customers/@r.CustomerId">@r.Company</a></td>
+              <td>
+                @if (r.ComplimentaryUntil is { } compUntil)
                 {
-                  <button class="btn btn-ghost btn-sm" type="submit" disabled title="A harvest is already @(r.HarvestStatus.ToString().ToLowerInvariant()).">Run harvest</button>
+                  @* Comp grants are Plan==Full under the hood, but must read as their own state —
+                     not indistinguishable from a real paying customer. *@
+                  <span class="pz-pill pz-pill-maybe">Complimentary</span>
+                  <span class="pz-cell-sub">until @compUntil.ToString("d MMM") · @Math.Max(0, (int)Math.Ceiling((compUntil - DateTimeOffset.UtcNow).TotalDays))d left</span>
+                }
+                else if (r.Plan == CustomerPlan.Full)
+                {
+                  <span class="pz-pill pz-pill-yes">Full</span>
                 }
                 else
                 {
-                  <button class="btn btn-ghost btn-sm" type="submit" title="Queues a harvest to run in the background.">Run harvest</button>
+                  <span class="pz-pill pz-pill-sent">Free</span>
                 }
-              </form>
-            }
-          </td>
-        </tr>
-      }
-      </tbody>
-    </table>
-  }
+              </td>
+              <td>
+                @r.HarvestStatus
+                @if (r.LastHarvestAt is { } lastAt) { <span class="pz-cell-sub">@lastAt.ToString("d MMM HH:mm")</span> }
+              </td>
+              <td>@r.UserCount</td>
+              <td>@r.LeadsTotal<span class="pz-cell-sub">@r.LeadsPendingReview pending review</span></td>
+              <td><a class="pz-btn pz-btn-quiet" href="/admin/customers/@r.CustomerId">Manage →</a></td>
+            </tr>
+          }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
 </main>
   </div>
 </div>

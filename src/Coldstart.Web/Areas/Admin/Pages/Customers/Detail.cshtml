@@ -1,0 +1,170 @@
+@page "/admin/customers/{id:guid}"
+@model Coldstart.Web.Areas.Admin.Pages.Customers.DetailModel
+@using Coldstart.Domain
+@{
+    ViewData["Title"] = $"Admin · {Model.Company}";
+    Layout = "/Pages/Shared/_Layout.cshtml";
+    ViewData["AdminTab"] = "companies";
+    var comp = Model.ComplimentaryUntil;
+    var daysLeft = comp is { } cu ? Math.Max(0, (int)Math.Ceiling((cu - DateTimeOffset.UtcNow).TotalDays)) : 0;
+}
+
+<div class="rail-shell">
+  <partial name="_AdminSidebar" />
+  <div class="rail-main">
+<main class="wrap app-zone">
+
+  <div class="pz-head">
+    <div>
+      <h1>@Model.Company</h1>
+      <p class="pz-sub">Customer id <span class="ts">@Model.CustomerId</span></p>
+    </div>
+    <a class="pz-btn pz-btn-quiet" href="/admin">← All companies</a>
+  </div>
+
+  @if (Model.StatusMessage is not null) { <p class="form-status">@Model.StatusMessage</p> }
+  @if (Model.CopyLink is { } cl)
+  {
+    <div class="form-status">Set-password link for @cl.Email:<br><input class="copy-link" type="text" readonly value="@cl.Url" onclick="this.select()"></div>
+  }
+
+  <div class="pz-detail">
+    <div>
+      <!-- People -->
+      <div class="pz-card">
+        <h2>People</h2>
+        @if (Model.People.Count == 0)
+        {
+          <p class="pz-empty">No accounts on this customer.</p>
+        }
+        else
+        {
+          <div class="pz-table-wrap">
+            <table class="pz-table">
+              <thead><tr><th>Email</th><th>Role</th><th>Status</th><th></th></tr></thead>
+              <tbody>
+              @foreach (var p in Model.People)
+              {
+                <tr>
+                  <td>@p.Email</td>
+                  <td>@p.Role</td>
+                  <td>@p.Status@(p.Status == "Pending" && p.DaysLeft is not null ? $" · {p.DaysLeft}d left" : "")</td>
+                  <td>
+                    <div class="pz-row-actions">
+                      @if (p.Status == "Pending")
+                      {
+                        <form method="post" asp-page-handler="Resend" asp-route-id="@Model.CustomerId"><input type="hidden" name="email" value="@p.Email"><button class="pz-btn pz-btn-quiet" type="submit">Resend</button></form>
+                        <form method="post" asp-page-handler="CopyLink" asp-route-id="@Model.CustomerId"><input type="hidden" name="email" value="@p.Email"><button class="pz-btn pz-btn-quiet" type="submit">Copy link</button></form>
+                        <form method="post" asp-page-handler="Revoke" asp-route-id="@Model.CustomerId"><input type="hidden" name="email" value="@p.Email"><button class="pz-btn pz-btn-quiet" type="submit" data-confirm="Revoke the invite for @p.Email?" data-confirm-title="Revoke invite?" data-confirm-ok="Revoke">Revoke</button></form>
+                      }
+                      @if (p.Status != "Pending" && p.CanManage)
+                      {
+                        @if (p.Status == "Blocked")
+                        {
+                          <form method="post" asp-page-handler="Unblock" asp-route-id="@Model.CustomerId"><input type="hidden" name="userId" value="@p.Id"><button class="pz-btn pz-btn-quiet" type="submit">Unblock</button></form>
+                        }
+                        else
+                        {
+                          <form method="post" asp-page-handler="Block" asp-route-id="@Model.CustomerId"><input type="hidden" name="userId" value="@p.Id"><button class="pz-btn pz-btn-quiet" type="submit">Block</button></form>
+                        }
+                        <form method="post" asp-page-handler="Remove" asp-route-id="@Model.CustomerId"><input type="hidden" name="userId" value="@p.Id"><button class="pz-btn pz-btn-danger" type="submit" data-confirm="This removes @p.Email and permanently deletes their data. This cannot be undone." data-confirm-title="Remove @p.Email?" data-confirm-ok="Remove">Remove</button></form>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <!-- Plan -->
+      <div class="pz-card">
+        <h2>Plan</h2>
+        @if (comp is { } compUntil)
+        {
+          <p class="pz-note">Complimentary — full access until <b>@compUntil.ToString("d MMM yyyy")</b> (@daysLeft day@(daysLeft == 1 ? "" : "s") left).</p>
+        }
+        else if (Model.Plan == CustomerPlan.Full)
+        {
+          <p class="pz-note">Full plan via Stripe@(Model.PlanRenewsAt is { } renews ? $" — renews {renews:d MMM yyyy}." : ".")</p>
+        }
+        else
+        {
+          <p class="pz-note">Free plan — no active subscription or grant.</p>
+        }
+
+        <form method="post" asp-page-handler="GrantComplimentary" asp-route-id="@Model.CustomerId">
+          <div class="pz-field">
+            <label asp-for="GrantDays">Days of complimentary access</label>
+            <input asp-for="GrantDays" type="number" min="1" max="365">
+            <p class="pz-hint">Sets the complimentary end date to this many days from today — this <b>replaces</b> any existing end date, it does not add to it.</p>
+          </div>
+          <div class="pz-actions">
+            <button class="pz-btn pz-btn-primary" type="submit">Grant / extend complimentary access</button>
+            @if (comp is not null)
+            {
+              <span class="spacer"></span>
+              <button class="pz-btn pz-btn-danger" type="submit" asp-page-handler="CancelComplimentary" asp-route-id="@Model.CustomerId"
+                      data-confirm="This ends @Model.Company's complimentary access immediately and returns them to the free plan. It does not send them an email."
+                      data-confirm-title="Cancel complimentary access?" data-confirm-ok="Cancel it">Cancel complimentary access</button>
+            }
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div>
+      <!-- Identity -->
+      <div class="pz-card">
+        <h2>Identity</h2>
+        <dl class="pz-facts">
+          <div class="pz-fact"><dt>Company</dt><dd>@Model.Company</dd></div>
+          <div class="pz-fact"><dt>Customer id</dt><dd class="ts">@Model.CustomerId</dd></div>
+          <div class="pz-fact"><dt>Created</dt><dd>@(Model.CreatedAt is { } created ? created.ToString("d MMM yyyy") : "not tracked")</dd></div>
+          @if (Model.Niche is not null)
+          {
+            <div class="pz-fact"><dt>Niche</dt><dd>@Model.Niche</dd></div>
+          }
+        </dl>
+      </div>
+
+      <!-- Harvest -->
+      <div class="pz-card">
+        <h2>Harvest</h2>
+        <dl class="pz-facts">
+          <div class="pz-fact"><dt>Status</dt><dd>@Model.HarvestStatus</dd></div>
+          <div class="pz-fact"><dt>Last run</dt><dd>@(Model.LastHarvestAt is { } last ? last.ToString("d MMM yyyy · HH:mm") : "never")</dd></div>
+        </dl>
+        <form method="post" asp-page-handler="RunHarvest" asp-route-id="@Model.CustomerId" class="pz-actions">
+          @if (Model.HarvestStatus is HarvestStatus.Pending or HarvestStatus.Running)
+          {
+            <button class="pz-btn pz-btn-primary" type="submit" disabled title="A harvest is already @Model.HarvestStatus.ToString().ToLowerInvariant().">Run harvest now</button>
+            <p class="pz-hint">A harvest is already @Model.HarvestStatus.ToString().ToLowerInvariant() — wait for it to finish before queuing another.</p>
+          }
+          else
+          {
+            <button class="pz-btn pz-btn-primary" type="submit">Run harvest now</button>
+            <p class="pz-hint">Queues a harvest to run in the background — it does not complete immediately.</p>
+          }
+        </form>
+      </div>
+
+      <!-- Leads -->
+      <div class="pz-card">
+        <h2>Leads</h2>
+        <dl class="pz-facts">
+          <div class="pz-fact"><dt>Total</dt><dd>@Model.LeadsTotal</dd></div>
+          <div class="pz-fact"><dt>Pending review</dt><dd>@Model.LeadsPendingReview</dd></div>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <partial name="/Pages/Shared/_ConfirmDialog.cshtml" />
+</main>
+  </div>
+</div>
+<script src="~/js/app-rail.js" defer asp-append-version="true"></script>
+<script src="~/js/app-confirm.js" defer asp-append-version="true"></script>

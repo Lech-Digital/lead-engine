@@ -1,10 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using Coldstart.Application.Ports;
 using Coldstart.Domain;
-using Coldstart.Infrastructure.Identity;
 using Coldstart.Web.Admin;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -13,21 +11,33 @@ namespace Coldstart.Web.Areas.Admin.Pages;
 [Authorize(Roles = ColdstartRoles.SuperAdmin)]
 internal sealed class IndexModel(
     AdminUserService admin,
-    UserManager<ApplicationUser> users,
+    ICustomerRepository customers,
     IInquiryRepository inquiries) : PageModel
 {
     [BindProperty]
     public InputModel Input { get; set; } = new();
 
     public string? StatusMessage { get; private set; }
-    public IReadOnlyList<AdminUserRow> Rows { get; private set; } = [];
+    public IReadOnlyList<CustomerRow> Rows { get; private set; } = [];
     public IReadOnlyList<InquiryRow> Inquiries { get; private set; } = [];
-    public (string Email, string Url)? CopyLink { get; private set; }
+
+    // Set by the customer detail page when a Revoke/Remove there deleted the customer outright,
+    // leaving no detail page to return to.
+    [TempData] public string? Flash { get; set; }
 
     public sealed record InquiryRow(Guid Id, string Name, string Email, string Niche, string WhatYouSell, string? Message, DateTimeOffset CreatedAt, string? Company);
 
+    // One row per customer (not per user) — the detail page is where per-user and per-plan
+    // controls live now, so this list only needs to say enough for the operator to pick a company.
+    public sealed record CustomerRow(
+        Guid CustomerId, string Company, int UserCount,
+        CustomerPlan Plan, DateTimeOffset? ComplimentaryUntil,
+        HarvestStatus HarvestStatus, DateTimeOffset? LastHarvestAt,
+        int LeadsTotal, int LeadsPendingReview);
+
     public async Task OnGetAsync(Guid? useInquiry, CancellationToken ct)
     {
+        StatusMessage = Flash;
         if (useInquiry is { } inqId)
         {
             var inq = await inquiries.GetAsync(new InquiryId(inqId), ct);
@@ -59,91 +69,29 @@ internal sealed class IndexModel(
         return Page();
     }
 
-    public async Task<IActionResult> OnPostResendAsync(string email, CancellationToken ct)
-    {
-        if (string.IsNullOrWhiteSpace(email)) { StatusMessage = "No account specified."; return await RenderAsync(ct); }
-        StatusMessage = (await admin.ResendAsync(email, ct)).Message;
-        return await RenderAsync(ct);
-    }
-
-    public async Task<IActionResult> OnPostRevokeAsync(string email, CancellationToken ct)
-    {
-        if (string.IsNullOrWhiteSpace(email)) { StatusMessage = "No account specified."; return await RenderAsync(ct); }
-        StatusMessage = (await admin.RevokeAsync(email, ct)).Message;
-        return await RenderAsync(ct);
-    }
-
-    public async Task<IActionResult> OnPostCopyLinkAsync(string email, CancellationToken ct)
-    {
-        if (string.IsNullOrWhiteSpace(email)) { StatusMessage = "No account specified."; return await RenderAsync(ct); }
-        var result = await admin.CopyLinkAsync(email, ct);
-        if (result.Succeeded) CopyLink = (email, result.SetPasswordLink!);
-        return await RenderAsync(ct);
-    }
-
-    public async Task<IActionResult> OnPostBlockAsync(string id, CancellationToken ct)
-    {
-        StatusMessage = await ActByIdAsync(id, email => admin.BlockAsync(email, User.Identity?.Name, ct));
-        return await RenderAsync(ct);
-    }
-
-    public async Task<IActionResult> OnPostUnblockAsync(string id, CancellationToken ct)
-    {
-        StatusMessage = await ActByIdAsync(id, email => admin.UnblockAsync(email, User.Identity?.Name, ct));
-        return await RenderAsync(ct);
-    }
-
-    public async Task<IActionResult> OnPostRemoveAsync(string id, CancellationToken ct)
-    {
-        StatusMessage = await ActByIdAsync(id, email => admin.RemoveAsync(email, User.Identity?.Name, ct));
-        return await RenderAsync(ct);
-    }
-
-    public async Task<IActionResult> OnPostGrantComplimentaryAsync(Guid customerId, int days, CancellationToken ct)
-    {
-        StatusMessage = (await admin.GrantComplimentaryAsync(customerId, days, ct)).Message;
-        return await RenderAsync(ct);
-    }
-
-    public async Task<IActionResult> OnPostCancelComplimentaryAsync(Guid customerId, CancellationToken ct)
-    {
-        StatusMessage = (await admin.CancelComplimentaryAsync(customerId, ct)).Message;
-        return await RenderAsync(ct);
-    }
-
-    public async Task<IActionResult> OnPostRunHarvestAsync(Guid customerId, CancellationToken ct)
-    {
-        StatusMessage = (await admin.TriggerHarvestAsync(customerId, ct)).Message;
-        return await RenderAsync(ct);
-    }
-
-    // The row buttons post the Identity user id; the service is keyed by email.
-    private async Task<string> ActByIdAsync(string id, Func<string, Task<AdminActionResult>> action)
-    {
-        var user = await users.FindByIdAsync(id);
-        if (user?.Email is not { } email) return "No such account.";
-        return (await action(email)).Message;
-    }
-
-    // Row-action handlers (Resend/Revoke/CopyLink/Block/Unblock/Remove) only post a bare
-    // "email"/"id" hidden field. Razor Pages' empty-prefix model-binding fallback then partially
-    // binds that value onto the page's [BindProperty] Input model (e.g. "email" -> Input.Email),
-    // leaving Input.Company's [Required] validation unsatisfied. Left uncleared, ModelState still
-    // carries that spurious error into the re-rendered page, and the Invite form's
-    // asp-validation-summary="All" displays it — making a successful row action look like a
-    // failure. Clear ModelState and the Input model before rendering so only this handler's own
-    // outcome (StatusMessage) is shown.
-    private async Task<IActionResult> RenderAsync(CancellationToken ct)
-    {
-        ModelState.Clear();
-        Input = new InputModel();
-        await LoadAsync(ct);
-        return Page();
-    }
-
+    // Groups the same per-user rows AdminUserService already computes down to one row per
+    // customer, then folds in the lead counts the admin API already exposes — no new queries.
     private async Task LoadAsync(CancellationToken ct)
     {
-        Rows = await admin.ListAsync(User.Identity?.Name, ct);
+        var userRows = await admin.ListAsync(User.Identity?.Name, ct);
+        var leadCounts = await customers.LeadCountsAsync(ct);
+
+        Rows = userRows
+            .Where(r => r.CustomerId is not null)
+            .GroupBy(r => r.CustomerId!.Value)
+            .Select(g =>
+            {
+                var first = g.First();
+                leadCounts.TryGetValue(g.Key, out var lc);
+                return new CustomerRow(
+                    g.Key, first.Company, g.Count(),
+                    first.Plan ?? CustomerPlan.Free, first.ComplimentaryUntil,
+                    first.HarvestStatus ?? HarvestStatus.None, first.LastHarvestAt,
+                    lc?.Total ?? 0, lc?.PendingReview ?? 0);
+            })
+            .OrderBy(r => r.Company)
+            .ToList();
+
         Inquiries = (await inquiries.RecentAsync(20, ct))
             .Select(i => new InquiryRow(i.Id.Value, i.Name, i.Email.Value, i.Niche, i.WhatYouSell, i.Message, i.CreatedAt, i.Company))
             .ToList();

@@ -8,8 +8,8 @@ using Xunit;
 
 namespace Coldstart.Web.Tests;
 
-// Companies page controls: complimentary grant/cancel and manual harvest, added alongside the
-// existing Resend/Revoke/Block/Unblock/Remove row actions on /admin.
+// Customer detail page controls: complimentary grant/cancel and manual harvest, alongside the
+// existing Resend/Revoke/Block/Unblock/Remove row actions on /admin/customers/{id}.
 public class AdminConsoleComplimentaryAndHarvestTests(ColdstartWebFactory factory) : IClassFixture<ColdstartWebFactory>
 {
     private async Task<Guid> InviteAndGetCustomerIdAsync(HttpClient client, string invitee, string company)
@@ -58,8 +58,8 @@ public class AdminConsoleComplimentaryAndHarvestTests(ColdstartWebFactory factor
         var before = factory.Email.Sent.Count;
 
         // Act
-        var html = await TestAuth.PostFormReadAsync(client, "/admin?handler=GrantComplimentary",
-            new() { ["customerId"] = customerId.ToString(), ["days"] = "5" });
+        var html = await TestAuth.PostFormReadAsync(client, $"/admin/customers/{customerId}?handler=GrantComplimentary",
+            new() { ["GrantDays"] = "5" });
 
         // Assert
         var customer = await ReloadCustomerAsync(customerId);
@@ -77,13 +77,12 @@ public class AdminConsoleComplimentaryAndHarvestTests(ColdstartWebFactory factor
         await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         var invitee = $"cancel-{Guid.NewGuid():N}@test.com";
         var customerId = await InviteAndGetCustomerIdAsync(client, invitee, "Cancel Co");
-        await TestAuth.PostFormAsync(client, "/admin?handler=GrantComplimentary",
-            new() { ["customerId"] = customerId.ToString(), ["days"] = "5" });
+        await TestAuth.PostFormAsync(client, $"/admin/customers/{customerId}?handler=GrantComplimentary",
+            new() { ["GrantDays"] = "5" });
         var before = factory.Email.Sent.Count;
 
         // Act
-        var html = await TestAuth.PostFormReadAsync(client, "/admin?handler=CancelComplimentary",
-            new() { ["customerId"] = customerId.ToString() });
+        var html = await TestAuth.PostFormReadAsync(client, $"/admin/customers/{customerId}?handler=CancelComplimentary", new());
 
         // Assert
         var customer = await ReloadCustomerAsync(customerId);
@@ -106,8 +105,7 @@ public class AdminConsoleComplimentaryAndHarvestTests(ColdstartWebFactory factor
         var before = factory.HarvestQueue.Jobs.Count;
 
         // Act
-        var html = await TestAuth.PostFormReadAsync(client, "/admin?handler=RunHarvest",
-            new() { ["customerId"] = customerId.ToString() });
+        var html = await TestAuth.PostFormReadAsync(client, $"/admin/customers/{customerId}?handler=RunHarvest", new());
 
         // Assert — enqueued, and the message is honest about being asynchronous
         factory.HarvestQueue.Jobs.Skip(before).Should().Contain(j => j.CustomerId == customerId);
@@ -128,8 +126,7 @@ public class AdminConsoleComplimentaryAndHarvestTests(ColdstartWebFactory factor
         var before = factory.HarvestQueue.Jobs.Count;
 
         // Act
-        var html = await TestAuth.PostFormReadAsync(client, "/admin?handler=RunHarvest",
-            new() { ["customerId"] = customerId.ToString() });
+        var html = await TestAuth.PostFormReadAsync(client, $"/admin/customers/{customerId}?handler=RunHarvest", new());
 
         // Assert
         factory.HarvestQueue.Jobs.Count.Should().Be(before);
