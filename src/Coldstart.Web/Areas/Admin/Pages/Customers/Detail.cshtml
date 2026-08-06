@@ -46,7 +46,7 @@
               @foreach (var p in Model.People)
               {
                 <tr>
-                  <td>@p.Email</td>
+                  <td class="pz-cell-wrap">@p.Email</td>
                   <td>@p.Role</td>
                   <td>@p.Status@(p.Status == "Pending" && p.DaysLeft is not null ? $" · {p.DaysLeft}d left" : "")</td>
                   <td>

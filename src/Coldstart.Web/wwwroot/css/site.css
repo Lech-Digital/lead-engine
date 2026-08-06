@@ -851,7 +851,12 @@
    same tokens as everything else, wrapped so it scrolls on its own rather than the page. */
 .pz-table-wrap { overflow-x: auto; border: 1px solid var(--line-soft); border-radius: 14px; background: #fff; }
 .pz-table { width: 100%; border-collapse: collapse; }
+/* nowrap keeps short cells (dates, counts, status) on one line, but a long value
+   — an email address, a company name — must wrap rather than force a horizontal
+   scrollbar inside a card, where the palette-matched amber thumb reads as a
+   stray progress bar. Opt individual cells out with .pz-cell-wrap. */
 .pz-table th, .pz-table td { padding: 12px 16px; text-align: left; vertical-align: middle; font-size: 0.88rem; white-space: nowrap; }
+.pz-table td.pz-cell-wrap, .pz-table th.pz-cell-wrap { white-space: normal; overflow-wrap: anywhere; }
 .pz-table thead th { font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--body-subtle); background: var(--daylight); border-bottom: 1px solid var(--line-soft); }
 .pz-table tbody tr { border-bottom: 1px solid var(--line-soft); }
 .pz-table tbody tr:last-child { border-bottom: 0; }
