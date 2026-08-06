@@ -6,33 +6,40 @@
   <partial name="_AppSidebar" />
   <div class="rail-main">
 <main class="wrap app-zone settings-page">
-  <section class="app-briefing"><h1>Settings</h1></section>
+  <div class="pz-head">
+    <div>
+      <h1>Notifications</h1>
+      <p class="pz-sub">How you hear about new leads beyond your morning email.</p>
+    </div>
+  </div>
 
   <form method="post">
-    <section class="panel" id="notifications">
-      <h2 class="app-group-head">Notifications</h2>
-      <p class="settings-note">Your morning briefing always arrives by <strong>email</strong> to your account address. Add a push channel below if you want it faster.</p>
-      <div class="field">
-        <label asp-for="SlackWebhookUrl">Slack webhook URL <span class="field-hint">— Slack → Apps → Incoming Webhooks → Add to channel, then paste the URL here</span></label>
+    <div class="pz-card" id="notifications">
+      <h2>Notifications</h2>
+      <p class="pz-note">Your morning briefing always arrives by <strong>email</strong> to your account address. Add a push channel below if you want it faster.</p>
+      <div class="pz-field">
+        <label asp-for="SlackWebhookUrl">Slack webhook URL</label>
         <input asp-for="SlackWebhookUrl" placeholder="https://hooks.slack.com/services/…">
+        <p class="pz-hint">Slack → Apps → Incoming Webhooks → Add to channel, then paste the URL here.</p>
       </div>
       @if (User.IsInRole(Coldstart.Web.ColdstartRoles.SuperAdmin))
       {
-        <div class="field">
-          <label asp-for="WhatsAppNumber">WhatsApp number <span class="field-hint">— operator only (sandbox) until the paid Twilio account exists</span></label>
+        <div class="pz-field">
+          <label asp-for="WhatsAppNumber">WhatsApp number</label>
           <input asp-for="WhatsAppNumber" placeholder="+31 6 12345678">
+          <p class="pz-hint">Operator only (sandbox) until the paid Twilio account exists.</p>
         </div>
       }
-      <div class="settings-actions">
-        <button class="btn btn-primary" type="submit">Save →</button>
-        <button class="btn btn-ghost" type="submit" asp-page-handler="TestSlack">Send Slack test</button>
+      <div class="pz-actions">
+        <button class="pz-btn pz-btn-primary" type="submit">Save changes</button>
+        <button class="pz-btn pz-btn-quiet" type="submit" asp-page-handler="TestSlack">Send Slack test</button>
         @if (User.IsInRole(Coldstart.Web.ColdstartRoles.SuperAdmin))
         {
-          <button class="btn btn-ghost" type="submit" asp-page-handler="TestWhatsApp">Send WhatsApp test</button>
+          <button class="pz-btn pz-btn-quiet" type="submit" asp-page-handler="TestWhatsApp">Send WhatsApp test</button>
         }
         @if (Model.StatusMessage is not null) { <span class="form-status">@Model.StatusMessage</span> }
       </div>
-    </section>
+    </div>
   </form>
 </main>
   </div>

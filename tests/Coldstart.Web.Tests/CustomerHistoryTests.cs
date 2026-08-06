@@ -203,7 +203,7 @@ public class CustomerHistoryTests(ColdstartWebFactory factory) : IClassFixture<C
 
         // Assert — exactly 15 lead rows in the briefing queue, exactly 1 in History/older,
         // and every one of the 16 names appears in exactly one of the two pages (no overlap, none missing).
-        var queueRowCount = Regex.Matches(briefing, "class=\"lead-row\"").Count;
+        var queueRowCount = Regex.Matches(briefing, "class=\"pz-lead\"").Count;
         queueRowCount.Should().Be(15);
 
         var inBriefing = names.Where(n => briefing.Contains(n)).ToList();

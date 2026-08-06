@@ -1,5 +1,6 @@
 @page "/app"
 @model Coldstart.Web.Areas.App.Pages.IndexModel
+@using Coldstart.Web.Areas.App.Pages
 @{
     ViewData["Title"] = "Your morning briefing";
     Layout = "/Pages/Shared/_Layout.cshtml";
@@ -10,39 +11,40 @@
   <partial name="_AppSidebar" />
   <div class="rail-main">
 <main class="wrap app-zone">
-  <div class="cz-greet">
-    @if (Model.TotalLeads == 0 && Model.HarvestStatus is Coldstart.Domain.HarvestStatus.Pending or Coldstart.Domain.HarvestStatus.Running)
-    {
-      <h1>Finding your first leads…</h1>
-    }
-    else if (Model.TotalLeads == 0 && Model.HarvestStatus == Coldstart.Domain.HarvestStatus.Failed)
-    {
-      <h1>We couldn't fetch leads yet</h1>
-    }
-    else if (Model.OvernightCount > 0)
-    {
-      <h1>Good morning — @Model.OvernightCount found overnight</h1>
-    }
-    else
-    {
-      <h1>Good morning — no new leads this morning</h1>
-    }
+  <div class="pz-head">
+    <div>
+      @if (Model.TotalLeads == 0 && Model.HarvestStatus is Coldstart.Domain.HarvestStatus.Pending or Coldstart.Domain.HarvestStatus.Running)
+      {
+        <h1>Finding your first leads…</h1>
+      }
+      else if (Model.TotalLeads == 0 && Model.HarvestStatus == Coldstart.Domain.HarvestStatus.Failed)
+      {
+        <h1>We couldn't fetch leads yet</h1>
+      }
+      else if (Model.OvernightCount > 0)
+      {
+        <h1>Good morning — @Model.OvernightCount found overnight</h1>
+      }
+      else
+      {
+        <h1>Good morning — no new leads this morning</h1>
+      }
+      @{
+        var statParts = new List<string>();
+        if (Model.LatestFound is { } latest) { statParts.Add($"latest <b>{latest.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture)}</b> UTC"); }
+        if (Model.SentTodayCount > 0) { statParts.Add($"<b>{Model.SentTodayCount}</b> sent today"); }
+        if (Model.HistoryCount > 0) { statParts.Add($"<b>{Model.HistoryCount}</b> in history"); }
+      }
+      @if (statParts.Count > 0)
+      {
+        <p class="pz-sub">@Html.Raw(string.Join(" · ", statParts))</p>
+      }
+    </div>
     @if (Model.Queue.Count > 0)
     {
-      <a class="btn btn-primary" href="/app/leads/@Model.Queue[0].Id?run=1">Review all →</a>
+      <a class="pz-btn pz-btn-primary" href="/app/leads/@Model.Queue[0].Id?run=1">Review all →</a>
     }
   </div>
-
-  @{
-    var statParts = new List<string>();
-    if (Model.LatestFound is { } latest) { statParts.Add($"latest <b>{latest.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture)}</b> UTC"); }
-    if (Model.SentTodayCount > 0) { statParts.Add($"<b>{Model.SentTodayCount}</b> sent today"); }
-    if (Model.HistoryCount > 0) { statParts.Add($"<b>{Model.HistoryCount}</b> in history"); }
-  }
-  @if (statParts.Count > 0)
-  {
-    <p class="cz-stat">@Html.Raw(string.Join(" · ", statParts))</p>
-  }
 
   @if (!string.IsNullOrEmpty(Model.StatusMessage))
   {
@@ -66,7 +68,7 @@
   }
   else
   {
-    <div class="cz-list">
+    <div class="pz-queue">
       @foreach (var lead in Model.Queue)
       {
         @if (lead.Locked)
@@ -76,7 +78,7 @@
               <div class="lead-row-main">
                 <div class="lead-row-head">
                   <span class="lead-row-co">@lead.Company</span>
-                  <span class="fit fit-@lead.Fit.ToLower()">@lead.Fit</span>
+                  <span class="pz-pill @FitLabel.PillClass(lead.Fit)">@FitLabel.Text(lead.Fit)</span>
                   @if (!string.IsNullOrWhiteSpace(lead.MatchedSignals))
                   {
                     <span class="lead-row-why">⚡ @lead.MatchedSignals.Split(',')[0].Trim()</span>
@@ -90,27 +92,27 @@
         }
         else
         {
-          <div class="lead-row-wrap">
-            <a class="lead-row" href="/app/leads/@lead.Id">
-              <div class="lead-row-main">
-                <div class="lead-row-head">
-                  <span class="lead-row-co">@lead.Company</span>
-                  <span class="fit fit-@lead.Fit.ToLower()">@lead.Fit</span>
-                  @if (!string.IsNullOrWhiteSpace(lead.MatchedSignals))
-                  {
-                    <span class="lead-row-why">⚡ @lead.MatchedSignals.Split(',')[0].Trim()</span>
-                  }
-                </div>
-                <div class="lead-row-subj">@lead.Subject</div>
+          <a class="pz-lead" href="/app/leads/@lead.Id">
+            <div>
+              <div class="pz-lead-meta">
+                <span class="pz-lead-co">@lead.Company</span>
+                <span class="pz-pill @FitLabel.PillClass(lead.Fit)">@FitLabel.Text(lead.Fit)</span>
+                @if (!string.IsNullOrWhiteSpace(lead.MatchedSignals))
+                {
+                  <span class="pz-why">⚡ @lead.MatchedSignals.Split(',')[0].Trim()</span>
+                }
               </div>
-            </a>
-            <form method="post" asp-page-handler="Skip" class="lead-skip-form">
-              <input type="hidden" name="id" value="@lead.Id">
-              <button class="cz-skip" type="submit" title="Skip" aria-label="Skip @lead.Company"
-                      data-confirm="It moves to History under “Skipped” — you can reopen it anytime."
-                      data-confirm-title="Skip @lead.Company?" data-confirm-ok="Skip lead">✕</button>
-            </form>
-          </div>
+              <p class="pz-lead-subj">@lead.Subject</p>
+            </div>
+            <div class="pz-row-actions">
+              <form method="post" asp-page-handler="Skip">
+                <input type="hidden" name="id" value="@lead.Id">
+                <button class="pz-skip" type="submit" title="Skip" aria-label="Skip @lead.Company"
+                        data-confirm="It moves to History under “Skipped” — you can reopen it anytime."
+                        data-confirm-title="Skip @lead.Company?" data-confirm-ok="Skip lead">✕</button>
+              </form>
+            </div>
+          </a>
         }
       }
     </div>

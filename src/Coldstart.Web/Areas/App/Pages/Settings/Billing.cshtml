@@ -6,59 +6,67 @@
   <partial name="_AppSidebar" />
   <div class="rail-main">
 <main class="wrap app-zone settings-page">
-  <section class="app-briefing"><h1>Settings</h1></section>
+  <div class="pz-head">
+    <div>
+      <h1>Subscription</h1>
+      <p class="pz-sub">Your plan, what it costs, and how to change it.</p>
+    </div>
+  </div>
 
-  <section class="panel" id="billing">
-    <h2 class="app-group-head">Subscription</h2>
+  <div class="pz-card" id="billing">
+    <h2>Subscription</h2>
     @if (Model.IsComplimentary)
     {
       @* Complimentary access: no Stripe subscription, no card on file — the paid-plan copy
          below would be untrue, so this branch states what actually happens instead. *@
-      <p class="settings-note">
-        <span class="plan-badge plan-full">Full plan</span>
-        <span> — complimentary access until <strong>@Model.ComplimentaryUntil!.Value.ToString("d MMMM yyyy")</strong></span>
-      </p>
-      <p class="settings-note">This is on the house — there's nothing to cancel and no card on file. When it ends, your account simply returns to the free plan and you can upgrade whenever you like.</p>
+      <dl class="pz-facts">
+        <div class="pz-fact"><dt>Plan</dt><dd><span class="pz-pill pz-pill-yes">Full plan</span></dd></div>
+        <div class="pz-fact"><dt>Access</dt><dd>complimentary access until <strong>@Model.ComplimentaryUntil!.Value.ToString("d MMMM yyyy")</strong></dd></div>
+      </dl>
+      <p class="pz-note">This is on the house — there's nothing to cancel and no card on file. When it ends, your account simply returns to the free plan and you can upgrade whenever you like.</p>
     }
     else if (Model.Plan == Coldstart.Domain.CustomerPlan.Full)
     {
-      <p class="settings-note">
-        <span class="plan-badge plan-full">Full plan</span>
+      <dl class="pz-facts">
+        <div class="pz-fact"><dt>Plan</dt><dd><span class="pz-pill pz-pill-yes">Full plan</span></dd></div>
         @if (Model.RenewsAt is { } renews)
         {
-          <span> — active · next payment on <strong>@renews.ToString("d MMMM yyyy")</strong></span>
+          <div class="pz-fact"><dt>Status</dt><dd>Active — next payment on @renews.ToString("d MMMM yyyy")</dd></div>
         }
         else
         {
-          <span> — active</span>
+          <div class="pz-fact"><dt>Status</dt><dd>Active</dd></div>
         }
-      </p>
-      <p class="settings-note">Cancel, change your payment method, or download invoices in the secure billing portal. Cancelling takes effect at the end of the paid month — no notice period.</p>
-      <div class="settings-actions">
+      </dl>
+      <p class="pz-note">Cancel, change your payment method, or download invoices in the secure billing portal. Cancelling takes effect at the end of the paid month — no notice period.</p>
+      <div class="pz-actions">
         <form method="post" asp-page="/Billing" asp-area="App" asp-page-handler="Portal">
-          <button class="btn btn-primary" type="submit">Manage or cancel subscription →</button>
+          <button class="pz-btn pz-btn-primary" type="submit">Manage or cancel subscription</button>
         </form>
       </div>
     }
     else
     {
-      <p class="settings-note"><span class="plan-badge plan-free">Free plan</span> — sample leads only.</p>
-      <p class="settings-note">The Full plan delivers every lead the engine finds, every morning. Pay by card, iDEAL, or Google Pay.</p>
-      <div class="settings-actions">
+      <dl class="pz-facts">
+        <div class="pz-fact"><dt>Plan</dt><dd><span class="pz-pill pz-pill-maybe">Free plan</span></dd></div>
+        <div class="pz-fact"><dt>Access</dt><dd>Sample leads only</dd></div>
+      </dl>
+      <p class="pz-note">The Full plan delivers every lead the engine finds, every morning. Pay by card, iDEAL, or Google Pay.</p>
+      <div class="pz-actions">
         <form method="post" asp-page="/Billing" asp-area="App" asp-page-handler="Checkout">
           <partial name="_CurrencyPicker" model='"settings"' />
-          <button class="btn btn-primary" type="submit">Upgrade to Full →</button>
+          <button class="pz-btn pz-btn-primary" type="submit">Upgrade to Full</button>
         </form>
         @if (Model.HasStripeCustomer)
         {
           <form method="post" asp-page="/Billing" asp-area="App" asp-page-handler="Portal">
-            <button class="btn btn-ghost" type="submit">Billing history</button>
+            <button class="pz-btn pz-btn-quiet" type="submit">Billing history</button>
           </form>
         }
       </div>
     }
     @if (Model.StatusMessage is not null) { <p class="form-status">@Model.StatusMessage</p> }
-  </section>
+  </div>
 </main>
   </div>
 </div>

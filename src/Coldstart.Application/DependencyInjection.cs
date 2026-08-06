@@ -21,6 +21,7 @@ public static class DependencyInjection
         services.AddScoped<Harvest.IHarvestLeads, Harvest.HarvestLeads>();
         services.AddScoped<Billing.IApplySubscriptionChange, Billing.ApplySubscriptionChange>();
         services.AddScoped<Billing.IGrantComplimentaryAccess, Billing.GrantComplimentaryAccess>();
+        services.AddScoped<Billing.ICancelComplimentaryAccess, Billing.CancelComplimentaryAccess>();
         services.AddScoped<Billing.ComplimentaryExpirySweeper>();
         services.AddScoped<Notifications.INotifyBriefing, Notifications.NotifyBriefing>();
         services.AddScoped<Customers.IUpdateSourceSelection, Customers.UpdateSourceSelection>();

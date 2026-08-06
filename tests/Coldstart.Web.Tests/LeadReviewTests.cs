@@ -26,7 +26,7 @@ public class LeadReviewTests(ColdstartWebFactory factory) : IClassFixture<Coldst
 
         // Assert
         html.Should().Contain("Pending Co");
-        html.Should().Contain("lead-row");
+        html.Should().Contain("pz-lead");
         html.Should().NotContain("app-tabs");
         html.Should().NotContain("?tab=");
         html.Should().NotContain("data-panel");
@@ -83,8 +83,8 @@ public class LeadReviewTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         var html = await client.GetStringAsync("/app");
 
         // Assert — 15 rows shown, backlog line names the remaining 3.
-        // NB: match the exact class="lead-row" (trailing quote) so lead-row-head/-why/-subj don't inflate the count.
-        System.Text.RegularExpressions.Regex.Matches(html, "class=\"lead-row\"").Count.Should().Be(15);
+        // NB: match the exact class="pz-lead" (trailing quote) so pz-lead-co/-why/-subj don't inflate the count.
+        System.Text.RegularExpressions.Regex.Matches(html, "class=\"pz-lead\"").Count.Should().Be(15);
         html.Should().Contain("3 older leads");
         html.Should().Contain("/app/history");
     }

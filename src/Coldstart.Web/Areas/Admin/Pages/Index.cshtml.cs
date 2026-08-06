@@ -99,6 +99,24 @@ internal sealed class IndexModel(
         return await RenderAsync(ct);
     }
 
+    public async Task<IActionResult> OnPostGrantComplimentaryAsync(Guid customerId, int days, CancellationToken ct)
+    {
+        StatusMessage = (await admin.GrantComplimentaryAsync(customerId, days, ct)).Message;
+        return await RenderAsync(ct);
+    }
+
+    public async Task<IActionResult> OnPostCancelComplimentaryAsync(Guid customerId, CancellationToken ct)
+    {
+        StatusMessage = (await admin.CancelComplimentaryAsync(customerId, ct)).Message;
+        return await RenderAsync(ct);
+    }
+
+    public async Task<IActionResult> OnPostRunHarvestAsync(Guid customerId, CancellationToken ct)
+    {
+        StatusMessage = (await admin.TriggerHarvestAsync(customerId, ct)).Message;
+        return await RenderAsync(ct);
+    }
+
     // The row buttons post the Identity user id; the service is keyed by email.
     private async Task<string> ActByIdAsync(string id, Func<string, Task<AdminActionResult>> action)
     {
