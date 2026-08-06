@@ -750,6 +750,24 @@
 .rail-logout:hover { color: #fff; background: #221f1b; }
 .rail-main { flex: 1; min-width: 0; }
 .rail-topbar { display: none; }
+
+/* ---- portal layout (inside the rail shell) ----
+   The rail is fixed: it never scrolls with the page, and the content column is
+   offset by its width instead of sharing a flex row with it.
+   .wrap's gutter is a viewport-relative clamp, which is right for the full-width
+   marketing pages but oversized and inconsistent inside this narrower column —
+   these rules re-derive the portal's own rhythm.
+   NOTE: this block must stay ABOVE the max-width:860px block below, which resets
+   the offset for the mobile overlay — same specificity, so source order decides. */
+.rail { position: fixed; top: 0; left: 0; bottom: 0; height: auto; }
+.rail-main { margin-left: 216px; flex: 1 1 auto; }
+.rail-main .wrap { max-width: 1080px; margin-inline: auto; padding-inline: clamp(24px, 3vw, 48px); }
+.rail-main .app-zone { padding-top: 30px; padding-bottom: 72px; }
+/* The zone already owns the top space; these page headers added a second helping. */
+.rail-main .app-briefing { margin-top: 0; }
+.rail-main .cz-greet { margin-top: 0; }
+.rail-main .cz-h1 { margin-top: 0; }
+
 @media (max-width: 860px) {
   .rail-shell { display: block; }
   .rail { position: fixed; inset: 0 auto 0 0; z-index: 40; transform: translateX(-100%); transition: transform .2s ease; width: 246px; }
@@ -757,4 +775,6 @@
   .rail-topbar { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: #171513; color: #f5f1ea; position: sticky; top: 0; z-index: 30; }
   .rail-topbar .rail-wordmark { padding: 0; }
   .rail-burger { background: none; border: 1px solid #3a352f; color: #f5f1ea; border-radius: 8px; padding: 6px 10px; font-size: 1rem; cursor: pointer; }
+  /* Fixed overlay on mobile, so the content column reclaims the full width. */
+  .rail-main { margin-left: 0; }
 }
