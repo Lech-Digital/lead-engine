@@ -5,6 +5,7 @@ using Coldstart.Infrastructure;
 using Coldstart.Infrastructure.Identity;
 using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -26,7 +27,6 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
 
         // Assert
         html.Should().Contain("Patronus AI");
-        html.Should().Contain(email); // customer named from the user's email
         html.Should().Contain("A thought after the $50M"); // subject renders
         html.Should().Contain("lead-row"); // compact row markup, not the old plain table
     }
@@ -98,19 +98,16 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         var htmlA = await clientA.GetStringAsync("/app");
         var htmlB = await clientB.GetStringAsync("/app");
 
-        // Assert
-        htmlA.Should().Contain(emailA);
+        // Assert — the rail carries no per-customer identifier, so scoping is proven via
+        // each customer's own lead data instead of the (now-removed) header email/company chip.
         htmlA.Should().Contain("Acme A");
-        htmlA.Should().NotContain(emailB);
         htmlA.Should().NotContain("Acme B");
-        htmlB.Should().Contain(emailB);
         htmlB.Should().Contain("Acme B");
-        htmlB.Should().NotContain(emailA);
         htmlB.Should().NotContain("Acme A");
     }
 
     [Fact]
-    public async Task App_ShowsCompanyChip_LinkingToProfile_NotTheFullCard()
+    public async Task App_LinksToCompanySettings_ViaRail_NotTheFullProfileCard()
     {
         // Arrange
         var client = factory.CreateClient();
@@ -120,8 +117,8 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Act
         var html = await client.GetStringAsync("/app");
 
-        // Assert — a compact chip links to the profile page; the full card is NOT on /app
-        html.Should().Contain("href=\"/app/settings\"");
+        // Assert — the rail links to Company settings; the full profile card is NOT on /app
+        html.Should().Contain("href=\"/app/settings/company\"");
         html.Should().NotContain("Add your company details");   // moved to the profile page
     }
 
@@ -307,7 +304,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
     }
 
     [Fact]
-    public async Task Profile_UsesAppBarShell_NotTheNarrowAuthCard()
+    public async Task Profile_UsesRailShell_NotTheNarrowAuthCard()
     {
         // Arrange
         var client = factory.CreateClient();
@@ -316,8 +313,8 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Act
         var html = await client.GetStringAsync("/app/settings/outreach");
 
-        // Assert — top app-bar nav (like the lead pages), grouped panels, no auth-card shell
-        html.Should().Contain("app-bar");
+        // Assert — full-height rail nav (like every other app page), grouped panels, no auth-card shell
+        html.Should().Contain("id=\"app-rail\"");
         html.Should().Contain("panel");
         html.Should().NotContain("auth-card");
     }
@@ -334,6 +331,63 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Redirect);
         response.Headers.Location!.OriginalString.Should().Contain("/Identity/Account/Login");
+    }
+
+    [Fact]
+    public async Task SettingsBilling_ComplimentaryCustomer_ShowsHonestCopyAndNoCancelAffordance()
+    {
+        // Arrange — a comp grant sets Plan = Full with no Stripe subscription behind it
+        var client = factory.CreateClient();
+        var email = $"comp-billing-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
+        var until = DateTimeOffset.UtcNow.AddDays(30);
+        await MutateCustomerAsync(email, c => c.GrantComplimentary(until, DateTimeOffset.UtcNow));
+
+        // Act
+        var html = await client.GetStringAsync("/app/settings/billing");
+
+        // Assert — the truth: an end date, nothing to cancel, and what happens afterwards
+        html.Should().Contain("complimentary access until");
+        html.Should().Contain(until.ToString("d MMMM yyyy"));
+        html.Should().Contain("nothing to cancel and no card on file");
+        html.Should().Contain("returns to the free plan");
+        // …and none of the paid-subscription wording or the Stripe portal button
+        html.Should().NotContain("Manage or cancel subscription");
+        html.Should().NotContain("Cancelling takes effect");
+        html.Should().NotContain("change your payment method");
+        html.Should().NotContain("handler=Portal");
+    }
+
+    [Fact]
+    public async Task SettingsBilling_PayingCustomer_StillShowsTheSubscriptionCopyAndPortal()
+    {
+        // Arrange — a genuine Stripe subscription
+        var client = factory.CreateClient();
+        var email = $"paid-billing-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
+        await MutateCustomerAsync(email, c => c.ActivateFull("sub_live_1", DateTimeOffset.UtcNow.AddDays(20)));
+
+        // Act
+        var html = await client.GetStringAsync("/app/settings/billing");
+
+        // Assert — unchanged paying path
+        html.Should().Contain("Full plan");
+        html.Should().Contain("Manage or cancel subscription");
+        html.Should().Contain("handler=Portal");
+        html.Should().NotContain("complimentary access until");
+    }
+
+    // Applies a domain mutation to the given registered user's customer and persists it.
+    private async Task MutateCustomerAsync(string email, Action<Customer> mutate)
+    {
+        using var scope = factory.Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var db = scope.ServiceProvider.GetRequiredService<ColdstartDbContext>();
+        var user = await users.FindByEmailAsync(email);
+        var customer = (await db.Customers.IgnoreQueryFilters().ToListAsync())
+            .Single(c => c.Id.Value == user!.CustomerId!.Value);
+        mutate(customer);
+        await db.SaveChangesAsync();
     }
 
     // Inserts a real harvested lead into the given registered user's customer via a service scope.
@@ -453,7 +507,11 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         html.Should().Contain("Free plan");
         html.Should().Contain("Upgrade to Full");
         html.Should().Contain("handler=Checkout");
-        html.Should().Contain("settings-nav");
+        html.Should().NotContain("complimentary access until");   // free path is untouched by the comp branch
+        // rail marks Subscription (not some other fixed item) as the current section
+        html.Should().Contain("class=\"rail-item active\" href=\"/app/settings/billing\"");
+        html.Should().NotContain("class=\"rail-item active\" href=\"/app\"");
+        System.Text.RegularExpressions.Regex.Matches(html, "rail-item active").Count.Should().Be(1);
     }
 
     [Fact]
@@ -482,5 +540,63 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         sent.Should().Contain("email");
         factory.Email.Sent.Skip(before).Should().Contain(m =>
             m.To == email && m.Subject.Contains("morning briefing") && m.TextBody.Contains("Acme"));
+    }
+
+    [Fact]
+    public async Task Briefing_RendersRailWithNavAndLogoutConfirm()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var email = $"rail-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
+
+        // Act
+        var html = await client.GetStringAsync("/app");
+
+        // Assert
+        html.Should().Contain("id=\"app-rail\"");
+        html.Should().Contain(">Briefing<");
+        html.Should().Contain(">History<");
+        html.Should().Contain("data-confirm-title=\"Log out?\"");
+        html.Should().NotContain("settings-nav");   // pills are gone
+    }
+
+    [Fact]
+    public async Task Settings_ActiveRailItem_MarksCurrentSection()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var email = $"rail-set-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
+
+        // Act
+        var html = await client.GetStringAsync("/app/settings/company");
+
+        // Assert — the active class sits on the Company item specifically (its href),
+        // not merely somewhere on the page, and there is exactly one active item —
+        // a "same item always active" regression (e.g. Briefing stuck active) would
+        // fail both the exact-pair check and the not-Briefing check below.
+        html.Should().Contain("class=\"rail-item active\" href=\"/app/settings/company\"");
+        html.Should().NotContain("class=\"rail-item active\" href=\"/app\"");
+        System.Text.RegularExpressions.Regex.Matches(html, "rail-item active").Count.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task History_ActiveRailItem_MarksHistorySection_NotBriefing()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var email = $"rail-hist-active-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
+
+        // Act
+        var html = await client.GetStringAsync("/app/history");
+
+        // Assert — same shape as the Settings/Company case above, on a different page,
+        // so a bug that always marks Briefing (or any fixed item) active is caught
+        // regardless of which page it happens to be tested against.
+        html.Should().Contain("class=\"rail-item active\" href=\"/app/history\"");
+        html.Should().NotContain("class=\"rail-item active\" href=\"/app\"");
+        System.Text.RegularExpressions.Regex.Matches(html, "rail-item active").Count.Should().Be(1);
     }
 }

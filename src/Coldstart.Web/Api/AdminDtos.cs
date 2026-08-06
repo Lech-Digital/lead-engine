@@ -7,10 +7,13 @@ public sealed record AdminCustomerDto(
     bool HasStripeCustomer, bool HasSubscription,
     string HarvestStatus, DateTimeOffset? LastHarvestAt,
     int LeadsTotal, int LeadsPendingReview,
-    IReadOnlyList<AdminUserDto> Users);
+    IReadOnlyList<AdminUserDto> Users,
+    DateTimeOffset? ComplimentaryUntil);
 
 public sealed record AdminStatsDto(
     string Database, int Customers, int Users, int PendingInvites, int BlockedUsers,
     Dictionary<string, int> HarvestStatuses);
 
 public sealed record InviteRequestDto(string? Email, string? Company, string? Niche, string? Info);
+
+public sealed record ComplimentaryRequestDto(int Days);

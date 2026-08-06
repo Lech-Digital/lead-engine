@@ -33,10 +33,10 @@ public class LeadReviewTests(ColdstartWebFactory factory) : IClassFixture<Coldst
     }
 
     [Fact]
-    public async Task Index_AppBar_HasPersistentHistoryLink_EvenWithNoBacklog()
+    public async Task Index_Rail_HasPersistentHistoryLink_EvenWithNoBacklog()
     {
         // Arrange — a single lead means no "older leads" line, so the only History link
-        // is the persistent app-bar one (how a user reaches their skipped/sent leads).
+        // is the persistent rail one (how a user reaches their skipped/sent leads).
         var client = factory.CreateClient();
         var email = $"rev-hist-{Guid.NewGuid():N}@test.com";
         await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
@@ -46,7 +46,7 @@ public class LeadReviewTests(ColdstartWebFactory factory) : IClassFixture<Coldst
         var html = await client.GetStringAsync("/app");
 
         // Assert
-        html.Should().Contain("app-navlink");
+        html.Should().Contain("rail-item");
         html.Should().Contain("href=\"/app/history\"");
         html.Should().NotContain("older lead");   // no backlog line in this case
     }

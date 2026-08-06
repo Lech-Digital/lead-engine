@@ -1,0 +1,25 @@
+@* Shared full-height rail nav for every /admin page. ViewData["AdminTab"] marks the
+   active section: "cockpit" | "companies" | "mailbox" | "exclusions" (or omitted — no
+   item active). The two External links (Visitors, Stripe) are never marked active. *@
+@{ var tab = (string?)ViewData["AdminTab"] ?? ""; }
+<div class="rail-topbar">
+  <button class="rail-burger" id="rail-burger" aria-label="Menu" aria-expanded="false">☰</button>
+  <a class="rail-wordmark" href="/admin/cockpit">coldstart<i>*</i><span class="rail-tag">ADMIN</span></a>
+</div>
+<aside class="rail" id="app-rail" aria-label="Admin navigation">
+  <a class="rail-wordmark" href="/admin/cockpit">coldstart<i>*</i><span class="rail-tag">ADMIN</span></a>
+  <nav class="rail-nav">
+    <a class="rail-item @(tab == "cockpit" ? "active" : null)" href="/admin/cockpit">Cockpit</a>
+    <a class="rail-item @(tab == "companies" ? "active" : null)" href="/admin">Companies &amp; invites</a>
+    <a class="rail-item @(tab == "mailbox" ? "active" : null)" href="/admin/mailbox">Mailbox</a>
+    <a class="rail-item @(tab == "exclusions" ? "active" : null)" href="/admin/exclusions">Exclusions</a>
+    <span class="rail-group">External</span>
+    <a class="rail-item" href="https://stats.getcoldstart.nl" target="_blank" rel="noopener">Visitors ↗</a>
+    <a class="rail-item" href="https://dashboard.stripe.com" target="_blank" rel="noopener">Stripe ↗</a>
+    <form method="post" asp-page="/Account/Logout" asp-area="Identity" style="margin-top:auto; display:contents;">
+      <button class="rail-logout" type="submit"
+              data-confirm="You'll need to sign in again to reach the admin panel."
+              data-confirm-title="Log out?" data-confirm-ok="Log out">Log out</button>
+    </form>
+  </nav>
+</aside>

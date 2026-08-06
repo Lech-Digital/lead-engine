@@ -13,6 +13,9 @@ public sealed class Customer
     public string? StripeCustomerId { get; private set; }
     public string? StripeSubscriptionId { get; private set; }
     public DateTimeOffset? PlanRenewsAt { get; private set; }
+    // Complimentary (non-Stripe) full access, e.g. tester thank-yous. Null = none.
+    // While set, Plan is Full; the nightly sweep downgrades once it lapses.
+    public DateTimeOffset? ComplimentaryUntil { get; private set; }
     // Briefing push channels (customer-configured; null = channel off).
     public string? SlackWebhookUrl { get; private set; }
     public string? WhatsAppNumber { get; private set; }
@@ -71,6 +74,19 @@ public sealed class Customer
         PlanRenewsAt = renewsAt;
         SubscriptionEndedAt = null;         // re-subscribing stops the retention clock
         RetentionReminderSent = false;
+        ComplimentaryUntil = null;          // a real subscription supersedes the trial
+    }
+
+    public void GrantComplimentary(DateTimeOffset until, DateTimeOffset now)
+    {
+        if (StripeSubscriptionId is not null)
+            throw new DomainException("This customer already has a paid subscription — nothing to grant.");
+        if (until <= now)
+            throw new DomainException("The complimentary end date must be in the future.");
+        Plan = CustomerPlan.Full;
+        ComplimentaryUntil = until;
+        SubscriptionEndedAt = null;         // active access stops the retention clock, as ActivateFull does
+        RetentionReminderSent = false;
     }
 
     public void MarkRetentionReminderSent() => RetentionReminderSent = true;
@@ -95,6 +111,7 @@ public sealed class Customer
         // Only a real subscription start the retention clock — a Free account that never paid
         // has no "subscription end" in the privacy-policy sense.
         if (Plan == CustomerPlan.Full) SubscriptionEndedAt = endedAt;
+        ComplimentaryUntil = null;
         Plan = CustomerPlan.Free;
         StripeSubscriptionId = null;
         PlanRenewsAt = null;

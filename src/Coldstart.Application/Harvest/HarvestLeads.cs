@@ -6,6 +6,7 @@ namespace Coldstart.Application.Harvest;
 internal sealed class HarvestLeads(
     IEnumerable<ILeadSource> sources,
     ILeadEnricher enricher,
+    ISecondaryContextLookup secondaryContextLookup,
     ILeadRepository leads,
     ICustomerRepository customers,
     ISuppressionRepository suppressions,
@@ -70,7 +71,21 @@ internal sealed class HarvestLeads(
         // Phase 2: enrich only the top-N by score (spend cap), save real fits.
         foreach (var (item, signal) in candidates.OrderByDescending(c => c.signal.Score).Take(runNiche.MaxEnrichPerRun))
         {
-            var result = await enricher.EnrichAsync(item, runNiche, signal, sender, ct);
+            // Best-effort: one extra public snippet about the company (its own announcement, a
+            // founder quote) gives paragraph one something beyond the funding blurb to draw on.
+            // Any failure here must never abort the batch — enrichment proceeds without it.
+            // Author alone isn't a sound key (it's a feed's URL host for FundingRssSource /
+            // DutchBusinessNewsSource, an HN username for HackerNewsSource, etc.) — see
+            // SecondaryContextKey. A null key means neither field yields anything usable, so
+            // skip the HTTP call entirely rather than look up known junk.
+            string? secondaryContext = null;
+            var secondaryKey = SecondaryContextKey.For(item);
+            if (secondaryKey is not null)
+            {
+                try { secondaryContext = await secondaryContextLookup.LookupAsync(secondaryKey, ct); }
+                catch (Exception) when (!ct.IsCancellationRequested) { /* best-effort by contract */ }
+            }
+            var result = await enricher.EnrichAsync(item, runNiche, signal, sender, secondaryContext, ct);
             if (result is null) continue;         // LLM failed/empty → retried next run
             enriched++;
             var company = string.IsNullOrWhiteSpace(result.Company) || result.Company == "-" ? item.Author : result.Company;

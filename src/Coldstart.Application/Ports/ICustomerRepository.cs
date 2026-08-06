@@ -14,6 +14,11 @@ public interface ICustomerRepository
     // System-level (webhook, no tenant context): find by the stored Stripe customer id.
     Task<Customer?> GetByStripeCustomerIdAsync(string stripeCustomerId, CancellationToken ct);
 
+    // System-level (admin API, no tenant context): find by id, bypassing the tenant filter.
+    // Unlike GetAsync, this is the escape hatch for callers that are not scoped to the target
+    // tenant (e.g. an operator granting complimentary access) — use GetAsync everywhere else.
+    Task<Customer?> GetForSystemAsync(CustomerId id, CancellationToken ct);
+
     // System-level (no tenant context): ids of Full-plan customers that are not mid-harvest and have
     // fewer than `threshold` unfinished (PendingReview/Approved) leads — i.e. have room for a top-up.
     Task<IReadOnlyList<Guid>> IdsDueForHarvestAsync(int threshold, CancellationToken ct);

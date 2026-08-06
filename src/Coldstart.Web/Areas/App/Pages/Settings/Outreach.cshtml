@@ -1,11 +1,12 @@
 @page "/app/settings/outreach"
 @model Coldstart.Web.Areas.App.Pages.Settings.OutreachSettingsModel
-@{ ViewData["Title"] = "Settings · Outreach"; Layout = "/Pages/Shared/_Layout.cshtml"; ViewData["SettingsTab"] = "outreach"; }
+@{ ViewData["Title"] = "Settings · Outreach"; Layout = "/Pages/Shared/_Layout.cshtml"; ViewData["AppNav"] = "outreach"; }
 
-<partial name="_SettingsHeader" />
+<div class="rail-shell">
+  <partial name="_AppSidebar" />
+  <div class="rail-main">
 <main class="wrap app-zone settings-page">
   <section class="app-briefing"><h1>Settings</h1></section>
-  <partial name="_SettingsNav" />
 
   <form method="post">
     <button type="submit" hidden aria-hidden="true" tabindex="-1"></button>
@@ -46,3 +47,8 @@
     </div>
   </form>
 </main>
+  </div>
+</div>
+<partial name="/Pages/Shared/_ConfirmDialog.cshtml" />
+<script src="~/js/app-rail.js" defer asp-append-version="true"></script>
+<script src="~/js/app-confirm.js" defer asp-append-version="true"></script>

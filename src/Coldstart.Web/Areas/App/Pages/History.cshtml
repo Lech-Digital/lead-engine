@@ -3,16 +3,12 @@
 @{
     ViewData["Title"] = "History";
     Layout = "/Pages/Shared/_Layout.cshtml";
+    ViewData["AppNav"] = "history";
 }
 
-<header class="app-bar">
-  <a class="wordmark" href="/">coldstart<i>*</i></a>
-  <nav class="app-nav">
-    <a class="cz-id" href="/app/settings">@Model.CustomerName <span class="cz-chev">▾</span></a>
-    <form method="post" asp-page="/Account/Logout" asp-area="Identity"><button class="btn btn-ghost" type="submit">Log out</button></form>
-  </nav>
-</header>
-
+<div class="rail-shell">
+  <partial name="_AppSidebar" />
+  <div class="rail-main">
 <main class="wrap app-zone">
   <a class="cz-back" href="/app">← Back to briefing</a>
   <h1 class="cz-h1">History</h1>
@@ -43,7 +39,7 @@
           <span class="cz-dot"></span>
           <div class="cz-main">
             <div class="cz-head">
-              <span class="cz-co">@lead.Company</span>
+              <a class="cz-co cz-co-link" href="/app/leads/@lead.Id">@lead.Company</a>
               @if (lead.Status == "Sent")
               {
                 <span class="cz-stbadge st-sent">SENT · @lead.CreatedAt.ToString("dd MMM", System.Globalization.CultureInfo.InvariantCulture)</span>
@@ -57,6 +53,16 @@
               else if (lead.Status is "Shelved" or "Rejected")
               {
                 <span class="cz-stbadge st-skip">SKIPPED · @(lead.SkipReason ?? (lead.Status == "Shelved" ? "you" : "not a fit"))</span>
+                @* Only a lead YOU shelved can be reopened. A Rejected lead is one the engine
+                   judged a non-fit: it was persisted with "-" for subject and draft, so
+                   reopening it would put a blank lead in the briefing. *@
+                @if (lead.Status == "Shelved")
+                {
+                  <form method="post" asp-page-handler="Reopen" class="cz-reopen-form">
+                    <input type="hidden" name="id" value="@lead.Id">
+                    <button class="cz-why" type="submit">reopen →</button>
+                  </form>
+                }
               }
               else if (isOlder)
               {
@@ -67,7 +73,7 @@
                 </form>
               }
             </div>
-            <div class="cz-subj">@lead.Subject</div>
+            <div class="cz-subj"><a class="cz-subj-link" href="/app/leads/@lead.Id">@lead.Subject</a></div>
           </div>
         </div>
       }
@@ -75,4 +81,9 @@
     <p class="app-group-empty" id="history-nomatch" hidden>No companies match your search.</p>
   }
 </main>
+  </div>
+</div>
+<partial name="/Pages/Shared/_ConfirmDialog.cshtml" />
+<script src="~/js/app-rail.js" defer asp-append-version="true"></script>
+<script src="~/js/app-confirm.js" defer asp-append-version="true"></script>
 <script src="~/js/app-history.js" defer asp-append-version="true"></script>

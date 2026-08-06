@@ -88,6 +88,58 @@ public class CustomerHistoryTests(ColdstartWebFactory factory) : IClassFixture<C
     }
 
     [Fact]
+    public async Task History_SkippedRow_ShowsReopenButton()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var email = $"hist-skipbtn-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
+        await AddLeadAsync(email, "Skipped Co", LeadStatus.Shelved);
+        var id = await LeadIdAsync(email, "Skipped Co");
+
+        // Act
+        var html = await client.GetStringAsync("/app/history?filter=skipped");
+
+        // Assert — the reopen form posts the skipped lead's id
+        html.Should().Contain("handler=Reopen");
+        html.Should().Contain($"value=\"{id}\"");
+    }
+
+    [Fact]
+    public async Task History_RejectedRow_OffersNoReopenButton()
+    {
+        // Arrange — Rejected is the engine's FIT: NO verdict; those leads carry "-" for subject/draft
+        var client = factory.CreateClient();
+        var email = $"hist-rejbtn-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
+        await AddLeadAsync(email, "Rejected Co", LeadStatus.Rejected);
+
+        // Act
+        var html = await client.GetStringAsync("/app/history?filter=skipped");
+
+        // Assert — the row is listed, but reopening it would put a blank lead in the briefing
+        html.Should().Contain("Rejected Co");
+        html.Should().NotContain("handler=Reopen");
+    }
+
+    [Fact]
+    public async Task History_Rows_LinkToLeadDetail()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var email = $"hist-link-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
+        await AddLeadAsync(email, "Linked Co", LeadStatus.Sent);
+        var id = await LeadIdAsync(email, "Linked Co");
+
+        // Act
+        var html = await client.GetStringAsync("/app/history");
+
+        // Assert
+        html.Should().Contain($"href=\"/app/leads/{id}\"");
+    }
+
+    [Fact]
     public async Task Reopen_MovesOlderLeadBackToTheQueue()
     {
         // Arrange

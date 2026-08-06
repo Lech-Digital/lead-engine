@@ -38,10 +38,12 @@ public class HarvestEndToEndTests(PostgresFixture fixture) : IClassFixture<Postg
         var niche = new NicheOptions { TargetKeywords = ["outbound"], BuyingSignals = ["hiring"], MinScore = 0.4, MaxEnrichPerRun = 5 };
         var item = new RawItem("fake", "e2e-1", "", "hiring outbound SDR", "", "https://x/1", "");
         var enricher = Substitute.For<ILeadEnricher>();
-        enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<CancellationToken>())
+        enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
             .Returns(new EnrichmentResult(Fit.Yes, "sum", "subj", "draft", "Acme"));
+        var lookup = Substitute.For<ISecondaryContextLookup>();
+        lookup.LookupAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns((string?)null);
         HarvestLeads Sut(ColdstartDbContext ctx, MutableTenantContext scope) =>
-            new([new OneSource(item)], enricher, new LeadRepository(ctx), new CustomerRepository(ctx), new SuppressionRepository(ctx), niche, scope);
+            new([new OneSource(item)], enricher, lookup, new LeadRepository(ctx), new CustomerRepository(ctx), new SuppressionRepository(ctx), niche, scope);
 
         // Act
         var first = await Sut(db, tenantScope).RunAsync(CancellationToken.None);

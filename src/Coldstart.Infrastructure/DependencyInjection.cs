@@ -8,6 +8,9 @@ namespace Coldstart.Infrastructure;
 
 public static class DependencyInjection
 {
+    // Named client for the per-lead secondary-context lookup (bounded timeout, see below).
+    public const string SecondaryContextClient = "secondary-context";
+
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString)
     {
         services.AddScoped<Tenancy.MutableTenantContext>();
@@ -34,6 +37,16 @@ public static class DependencyInjection
         services.AddScoped<Application.Harvest.ILeadSource, Harvest.LangSearchSource>();
         services.AddScoped<Application.Harvest.ILeadSource, Harvest.DutchBusinessNewsSource>();
         services.AddScoped<Application.Harvest.ILeadEnricher, Harvest.GroqLeadEnricher>();
+        // The secondary-context lookup runs once per enriched lead INSIDE the nightly loop, so a
+        // hung endpoint on the shared default client (~100s framework timeout) would cost up to
+        // MaxEnrichPerRun × 100s sequentially. Its own named client keeps that bounded at 10s per
+        // lead; the timeout surfaces as TaskCanceledException, which the lookup's best-effort
+        // catch swallows into a null context. Other consumers of the default client are untouched.
+        services.AddHttpClient(SecondaryContextClient, c => c.Timeout = TimeSpan.FromSeconds(10));
+        services.AddScoped<Application.Harvest.ISecondaryContextLookup>(sp =>
+            new Harvest.LangSearchSecondaryLookup(
+                sp.GetRequiredService<IHttpClientFactory>().CreateClient(SecondaryContextClient),
+                sp.GetRequiredService<Application.Harvest.NicheOptions>()));
         services.AddScoped<Application.Notifications.IBriefingChannel, Notifications.SlackBriefingChannel>();
         services.AddScoped<Application.Notifications.IBriefingChannel, Notifications.TwilioWhatsAppChannel>();
         services.AddScoped<Application.Customers.ICompanyBriefPolisher, Harvest.GroqBriefPolisher>();
@@ -60,6 +73,7 @@ public static class DependencyInjection
         services.AddHostedService<Harvest.NightlyHarvestScheduler>();
         services.AddHostedService<FollowUps.TrialFollowUpScheduler>();
         services.AddHostedService<Retention.RetentionCleanupService>();
+        services.AddHostedService<Billing.ComplimentaryExpiryService>();
         return services;
     }
 }

@@ -10,6 +10,10 @@
     var approved = status == "Approved";
     var sent = status == "Sent";
     var skipped = status is "Shelved" or "Rejected";
+    // Only a lead the customer shelved can go back to review. "Rejected" is the engine's own
+    // FIT: NO verdict — those are stored with "-" for subject and draft, so reopening one
+    // would drop a blank lead into the briefing (Lead.Reopen refuses it in the domain too).
+    var shelved = status == "Shelved";
     var hasRecipient = !string.IsNullOrWhiteSpace(lead.RecipientEmail);
     var decisionMaker = lead.ContactLinks.Count > 0 ? lead.ContactLinks[0] : null;
     var quietDays = sent && lead.SentAt is { } sentAt ? (int)(DateTimeOffset.UtcNow - sentAt).TotalDays : 0;
@@ -29,11 +33,9 @@
          url.StartsWith("https://", StringComparison.OrdinalIgnoreCase));
 }
 
-<header class="app-bar">
-  <a class="wordmark" href="/">coldstart<i>*</i></a>
-  <nav class="app-nav"><a href="/app">Your briefing</a><a class="app-navlink" href="/app/history">History</a></nav>
-</header>
-
+<div class="rail-shell">
+  <partial name="_AppSidebar" />
+  <div class="rail-main">
 <main class="wrap app-zone lead-detail">
   <p class="auth-alt cz-back"><a href="/app">← Back to your briefing</a></p>
 
@@ -102,7 +104,7 @@
           {
             <div class="ld-actions">
               <button class="btn btn-ghost" type="submit" asp-page-handler="Save">Save draft</button>
-              @if (approved || skipped) { <button class="btn btn-ghost" type="submit" asp-page-handler="Reopen">Move back to review</button> }
+              @if (approved || shelved) { <button class="btn btn-ghost" type="submit" asp-page-handler="Reopen">Move back to review</button> }
               @if (!skipped) { <button class="btn btn-ghost" type="submit" asp-page-handler="Discard" data-confirm="It moves to History under “Skipped” — you can reopen it anytime." data-confirm-title="Skip @lead.Company?" data-confirm-ok="Skip lead">Skip</button> }
             </div>
           }
@@ -181,9 +183,9 @@
           <p class="ld-why-text">@lead.MatchedSignals.Split(',')[0].Trim()</p>
         }
         <dl class="ld-facts">
-          <div><dt>Signals</dt><dd class="ts">@lead.MatchedSignals</dd></div>
+          <div><dt>Signals</dt><dd class="ts">@(string.IsNullOrWhiteSpace(lead.MatchedSignals) ? "none beyond the source itself" : lead.MatchedSignals)</dd></div>
           <div><dt>Source</dt><dd>@lead.Source @if (IsSafeHttpUrl(lead.SourceUrl)) { <a class="lnk" href="@lead.SourceUrl" target="_blank" rel="noopener">→</a> }</dd></div>
-          <div><dt>Score</dt><dd>@lead.Score.ToString("0.00") · @lead.EmailConfidence.ToLower()</dd></div>
+          <div><dt>Score</dt><dd>@lead.Score.ToString("0.00")@if (string.IsNullOrWhiteSpace(lead.MatchedSignals)) { <text> · baseline — source signal only</text> } · @lead.EmailConfidence.ToLower()</dd></div>
         </dl>
       </section>
 
@@ -223,7 +225,10 @@
     </div>
   </div>
 
-  <partial name="_ConfirmDialog" />
+  <partial name="/Pages/Shared/_ConfirmDialog.cshtml" />
 </main>
+  </div>
+</div>
+<script src="~/js/app-rail.js" defer asp-append-version="true"></script>
 <script src="~/js/lead-detail.js" defer asp-append-version="true"></script>
 <script src="~/js/app-confirm.js" defer asp-append-version="true"></script>

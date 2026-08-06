@@ -81,6 +81,27 @@ internal static class EmailTemplates
                 footnote: "You're receiving this because leads were found for your Coldstart account overnight. Nothing is sent without your approval."));
     }
 
+    internal static EmailContent ComplimentaryGranted(string company, DateTimeOffset until, string appUrl)
+    {
+        var untilText = until.ToString("d MMMM yyyy", System.Globalization.CultureInfo.InvariantCulture);
+        return new(
+            Subject: "Thanks for the feedback — the full plan is yours for a few days",
+            TextBody:
+                $"Your feedback made Coldstart better, so we've switched {company} to the full plan as a thank-you.\n\n" +
+                $"Until {untilText} you get everything: every lead unlocked, no daily cap, full history.\n\n" +
+                "No card needed, nothing to cancel — when it ends, your account simply returns to the free plan.\n\n" +
+                $"Your briefing lives here:\n\n{appUrl}\n\n" +
+                "Questions or more feedback? Just reply to this email.",
+            HtmlBody: Shell(
+                heading: "The full plan is yours for a few days",
+                introHtml: $"Your feedback made Coldstart better, so we've switched <strong>{Enc(company)}</strong> to the full plan as a thank-you. " +
+                           $"Until <strong>{Enc(untilText)}</strong> you get everything: every lead unlocked, no daily cap, full history. " +
+                           "No card needed, nothing to cancel — when it ends, your account simply returns to the free plan.",
+                ctaText: "Open your briefing",
+                ctaUrl: appUrl,
+                footnote: "Questions or more feedback? Just reply to this email."));
+    }
+
     private static string Enc(string s) => WebUtility.HtmlEncode(s);
 
     internal static EmailContent WeeklyDigest(string company, int found, int sent, int replies, string appUrl)

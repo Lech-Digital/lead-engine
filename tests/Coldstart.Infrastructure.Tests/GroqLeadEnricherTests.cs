@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using Coldstart.Application.Harvest;
 using Coldstart.Domain;
 using Coldstart.Infrastructure.Harvest;
@@ -62,7 +63,7 @@ public class GroqLeadEnricherTests
             (d, _) => { delays.Add(d); return Task.CompletedTask; });
 
         // Act
-        var result = await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
+        var result = await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, null, CancellationToken.None);
 
         // Assert — the 429 was retried, the second (200) response parsed successfully
         result.Should().NotBeNull();
@@ -81,7 +82,7 @@ public class GroqLeadEnricherTests
             (d, _) => { delays.Add(d); return Task.CompletedTask; });
 
         // Act
-        var result = await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
+        var result = await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, null, CancellationToken.None);
 
         // Assert — bounded retries: 1 initial + 3 retries = 4 calls, 3 backoffs, then give up
         result.Should().BeNull();
@@ -100,9 +101,9 @@ public class GroqLeadEnricherTests
             (d, _) => { delays.Add(d); return Task.CompletedTask; });
 
         // Act
-        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
-        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
-        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, null, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, null, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, null, CancellationToken.None);
 
         // Assert — no delay before the first request, the pacing delay before each subsequent one
         handler.Calls.Should().Be(3);
@@ -121,8 +122,8 @@ public class GroqLeadEnricherTests
             (d, _) => { delays.Add(d); return Task.CompletedTask; });
 
         // Act
-        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
-        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, null, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, null, CancellationToken.None);
 
         // Assert
         handler.Calls.Should().Be(2);
@@ -139,7 +140,7 @@ public class GroqLeadEnricherTests
             (d, _) => { delays.Add(d); return Task.CompletedTask; });
 
         // Act
-        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, null, CancellationToken.None);
 
         // Assert — the server-provided Retry-After drives the wait, not the exponential fallback
         delays.Should().ContainSingle().Which.Should().Be(TimeSpan.FromSeconds(2));
@@ -154,7 +155,7 @@ public class GroqLeadEnricherTests
         var sender = new SenderContext("Acme helps dentists fill calendars.", MentionSourceTool: false);
 
         // Act
-        await sut.EnrichAsync(Item, Niche, Signal, sender, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, sender, null, CancellationToken.None);
 
         // Assert — the brief is in the prompt; the Coldstart line is NOT (toggle off)
         handler.SentBody.Should().Contain("Acme helps dentists fill calendars.");
@@ -170,13 +171,79 @@ public class GroqLeadEnricherTests
         var sender = new SenderContext(Brief: null, MentionSourceTool: true);
 
         // Act
-        await sut.EnrichAsync(Item, Niche, Signal, sender, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, sender, null, CancellationToken.None);
 
         // Assert — the dogfood line must be an explicit, first-person "found you with the
         // tool I'm offering you" statement, not a vague hint.
         handler.SentBody.Should().Contain("Coldstart");
         handler.SentBody.Should().Contain("first person");
         handler.SentBody.Should().Contain("the very tool this email offers");
+        // …and it must be placeable in EVERY rotated skeleton: shape 4 has a single paragraph
+        // (no "paragraph 2" to put it in) and shape 5's dashed block is exactly two lines.
+        handler.SentBody.Should().NotContain("inside paragraph 2");
+        handler.SentBody.Should().Contain("add ONE short sentence to the body prose");
+        handler.SentBody.Should().Contain("never goes in the greeting line");
+        handler.SentBody.Should().Contain("never inside a fixed-format block");
+        handler.SentBody.Should().Contain("never becomes the closing ask");
+        // The addendum must explicitly outrank a shape's own sentence-count / no-offer-mention
+        // restrictions on its prose part — otherwise shape 5 (whose only prose sentence is
+        // barred from mentioning the offer) has nowhere to place this line. Decoded via
+        // ExtractPromptContent because System.Text.Json's default encoder escapes apostrophes
+        // (' -> ') in the raw request body, and the wording below contains one.
+        var decodedPrompt = ExtractPromptContent(handler.SentBody!);
+        decodedPrompt.Should().Contain("takes precedence over that shape's sentence-count limit");
+        decodedPrompt.Should().Contain("becomes two");
+        decodedPrompt.Should().Contain("exceed it by exactly this one sentence");
+    }
+
+    [Fact]
+    public async Task EnrichAsync_WithMentionSourceTool_AcrossEveryDraftShape_CarriesAddendumAndItsPrecedenceWording()
+    {
+        // Arrange — round-1 review Finding (Important): the dogfood addendum used to tell the
+        // model to "fit the shape above rather than bend it", but shape 5's only prose part is
+        // capped at EXACTLY one sentence and explicitly bars an offer mention — there was
+        // nowhere the addendum's sentence could legally go. The fix makes the addendum state
+        // that it ADDS a sentence and OUTRANKS a shape's sentence-count / no-offer-mention
+        // limits. Pin that guarantee for EVERY one of the five rotated shapes (not just
+        // whichever one a fixed fixture happens to hash to), so a future edit to the shapes or
+        // the addendum that reintroduces the contradiction on any shape fails this suite.
+        const int shapeCount = 5;
+        var idsByShape = Enumerable.Range(0, 500).Select(i => i.ToString())
+            .GroupBy(id => DraftSkeletons.IndexFor(new RawItem("hn", id, "", "", "", "", "").Fingerprint, shapeCount))
+            .ToDictionary(g => g.Key, g => g.First());
+        idsByShape.Keys.Should().BeEquivalentTo(Enumerable.Range(0, shapeCount),
+            "500 fingerprints must land on all 5 shapes at least once");
+
+        var sender = new SenderContext(Brief: null, MentionSourceTool: true);
+
+        for (var shape = 0; shape < shapeCount; shape++)
+        {
+            var item = new RawItem("hn", idsByShape[shape], "", "hiring outbound SDR", "author", "https://x/1", "");
+            var handler = new CapturingHandler(ValidBody);
+            var sut = new GroqLeadEnricher(new HttpClient(handler), Opts(), (d, _) => Task.CompletedTask);
+
+            // Act
+            await sut.EnrichAsync(item, Niche, Signal, sender, null, CancellationToken.None);
+
+            // Assert — every shape's composed prompt carries the addendum itself and the
+            // precedence wording that makes it satisfiable regardless of the shape's own
+            // sentence-count / no-offer-mention restrictions.
+            var prompt = ExtractPromptContent(handler.SentBody!);
+            prompt.Should().Contain("Coldstart", $"shape {shape} must carry the dogfood addendum");
+            prompt.Should().Contain("add ONE short sentence to the body prose",
+                $"shape {shape} must carry the addendum's core instruction");
+            prompt.Should().Contain("takes precedence over that shape's sentence-count limit",
+                $"shape {shape} must carry the precedence-over-sentence-count wording");
+            prompt.Should().Contain("no offer mention\" restriction on its prose part",
+                $"shape {shape} must carry the precedence-over-no-offer-mention wording");
+            prompt.Should().Contain("becomes two", $"shape {shape} must state the one-sentence-becomes-two rule");
+            prompt.Should().Contain("exceed it by exactly this one sentence",
+                $"shape {shape} must state the exceed-the-cap-by-one rule");
+            prompt.Should().Contain("never goes in the greeting line", $"shape {shape} must still bar the greeting");
+            prompt.Should().Contain("never inside a fixed-format block",
+                $"shape {shape} must still bar fixed-format blocks (shape 5's two-line dashed list)");
+            prompt.Should().Contain("never becomes the closing ask", $"shape {shape} must still bar the closing ask");
+        }
     }
 
     [Fact]
@@ -184,58 +251,221 @@ public class GroqLeadEnricherTests
     {
         // Arrange — when the sender has hardcoded pitch/CTA blocks, the model writes ONLY
         // the personalized hook; the selling copy is composed in code afterwards.
+        // NOTE: this test used to assert one variant's exact wording ("ONLY the greeting,
+        // one congratulations sentence", "their potential customers", "own vocabulary",
+        // "Speak TO them, not about them", "genuine, specific compliment"). Now that
+        // FixedPitchDraftInstruction rotates across 3 structurally different variants keyed
+        // by the item's fingerprint, those exact phrases only hold for ONE of the three —
+        // asserting them here pins the test to whichever variant this fixture's fingerprint
+        // happens to hash to. Updated to assert the invariants every fixed-pitch variant
+        // must keep (per DraftComposer's contract: hook-only, quoted analysis, honesty,
+        // banned list) plus the hallucination guardrail itself.
         var handler = new CapturingHandler(ValidBody);
         var sut = new GroqLeadEnricher(new HttpClient(handler), Opts(), (d, _) => Task.CompletedTask);
         var sender = new SenderContext(Brief: null, MentionSourceTool: true, PitchLine: "I run Coldstart.", CtaLine: "3 free leads: link");
 
         // Act
-        await sut.EnrichAsync(Item, Niche, Signal, sender, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, sender, null, CancellationToken.None);
 
         // Assert — hook-only instructions; no AI-written pitch/CTA/dogfood line
-        handler.SentBody.Should().Contain("ONLY the greeting, one congratulations sentence");
+        handler.SentBody.Should().Contain("ONLY the greeting");
         handler.SentBody.Should().Contain("quoted analysis");
-        handler.SentBody.Should().Contain("their potential customers");
+        handler.SentBody.Should().Contain("do NOT sell");
+        handler.SentBody.Should().Contain("do NOT ask a closing question");
         handler.SentBody.Should().Contain("appended automatically");
         handler.SentBody.Should().NotContain("the very tool this email offers");
-        // Empathy + their-language + honest-bridge requirements
-        handler.SentBody.Should().Contain("own vocabulary"); // note: apostrophes JSON-escape to ' in the body
+        // The hallucination guardrail (replaces the old "Invent it from THEIR market")
+        handler.SentBody.Should().NotContain("Invent it from THEIR market");
+        handler.SentBody.Should().Contain("only when the evidence given above supports them");
+        // Shared honesty + greeting invariants
         handler.SentBody.Should().Contain("never claim leads are already found");
-        // Direct address: TO them (you/your), compliment-first, never third-person about their company
-        handler.SentBody.Should().Contain("Speak TO them, not about them");
-        handler.SentBody.Should().Contain("genuine, specific compliment");
+        handler.SentBody.Should().Contain("Never guess or invent a name");
     }
 
     [Fact]
-    public async Task EnrichAsync_Always_SubjectFollowsTheirMomentPlusIdeaPattern()
+    public async Task EnrichAsync_AcrossDifferentFingerprints_SubjectRotatesButIsDeterministicPerFingerprint()
     {
         // Arrange
+        // FIX (round-1 review, Finding 3): the previous version of this test
+        // (EnrichAsync_Always_SubjectFollowsTheirMomentPlusIdeaPattern, then renamed to
+        // EnrichAsync_Always_SubjectInstructionCarriesLengthAndStyleConstraints) only asserted
+        // literal suffix text ("SUBJECT:", "Max 10 words, no clickbait, no emojis.") that was
+        // present identically in the OLD hardcoded subject line — it would have passed unchanged
+        // against pre-diff code and verified nothing about the rotation. Rewritten to drive
+        // enrichment across several distinct fingerprints and assert (a) more than one distinct
+        // subject instruction is emitted across them and (b) each fingerprint deterministically
+        // reproduces its own expected instruction — computed via DraftSkeletons.SubjectInstruction
+        // rather than a hardcoded pattern index, so this survives future edits to pattern wording.
+        var ids = Enumerable.Range(0, 20).Select(i => i.ToString()).ToList();
+        var items = ids.Select(id => new RawItem("hn", id, "", "hiring outbound SDR", "author", "https://x/1", "")).ToList();
+        var expectedSubjects = items.ToDictionary(i => i.ExternalId, i => DraftSkeletons.SubjectInstruction(i.Fingerprint));
+
+        // Act — enrich each item independently and decode the actual prompt sent
+        var actualSubjects = new Dictionary<string, string>();
+        foreach (var item in items)
+        {
+            var handler = new CapturingHandler(ValidBody);
+            var sut = new GroqLeadEnricher(new HttpClient(handler), Opts(), (d, _) => Task.CompletedTask);
+            await sut.EnrichAsync(item, Niche, Signal, SenderContext.None, null, CancellationToken.None);
+            actualSubjects[item.ExternalId] = ExtractPromptContent(handler.SentBody!);
+        }
+
+        // Assert — the rotation actually happened: more than one distinct subject instruction
+        // across the batch, and every fingerprint reproduced exactly its own expected one.
+        expectedSubjects.Values.Distinct().Count().Should().BeGreaterThan(1);
+        foreach (var id in ids)
+            actualSubjects[id].Should().Contain(expectedSubjects[id]);
+
+        // Assert — same fingerprint, enriched twice independently, yields the identical
+        // subject instruction both times (determinism through the full BuildPrompt wiring,
+        // not just DraftSkeletons in isolation).
+        var repeatHandler1 = new CapturingHandler(ValidBody);
+        var repeatSut1 = new GroqLeadEnricher(new HttpClient(repeatHandler1), Opts(), (d, _) => Task.CompletedTask);
+        await repeatSut1.EnrichAsync(items[0], Niche, Signal, SenderContext.None, null, CancellationToken.None);
+        var repeatHandler2 = new CapturingHandler(ValidBody);
+        var repeatSut2 = new GroqLeadEnricher(new HttpClient(repeatHandler2), Opts(), (d, _) => Task.CompletedTask);
+        await repeatSut2.EnrichAsync(items[0], Niche, Signal, SenderContext.None, null, CancellationToken.None);
+        ExtractPromptContent(repeatHandler1.SentBody!).Should().Be(ExtractPromptContent(repeatHandler2.SentBody!));
+    }
+
+    [Fact]
+    public async Task EnrichAsync_Always_PromptCarriesGreetingHonestyAndBannedInvariants()
+    {
+        // Arrange
+        // NOTE: renamed from EnrichAsync_Always_PromptAsksForGreetingAndParagraphs. That test
+        // asserted "paragraphs separated by ONE blank line", true of the old single skeleton
+        // but not of every rotated NormalDraftInstruction variant (the ultra-short variant is
+        // one paragraph, not several) — asserting it pins the test to whichever skeleton this
+        // fixture's fingerprint happens to hash to. Updated to assert the invariants every
+        // skeleton keeps: the greeting rule (incl. "Hi there," fallback and the no-guessing
+        // rule), the honesty rule, and the banned-phrase list.
         var handler = new CapturingHandler(ValidBody);
         var sut = new GroqLeadEnricher(new HttpClient(handler), Opts(), (d, _) => Task.CompletedTask);
 
         // Act
-        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, null, CancellationToken.None);
 
-        // Assert
-        handler.SentBody.Should().Contain("an idea for");
-    }
-
-    [Fact]
-    public async Task EnrichAsync_Always_PromptAsksForGreetingAndParagraphs()
-    {
-        // Arrange
-        var handler = new CapturingHandler(ValidBody);
-        var sut = new GroqLeadEnricher(new HttpClient(handler), Opts(), (d, _) => Task.CompletedTask);
-
-        // Act
-        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
-
-        // Assert — drafts open with a greeting and are laid out as paragraphs, never one block
+        // Assert — drafts open with a greeting; every skeleton keeps the shared invariants
         handler.SentBody.Should().Contain("Hi there");
         handler.SentBody.Should().Contain("greeting");
-        handler.SentBody.Should().Contain("paragraphs separated by ONE blank line");
         handler.SentBody.Should().Contain("Never guess or invent a name");
+        handler.SentBody.Should().Contain("STRICTLY honest");
+        handler.SentBody.Should().Contain("Banned:");
         // When the offer contains a free / no-commitment element, the closing question
         // must offer exactly that — it's the lowest-friction ask available.
         handler.SentBody.Should().Contain("free or no-commitment");
     }
+
+    [Fact]
+    public async Task EnrichAsync_DifferentLeads_GetDifferentDraftSkeletons()
+    {
+        // Arrange — two items with the same harvested text/author but different fingerprints
+        // (different ExternalId), captured via two independent CapturingHandlers. Search for
+        // ids whose IndexFor(., 5) differ so the two prompts are guaranteed to land on
+        // different NormalDraftInstruction skeletons.
+        var idA = Enumerable.Range(0, 100).Select(i => i.ToString())
+            .First(id => DraftSkeletons.IndexFor(new RawItem("hn", id, "", "", "", "", "").Fingerprint, 5) == 0);
+        var idB = Enumerable.Range(0, 100).Select(i => i.ToString())
+            .First(id => DraftSkeletons.IndexFor(new RawItem("hn", id, "", "", "", "", "").Fingerprint, 5) == 1);
+        var itemA = new RawItem("hn", idA, "", "hiring outbound SDR", "author", "https://x/1", "");
+        var itemB = new RawItem("hn", idB, "", "hiring outbound SDR", "author", "https://x/1", "");
+
+        var handlerA = new CapturingHandler(ValidBody);
+        var sutA = new GroqLeadEnricher(new HttpClient(handlerA), Opts(), (d, _) => Task.CompletedTask);
+        var handlerB = new CapturingHandler(ValidBody);
+        var sutB = new GroqLeadEnricher(new HttpClient(handlerB), Opts(), (d, _) => Task.CompletedTask);
+
+        // Act — enrich item A and item B
+        await sutA.EnrichAsync(itemA, Niche, Signal, SenderContext.None, null, CancellationToken.None);
+        await sutB.EnrichAsync(itemB, Niche, Signal, SenderContext.None, null, CancellationToken.None);
+
+        // Assert — the two captured prompts' DRAFT sections differ
+        var promptA = ExtractSection(handlerA.SentBody!, "DRAFT:", "COMPANY:");
+        var promptB = ExtractSection(handlerB.SentBody!, "DRAFT:", "COMPANY:");
+        promptA.Should().NotBe(promptB);
+    }
+
+    [Fact]
+    public async Task EnrichAsync_Prompt_NeverInvitesInventingTheirMarket()
+    {
+        // Arrange — fixed-pitch sender (reuse existing fixture)
+        var handler = new CapturingHandler(ValidBody);
+        var sut = new GroqLeadEnricher(new HttpClient(handler), Opts(), (d, _) => Task.CompletedTask);
+        var sender = new SenderContext(Brief: null, MentionSourceTool: true, PitchLine: "I run Coldstart.", CtaLine: "3 free leads: link");
+
+        // Act — capture the prompt
+        await sut.EnrichAsync(Item, Niche, Signal, sender, null, CancellationToken.None);
+
+        // Assert — the hallucination guardrail replaced the invention instruction
+        handler.SentBody.Should().NotContain("Invent it from THEIR market");
+        handler.SentBody.Should().Contain("only when the evidence given above supports them");
+    }
+
+    [Fact]
+    public async Task EnrichAsync_WithSecondaryContext_PromptContainsSecondaryContextSection()
+    {
+        // Arrange — a realistic snippet exactly as LangSearchSecondaryLookup would produce it:
+        // its own honesty preamble (the sole "SECONDARY CONTEXT" marker — BuildPrompt adds no
+        // label of its own, so production prompts never carry the header twice) plus the hit.
+        var handler = new CapturingHandler(ValidBody);
+        var sut = new GroqLeadEnricher(new HttpClient(handler), Opts(), (d, _) => Task.CompletedTask);
+        var secondaryContext = $"{LangSearchSecondaryLookup.Preamble}\nThey just hired a VP Sales.";
+
+        // Act
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, secondaryContext, CancellationToken.None);
+
+        // Assert
+        var prompt = ExtractPromptContent(handler.SentBody!);
+        prompt.Should().Contain("SECONDARY CONTEXT");
+        prompt.Should().Contain("They just hired a VP Sales.");
+    }
+
+    [Fact]
+    public async Task EnrichAsync_NullSecondaryContext_PromptOmitsSection()
+    {
+        // Arrange
+        var handler = new CapturingHandler(ValidBody);
+        var sut = new GroqLeadEnricher(new HttpClient(handler), Opts(), (d, _) => Task.CompletedTask);
+
+        // Act
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, null, CancellationToken.None);
+
+        // Assert — no stray block when there's nothing to label. (The evidence guardrail now
+        // names the SECONDARY CONTEXT block "when one is present", so the bare header string
+        // is no longer proof of a block — the lookup's preamble is.)
+        var prompt = ExtractPromptContent(handler.SentBody!);
+        prompt.Should().NotContain("an additional public snippet about the same company");
+        prompt.Should().NotContain("SECONDARY CONTEXT (");
+    }
+
+    [Fact]
+    public async Task EnrichAsync_Prompt_EvidenceRuleAdmitsTheSecondaryContextBlock()
+    {
+        // Arrange — the guardrail and the secondary-context block must not contradict each other:
+        // the block is fetched precisely to support naming decisions, so the rule has to allow it.
+        var handler = new CapturingHandler(ValidBody);
+        var sut = new GroqLeadEnricher(new HttpClient(handler), Opts(), (d, _) => Task.CompletedTask);
+        var secondaryContext = $"{LangSearchSecondaryLookup.Preamble}\nThey sell scheduling software to dental clinics.";
+
+        // Act
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, secondaryContext, CancellationToken.None);
+
+        // Assert
+        var prompt = ExtractPromptContent(handler.SentBody!);
+        prompt.Should().Contain("that evidence is the HARVESTED CONTENT, plus the SECONDARY CONTEXT block when one is present");
+        prompt.Should().NotContain("only when the harvested content itself supports");
+    }
+
+    private static string ExtractSection(string body, string startMarker, string endMarker)
+    {
+        var start = body.IndexOf(startMarker, StringComparison.Ordinal);
+        var end = body.IndexOf(endMarker, start, StringComparison.Ordinal);
+        return body[start..end];
+    }
+
+    // Decodes the raw captured JSON request body back into the actual prompt string BuildPrompt
+    // produced (undoing JSON escaping of embedded quotes), so assertions can Contain()-match
+    // instruction text that itself contains double quotes (e.g. the "Hi there," greeting rule).
+    private static string ExtractPromptContent(string body) =>
+        JsonDocument.Parse(body).RootElement.GetProperty("messages")[1].GetProperty("content").GetString()!;
 }

@@ -34,6 +34,13 @@ public class HarvestSuppressionTests
         return (leads, customers, suppressions);
     }
 
+    private static ISecondaryContextLookup NoSecondaryContext()
+    {
+        var lookup = Substitute.For<ISecondaryContextLookup>();
+        lookup.LookupAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns((string?)null);
+        return lookup;
+    }
+
     [Fact]
     public async Task RunAsync_SuppressedRawItem_NeverReachesTheEnricher()
     {
@@ -41,14 +48,14 @@ public class HarvestSuppressionTests
         var item = new RawItem("fake", "1", "Bluecore Energy raises €4M", "hiring outbound SDR", "", "u1", "");
         var enricher = Substitute.For<ILeadEnricher>();
         var (leads, customers, suppressions) = Deps("bluecore energy");
-        var sut = new HarvestLeads([new FakeSource(item)], enricher, leads, customers, suppressions, Niche(), Substitute.For<ITenantScope>());
+        var sut = new HarvestLeads([new FakeSource(item)], enricher, NoSecondaryContext(), leads, customers, suppressions, Niche(), Substitute.For<ITenantScope>());
 
         // Act
         var report = await sut.RunAsync(CancellationToken.None);
 
         // Assert — dropped before any LLM spend or persistence
         report.Saved.Should().Be(0);
-        await enricher.DidNotReceive().EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<CancellationToken>());
+        await enricher.DidNotReceive().EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
         await leads.DidNotReceive().AddAsync(Arg.Any<Lead>(), Arg.Any<CancellationToken>());
     }
 
@@ -58,10 +65,10 @@ public class HarvestSuppressionTests
         // Arrange — raw text is clean; only the enriched company name reveals the objector
         var item = new RawItem("fake", "1", "", "hiring outbound SDR", "", "u1", "");
         var enricher = Substitute.For<ILeadEnricher>();
-        enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<CancellationToken>())
+        enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
             .Returns(new EnrichmentResult(Fit.Yes, "s", "subj", "draft", "Bluecore Energy B.V."));
         var (leads, customers, suppressions) = Deps("bluecore energy");
-        var sut = new HarvestLeads([new FakeSource(item)], enricher, leads, customers, suppressions, Niche(), Substitute.For<ITenantScope>());
+        var sut = new HarvestLeads([new FakeSource(item)], enricher, NoSecondaryContext(), leads, customers, suppressions, Niche(), Substitute.For<ITenantScope>());
 
         // Act
         var report = await sut.RunAsync(CancellationToken.None);
@@ -77,10 +84,10 @@ public class HarvestSuppressionTests
         // Arrange
         var item = new RawItem("fake", "1", "", "hiring outbound SDR", "", "u1", "");
         var enricher = Substitute.For<ILeadEnricher>();
-        enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<CancellationToken>())
+        enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
             .Returns(new EnrichmentResult(Fit.Yes, "s", "subj", "draft", "Acme"));
         var (leads, customers, suppressions) = Deps("bluecore energy");
-        var sut = new HarvestLeads([new FakeSource(item)], enricher, leads, customers, suppressions, Niche(), Substitute.For<ITenantScope>());
+        var sut = new HarvestLeads([new FakeSource(item)], enricher, NoSecondaryContext(), leads, customers, suppressions, Niche(), Substitute.For<ITenantScope>());
 
         // Act
         var report = await sut.RunAsync(CancellationToken.None);

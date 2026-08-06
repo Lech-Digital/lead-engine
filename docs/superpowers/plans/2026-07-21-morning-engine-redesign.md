@@ -631,7 +631,7 @@ Expected: 3 new tests FAIL (`/terms` 404, no footer, privacy missing GDPR marker
     <div class="site-footer-grid">
       <div>
         <a class="wordmark" href="/">coldstart<i>*</i></a>
-        <p class="site-footer-co">Coldstart · Schiedam, the Netherlands<br>KvK: — · VAT: —</p>
+        <p class="site-footer-co">Coldstart · Schiedam, the Netherlands<br>KvK: — · VAT: NL005516039B31</p>
       </div>
       <nav class="site-footer-nav" aria-label="Legal">
         <a href="/terms">Terms &amp; conditions</a>

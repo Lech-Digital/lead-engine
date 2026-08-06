@@ -40,7 +40,7 @@ internal sealed class GroqLeadEnricher : ILeadEnricher
         _delay = delay;
     }
 
-    public async Task<EnrichmentResult?> EnrichAsync(RawItem item, NicheOptions niche, SignalResult signal, SenderContext sender, CancellationToken ct)
+    public async Task<EnrichmentResult?> EnrichAsync(RawItem item, NicheOptions niche, SignalResult signal, SenderContext sender, string? secondaryContext, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(_o.ApiKey)) return null;
         // Pace the batch: pause before every call after the first so a sequential run
@@ -48,7 +48,7 @@ internal sealed class GroqLeadEnricher : ILeadEnricher
         if (_sentBefore && _o.RequestDelaySeconds > 0)
             await _delay(TimeSpan.FromSeconds(_o.RequestDelaySeconds), ct);
         _sentBefore = true;
-        var prompt = BuildPrompt(item, niche, signal, sender);
+        var prompt = BuildPrompt(item, niche, signal, sender, secondaryContext);
         var body = new
         {
             model = _o.Model,
@@ -105,8 +105,13 @@ internal sealed class GroqLeadEnricher : ILeadEnricher
     }
 
     // Ported from enrich.py PROMPT_TEMPLATE.
-    private static string BuildPrompt(RawItem item, NicheOptions n, SignalResult signal, SenderContext sender) =>
-        $"""
+    private static string BuildPrompt(RawItem item, NicheOptions n, SignalResult signal, SenderContext sender, string? secondaryContext)
+    {
+        // SHA-256 hex of "{Source}:{ExternalId}" — stable per item, never empty. Rotates the
+        // subject pattern and draft skeleton deterministically so the same lead always gets
+        // the same shape across re-runs, but a night's batch never shares one shape.
+        var key = item.Fingerprint;
+        return $"""
         OFFER WE SELL:
         {n.Offer}
         {(string.IsNullOrWhiteSpace(sender.Brief) ? "" : $"""
@@ -132,6 +137,10 @@ internal sealed class GroqLeadEnricher : ILeadEnricher
         \"\"\"
         {item.Text}
         \"\"\"
+        {(string.IsNullOrWhiteSpace(secondaryContext) ? "" : $"""
+
+        {secondaryContext}
+        """)}
 
         Pre-detected signals (keyword-level, may be noisy): {string.Join(", ", signal.Matched)}
 
@@ -139,21 +148,8 @@ internal sealed class GroqLeadEnricher : ILeadEnricher
 
         FIT: YES | MAYBE | NO — would this specific person plausibly buy the offer? Be strict; default to NO if the content is off-topic, a job seeker, a competitor, or just noise.
         SUMMARY: one sentence — who they are and the concrete reason they do or don't fit.
-        SUBJECT: personal and specific to their moment, following the pattern "<their moment> + an idea for <their company or name>" (e.g. "Congrats on the raise + an idea for Acme"). Always include their company or name after "an idea for". Max 10 words, no clickbait, no emojis.
-        {(sender.HasFixedPitch ? $"""
-        DRAFT: ONLY the greeting, one congratulations sentence, and a short quoted analysis — the sender's intro, pitch and call-to-action are appended automatically after your text, so do NOT sell, do NOT name any offer or tool, do NOT ask a closing question. Produce exactly:
-        - Greeting on its own line: "Hi <first name>," when the author's real first name is clearly visible in the content; otherwise exactly "Hi there,". Never guess or invent a name.
-        - After a blank line: ONE short sentence — a genuine, specific compliment or congratulations on their moment, naming the concrete thing (the round and amount, the hire, the post). Speak TO them, not about them: always you/your ("your $50M round", never "Acme's $50M round" — their company is never the third-person subject of a sentence addressed to them). Warm and energizing; an exclamation mark is fine.
-        - After a blank line: the quoted analysis — at most 2 short sentences where EVERY line starts with "> ". Name the pressure this moment creates for them, and the SPECIFIC decision-makers or companies (their potential customers) a lead engine could find for them to connect with, in THEIR industry's own vocabulary. Invent it from THEIR market — who do THEY sell to? Never reuse an example from these instructions. STRICTLY honest and conditional: no search has run for them yet — never claim leads are already found, never invent numbers, names, or results.
-        Short, human, no marketing voice. Banned: "I hope this email finds you well", "I came across", "reaching out", "game-changer", "revolutionize", "synergy", "circle back", "touch base", "in today's fast-paced".
-        """ : $"""
-        DRAFT: a short, warm email from {n.SenderName} ({n.SenderTitle}), written to one person — 5-7 short sentences in total, laid out as a greeting line plus 2-3 paragraphs separated by ONE blank line each:
-        - Greeting on its own line: "Hi <first name>," when the author's real first name is clearly visible in the content; otherwise exactly "Hi there,". Never guess or invent a name.
-        - Paragraph 1: open with a genuine, specific compliment or acknowledgment of THEIR moment, speaking TO them (always you/your, never their company as a third-person subject), plus the concrete need or pressure it creates for them right now — proof you actually read their content.
-        - Paragraph 2: the specific outcome the offer gives them for that need — a result they'd want, not a feature list.
-        - Final paragraph: one friendly, low-effort question that is easy to answer with a single sentence. If the OFFER includes anything free or no-commitment (a sample, a trial, free leads), the question must offer exactly that — it is the easiest possible yes.
-        Welcoming and human, never salesy: short, clean sentences, one idea each — no comma splices, no filler, no marketing voice. No signature (one is added on send). Banned: "I hope this email finds you well", "I came across", "reaching out", "game-changer", "revolutionize", "synergy", "circle back", "touch base", "in today's fast-paced".
-        """)}
+        {DraftSkeletons.SubjectInstruction(key)}
+        {(sender.HasFixedPitch ? DraftSkeletons.FixedPitchDraftInstruction(key) : DraftSkeletons.NormalDraftInstruction(key, n))}
         COMPANY: the real company/org name this is about, or "-" if it cannot be determined. Never guess.
         PROSPECT_NICHE: who THEY sell to, as they would describe it themselves, 2-6 words (e.g. "dental clinics in the Benelux"), or "-" if unclear.
         PROSPECT_SELLS: what THEY sell, 2-6 words (e.g. "scheduling software"), or "-" if unclear.
@@ -161,7 +157,8 @@ internal sealed class GroqLeadEnricher : ILeadEnricher
         If FIT is NO, still fill SUBJECT and DRAFT with "-".
         {(sender.MentionSourceTool && !sender.HasFixedPitch ? """
 
-        Also: inside paragraph 2, state plainly in first person that the sender found this prospect using Coldstart — the very tool this email offers them (for example: "I found your post with Coldstart, the same engine I'd like to put to work for you."). Exactly one sentence; honest proof, stated as a simple fact, no boasting beyond the fact itself.
+        Also: add ONE short sentence to the body prose stating plainly in first person that the sender found this prospect using Coldstart — the very tool this email offers them (for example: "I found your post with Coldstart, the same engine I'd like to put to work for you."). This is an ADDITION to the shape above, not a swap, and it takes precedence over that shape's sentence-count limit and over any "no offer mention" restriction on its prose part: a prose part that is normally exactly one sentence becomes two, and a shape with a total-sentence cap may exceed it by exactly this one sentence. It still never goes in the greeting line, never inside a fixed-format block such as a dashed list (that block keeps exactly the lines the shape specifies), and never becomes the closing ask — place it as its own sentence in the prose part that comes right before the ask. Honest proof, stated as a simple fact, no boasting beyond the fact itself.
         """ : "")}
         """;
+    }
 }

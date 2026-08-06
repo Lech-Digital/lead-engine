@@ -2,8 +2,9 @@
 @model Coldstart.Web.Areas.Admin.Pages.CockpitModel
 @{ ViewData["Title"] = "Admin · Cockpit"; Layout = "/Pages/Shared/_Layout.cshtml"; ViewData["AdminTab"] = "cockpit"; }
 
-<partial name="_AdminHeader" />
-
+<div class="rail-shell">
+  <partial name="_AdminSidebar" />
+  <div class="rail-main">
 <main class="wrap app-zone">
   <h1 class="cz-h1">Cockpit</h1>
   <p class="settings-note">Last 7 days at a glance.</p>
@@ -54,3 +55,8 @@
     </table>
   </section>
 </main>
+  </div>
+</div>
+<partial name="/Pages/Shared/_ConfirmDialog.cshtml" />
+<script src="~/js/app-rail.js" defer asp-append-version="true"></script>
+<script src="~/js/app-confirm.js" defer asp-append-version="true"></script>
