@@ -184,6 +184,15 @@ public class GroqLeadEnricherTests
     {
         // Arrange — when the sender has hardcoded pitch/CTA blocks, the model writes ONLY
         // the personalized hook; the selling copy is composed in code afterwards.
+        // NOTE: this test used to assert one variant's exact wording ("ONLY the greeting,
+        // one congratulations sentence", "their potential customers", "own vocabulary",
+        // "Speak TO them, not about them", "genuine, specific compliment"). Now that
+        // FixedPitchDraftInstruction rotates across 3 structurally different variants keyed
+        // by the item's fingerprint, those exact phrases only hold for ONE of the three —
+        // asserting them here pins the test to whichever variant this fixture's fingerprint
+        // happens to hash to. Updated to assert the invariants every fixed-pitch variant
+        // must keep (per DraftComposer's contract: hook-only, quoted analysis, honesty,
+        // banned list) plus the hallucination guardrail itself.
         var handler = new CapturingHandler(ValidBody);
         var sut = new GroqLeadEnricher(new HttpClient(handler), Opts(), (d, _) => Task.CompletedTask);
         var sender = new SenderContext(Brief: null, MentionSourceTool: true, PitchLine: "I run Coldstart.", CtaLine: "3 free leads: link");
@@ -192,23 +201,30 @@ public class GroqLeadEnricherTests
         await sut.EnrichAsync(Item, Niche, Signal, sender, CancellationToken.None);
 
         // Assert — hook-only instructions; no AI-written pitch/CTA/dogfood line
-        handler.SentBody.Should().Contain("ONLY the greeting, one congratulations sentence");
+        handler.SentBody.Should().Contain("ONLY the greeting");
         handler.SentBody.Should().Contain("quoted analysis");
-        handler.SentBody.Should().Contain("their potential customers");
+        handler.SentBody.Should().Contain("do NOT sell");
+        handler.SentBody.Should().Contain("do NOT ask a closing question");
         handler.SentBody.Should().Contain("appended automatically");
         handler.SentBody.Should().NotContain("the very tool this email offers");
-        // Empathy + their-language + honest-bridge requirements
-        handler.SentBody.Should().Contain("own vocabulary"); // note: apostrophes JSON-escape to ' in the body
+        // The hallucination guardrail (replaces the old "Invent it from THEIR market")
+        handler.SentBody.Should().NotContain("Invent it from THEIR market");
+        handler.SentBody.Should().Contain("only when the harvested content itself supports");
+        // Shared honesty + greeting invariants
         handler.SentBody.Should().Contain("never claim leads are already found");
-        // Direct address: TO them (you/your), compliment-first, never third-person about their company
-        handler.SentBody.Should().Contain("Speak TO them, not about them");
-        handler.SentBody.Should().Contain("genuine, specific compliment");
+        handler.SentBody.Should().Contain("Never guess or invent a name");
     }
 
     [Fact]
-    public async Task EnrichAsync_Always_SubjectFollowsTheirMomentPlusIdeaPattern()
+    public async Task EnrichAsync_Always_SubjectInstructionCarriesLengthAndStyleConstraints()
     {
         // Arrange
+        // NOTE: renamed from EnrichAsync_Always_SubjectFollowsTheirMomentPlusIdeaPattern.
+        // That test asserted "an idea for", the old single hard-coded subject pattern. Subjects
+        // now rotate across 4 structurally different patterns (DraftSkeletons.SubjectInstruction)
+        // keyed by fingerprint, and "an idea for" is only one of them — pinning to it fails for
+        // whichever pattern this fixture's fingerprint doesn't hash to. Updated to assert the
+        // constraint every subject pattern shares instead of one pattern's exact wording.
         var handler = new CapturingHandler(ValidBody);
         var sut = new GroqLeadEnricher(new HttpClient(handler), Opts(), (d, _) => Task.CompletedTask);
 
@@ -216,26 +232,87 @@ public class GroqLeadEnricherTests
         await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
 
         // Assert
-        handler.SentBody.Should().Contain("an idea for");
+        handler.SentBody.Should().Contain("SUBJECT:");
+        handler.SentBody.Should().Contain("Max 10 words, no clickbait, no emojis.");
     }
 
     [Fact]
-    public async Task EnrichAsync_Always_PromptAsksForGreetingAndParagraphs()
+    public async Task EnrichAsync_Always_PromptCarriesGreetingHonestyAndBannedInvariants()
     {
         // Arrange
+        // NOTE: renamed from EnrichAsync_Always_PromptAsksForGreetingAndParagraphs. That test
+        // asserted "paragraphs separated by ONE blank line", true of the old single skeleton
+        // but not of every rotated NormalDraftInstruction variant (the ultra-short variant is
+        // one paragraph, not several) — asserting it pins the test to whichever skeleton this
+        // fixture's fingerprint happens to hash to. Updated to assert the invariants every
+        // skeleton keeps: the greeting rule (incl. "Hi there," fallback and the no-guessing
+        // rule), the honesty rule, and the banned-phrase list.
         var handler = new CapturingHandler(ValidBody);
         var sut = new GroqLeadEnricher(new HttpClient(handler), Opts(), (d, _) => Task.CompletedTask);
 
         // Act
         await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
 
-        // Assert — drafts open with a greeting and are laid out as paragraphs, never one block
+        // Assert — drafts open with a greeting; every skeleton keeps the shared invariants
         handler.SentBody.Should().Contain("Hi there");
         handler.SentBody.Should().Contain("greeting");
-        handler.SentBody.Should().Contain("paragraphs separated by ONE blank line");
         handler.SentBody.Should().Contain("Never guess or invent a name");
+        handler.SentBody.Should().Contain("STRICTLY honest");
+        handler.SentBody.Should().Contain("Banned:");
         // When the offer contains a free / no-commitment element, the closing question
         // must offer exactly that — it's the lowest-friction ask available.
         handler.SentBody.Should().Contain("free or no-commitment");
+    }
+
+    [Fact]
+    public async Task EnrichAsync_DifferentLeads_GetDifferentDraftSkeletons()
+    {
+        // Arrange — two items with the same harvested text/author but different fingerprints
+        // (different ExternalId), captured via two independent CapturingHandlers. Search for
+        // ids whose IndexFor(., 5) differ so the two prompts are guaranteed to land on
+        // different NormalDraftInstruction skeletons.
+        var idA = Enumerable.Range(0, 100).Select(i => i.ToString())
+            .First(id => DraftSkeletons.IndexFor(new RawItem("hn", id, "", "", "", "", "").Fingerprint, 5) == 0);
+        var idB = Enumerable.Range(0, 100).Select(i => i.ToString())
+            .First(id => DraftSkeletons.IndexFor(new RawItem("hn", id, "", "", "", "", "").Fingerprint, 5) == 1);
+        var itemA = new RawItem("hn", idA, "", "hiring outbound SDR", "author", "https://x/1", "");
+        var itemB = new RawItem("hn", idB, "", "hiring outbound SDR", "author", "https://x/1", "");
+
+        var handlerA = new CapturingHandler(ValidBody);
+        var sutA = new GroqLeadEnricher(new HttpClient(handlerA), Opts(), (d, _) => Task.CompletedTask);
+        var handlerB = new CapturingHandler(ValidBody);
+        var sutB = new GroqLeadEnricher(new HttpClient(handlerB), Opts(), (d, _) => Task.CompletedTask);
+
+        // Act — enrich item A and item B
+        await sutA.EnrichAsync(itemA, Niche, Signal, SenderContext.None, CancellationToken.None);
+        await sutB.EnrichAsync(itemB, Niche, Signal, SenderContext.None, CancellationToken.None);
+
+        // Assert — the two captured prompts' DRAFT sections differ
+        var promptA = ExtractSection(handlerA.SentBody!, "DRAFT:", "COMPANY:");
+        var promptB = ExtractSection(handlerB.SentBody!, "DRAFT:", "COMPANY:");
+        promptA.Should().NotBe(promptB);
+    }
+
+    [Fact]
+    public async Task EnrichAsync_Prompt_NeverInvitesInventingTheirMarket()
+    {
+        // Arrange — fixed-pitch sender (reuse existing fixture)
+        var handler = new CapturingHandler(ValidBody);
+        var sut = new GroqLeadEnricher(new HttpClient(handler), Opts(), (d, _) => Task.CompletedTask);
+        var sender = new SenderContext(Brief: null, MentionSourceTool: true, PitchLine: "I run Coldstart.", CtaLine: "3 free leads: link");
+
+        // Act — capture the prompt
+        await sut.EnrichAsync(Item, Niche, Signal, sender, CancellationToken.None);
+
+        // Assert — the hallucination guardrail replaced the invention instruction
+        handler.SentBody.Should().NotContain("Invent it from THEIR market");
+        handler.SentBody.Should().Contain("only when the harvested content itself supports");
+    }
+
+    private static string ExtractSection(string body, string startMarker, string endMarker)
+    {
+        var start = body.IndexOf(startMarker, StringComparison.Ordinal);
+        var end = body.IndexOf(endMarker, start, StringComparison.Ordinal);
+        return body[start..end];
     }
 }
