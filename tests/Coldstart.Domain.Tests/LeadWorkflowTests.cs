@@ -53,17 +53,34 @@ public class LeadWorkflowTests
     }
 
     [Fact]
-    public void Reopen_FromRejected_ReturnsToPendingReview()
+    public void Reopen_FromShelved_ReturnsToPendingReview()
     {
-        // Arrange
+        // Arrange — the customer skipped it themselves; the draft is intact
         var lead = Harvested();
-        lead.Reject();
+        lead.Discard("Bad timing");
 
         // Act
         lead.Reopen();
 
         // Assert
         lead.Status.Should().Be(LeadStatus.PendingReview);
+        lead.SkipReason.Should().BeNull();
+    }
+
+    [Fact]
+    public void Reopen_FromRejected_Throws()
+    {
+        // Arrange — the engine judged it a non-fit, so it was saved with "-" subject and draft
+        var lead = Lead.CreateHarvested(CustomerId.New(), "Acme", Fit.No, "-", "-",
+            "hackernews", "https://x/1", "fp-1", 0.7, "outbound", DateTimeOffset.UtcNow);
+        lead.Reject();
+
+        // Act
+        var act = () => lead.Reopen();
+
+        // Assert — reopening would put a blank lead into the customer's briefing
+        act.Should().Throw<DomainException>().WithMessage("*no draft to review*");
+        lead.Status.Should().Be(LeadStatus.Rejected);
     }
 
     [Fact]

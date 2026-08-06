@@ -39,11 +39,18 @@ internal sealed class LangSearchSecondaryLookup(HttpClient http, NicheOptions ni
                 !data.TryGetProperty("webPages", out var pages) ||
                 !pages.TryGetProperty("value", out var hits) || hits.ValueKind != JsonValueKind.Array)
                 return null;
+            var key = company.Trim();
             foreach (var hit in hits.EnumerateArray())
             {
                 var name = hit.TryGetProperty("name", out var n) ? n.GetString() : null;
                 var snippet = hit.TryGetProperty("snippet", out var s) ? s.GetString() : null;
                 if (string.IsNullOrWhiteSpace(snippet)) continue;
+                // Relevance gate. The search engine happily returns loosely-related pages, and the
+                // key is often the item's title rather than a clean company name — so a hit only
+                // counts as being "about the same company" (what the preamble promises the model)
+                // when the key actually appears in it. Anything else would hand the model
+                // unrelated text as evidence, exactly the hallucination the guardrail closes.
+                if (!Mentions(name, key) && !Mentions(snippet, key)) continue;
                 return $"{Preamble}\n{name}: {snippet}".Trim();
             }
             return null;
@@ -53,4 +60,7 @@ internal sealed class LangSearchSecondaryLookup(HttpClient http, NicheOptions ni
             return null;   // best-effort by contract
         }
     }
+
+    private static bool Mentions(string? text, string key) =>
+        !string.IsNullOrWhiteSpace(text) && text.Contains(key, StringComparison.OrdinalIgnoreCase);
 }

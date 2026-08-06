@@ -408,6 +408,37 @@ public class LeadDetailTests(ColdstartWebFactory factory) : IClassFixture<Coldst
     }
 
     [Fact]
+    public async Task Detail_ForRejectedLead_HidesTheMoveBackToReviewButton()
+    {
+        // Arrange — the engine judged this one a non-fit, so it has no draft to review
+        var client = factory.CreateClient();
+        var email = $"detail-rejected-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
+        var id = await AddRejectedLeadAsync(email, "Nonfit Co", "fp-" + Guid.NewGuid().ToString("N"));
+
+        // Act
+        var html = await client.GetStringAsync($"/app/leads/{id}");
+
+        // Assert
+        html.Should().NotContain("handler=Reopen");
+        html.Should().NotContain("Move back to review");
+    }
+
+    private async Task<Guid> AddRejectedLeadAsync(string email, string company, string fingerprint)
+    {
+        using var scope = factory.Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var db = scope.ServiceProvider.GetRequiredService<ColdstartDbContext>();
+        var user = await users.FindByEmailAsync(email);
+        var lead = Lead.CreateHarvested(new CustomerId(user!.CustomerId!.Value), company, Fit.No,
+            "-", "-", "hackernews", "https://x/1", fingerprint, 0.7, "outbound", DateTimeOffset.UtcNow);
+        lead.Reject();
+        db.Leads.Add(lead);
+        await db.SaveChangesAsync();
+        return lead.Id.Value;
+    }
+
+    [Fact]
     public async Task Detail_NoMatchedSignals_ShowsBaselineScoreLabel()
     {
         // Arrange — a lead whose score came only from the source floor (no keyword hits)

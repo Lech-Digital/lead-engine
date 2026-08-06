@@ -10,7 +10,17 @@
 
   <section class="panel" id="billing">
     <h2 class="app-group-head">Subscription</h2>
-    @if (Model.Plan == Coldstart.Domain.CustomerPlan.Full)
+    @if (Model.IsComplimentary)
+    {
+      @* Complimentary access: no Stripe subscription, no card on file — the paid-plan copy
+         below would be untrue, so this branch states what actually happens instead. *@
+      <p class="settings-note">
+        <span class="plan-badge plan-full">Full plan</span>
+        <span> — complimentary access until <strong>@Model.ComplimentaryUntil!.Value.ToString("d MMMM yyyy")</strong></span>
+      </p>
+      <p class="settings-note">This is on the house — there's nothing to cancel and no card on file. When it ends, your account simply returns to the free plan and you can upgrade whenever you like.</p>
+    }
+    else if (Model.Plan == Coldstart.Domain.CustomerPlan.Full)
     {
       <p class="settings-note">
         <span class="plan-badge plan-full">Full plan</span>

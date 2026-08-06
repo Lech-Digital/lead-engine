@@ -157,7 +157,7 @@ internal sealed class GroqLeadEnricher : ILeadEnricher
         If FIT is NO, still fill SUBJECT and DRAFT with "-".
         {(sender.MentionSourceTool && !sender.HasFixedPitch ? """
 
-        Also: inside paragraph 2, state plainly in first person that the sender found this prospect using Coldstart — the very tool this email offers them (for example: "I found your post with Coldstart, the same engine I'd like to put to work for you."). Exactly one sentence; honest proof, stated as a simple fact, no boasting beyond the fact itself.
+        Also: somewhere in the body prose, state plainly in first person that the sender found this prospect using Coldstart — the very tool this email offers them (for example: "I found your post with Coldstart, the same engine I'd like to put to work for you."). Exactly ONE sentence, and it must fit the shape above rather than bend it: never in the greeting line, never inside a fixed-format block such as a dashed list (those keep exactly the lines the shape specifies), and never as the closing ask. Put it as a prose sentence before the ask, in whichever part of the shape has room — it counts toward that part's sentence budget. Honest proof, stated as a simple fact, no boasting beyond the fact itself.
         """ : "")}
         """;
     }

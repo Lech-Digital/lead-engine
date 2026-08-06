@@ -17,6 +17,16 @@ public sealed class BillingSettingsModel(UserManager<ApplicationUser> users, ICu
     public CustomerPlan Plan { get; private set; }
     public DateTimeOffset? RenewsAt { get; private set; }
     public bool HasStripeCustomer { get; private set; }
+    public DateTimeOffset? ComplimentaryUntil { get; private set; }
+
+    // A complimentary grant sets Plan = Full without any Stripe subscription behind it. Those
+    // customers have no card on file and nothing to cancel, so none of the paid-subscription
+    // copy (or the portal button) is true for them.
+    public bool IsComplimentary => Plan == CustomerPlan.Full
+        && ComplimentaryUntil is not null
+        && !HasStripeSubscription;
+
+    private bool HasStripeSubscription { get; set; }
 
     public async Task<IActionResult> OnGetAsync(CancellationToken ct)
     {
@@ -27,6 +37,8 @@ public sealed class BillingSettingsModel(UserManager<ApplicationUser> users, ICu
         Plan = customer.Plan;
         RenewsAt = customer.PlanRenewsAt;
         HasStripeCustomer = !string.IsNullOrEmpty(customer.StripeCustomerId);
+        HasStripeSubscription = !string.IsNullOrEmpty(customer.StripeSubscriptionId);
+        ComplimentaryUntil = customer.ComplimentaryUntil;
         return Page();
     }
 }

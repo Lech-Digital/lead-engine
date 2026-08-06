@@ -106,6 +106,23 @@ public class CustomerHistoryTests(ColdstartWebFactory factory) : IClassFixture<C
     }
 
     [Fact]
+    public async Task History_RejectedRow_OffersNoReopenButton()
+    {
+        // Arrange — Rejected is the engine's FIT: NO verdict; those leads carry "-" for subject/draft
+        var client = factory.CreateClient();
+        var email = $"hist-rejbtn-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
+        await AddLeadAsync(email, "Rejected Co", LeadStatus.Rejected);
+
+        // Act
+        var html = await client.GetStringAsync("/app/history?filter=skipped");
+
+        // Assert — the row is listed, but reopening it would put a blank lead in the briefing
+        html.Should().Contain("Rejected Co");
+        html.Should().NotContain("handler=Reopen");
+    }
+
+    [Fact]
     public async Task History_Rows_LinkToLeadDetail()
     {
         // Arrange

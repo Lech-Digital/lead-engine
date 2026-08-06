@@ -135,4 +135,23 @@ public class CustomerBillingTests
         customer.ComplimentaryUntil.Should().BeNull();
         customer.SubscriptionEndedAt.Should().BeNull();
     }
+
+    [Fact]
+    public void GrantComplimentary_ToLapsedCustomer_StopsTheRetentionClock()
+    {
+        // Arrange — a customer who paid, lapsed, and was already reminded about deletion
+        var customer = Customer.Create("Lapsed Then Comped Co");
+        var now = DateTimeOffset.UtcNow;
+        customer.ActivateFull("sub_789", now.AddMonths(1));
+        customer.DowngradeToFree(now.AddDays(-54));
+        customer.MarkRetentionReminderSent();
+
+        // Act
+        customer.GrantComplimentary(now.AddDays(30), now);
+
+        // Assert — active access means the operator must not be told to delete their data
+        customer.Plan.Should().Be(CustomerPlan.Full);
+        customer.SubscriptionEndedAt.Should().BeNull();
+        customer.RetentionReminderSent.Should().BeFalse();
+    }
 }

@@ -178,6 +178,13 @@ public class GroqLeadEnricherTests
         handler.SentBody.Should().Contain("Coldstart");
         handler.SentBody.Should().Contain("first person");
         handler.SentBody.Should().Contain("the very tool this email offers");
+        // …and it must be placeable in EVERY rotated skeleton: shape 4 has a single paragraph
+        // (no "paragraph 2" to put it in) and shape 5's dashed block is exactly two lines.
+        handler.SentBody.Should().NotContain("inside paragraph 2");
+        handler.SentBody.Should().Contain("somewhere in the body prose");
+        handler.SentBody.Should().Contain("never in the greeting line");
+        handler.SentBody.Should().Contain("never inside a fixed-format block");
+        handler.SentBody.Should().Contain("never as the closing ask");
     }
 
     [Fact]
@@ -210,7 +217,7 @@ public class GroqLeadEnricherTests
         handler.SentBody.Should().NotContain("the very tool this email offers");
         // The hallucination guardrail (replaces the old "Invent it from THEIR market")
         handler.SentBody.Should().NotContain("Invent it from THEIR market");
-        handler.SentBody.Should().Contain("only when the harvested content itself supports");
+        handler.SentBody.Should().Contain("only when the evidence given above supports them");
         // Shared honesty + greeting invariants
         handler.SentBody.Should().Contain("never claim leads are already found");
         handler.SentBody.Should().Contain("Never guess or invent a name");
@@ -332,7 +339,7 @@ public class GroqLeadEnricherTests
 
         // Assert — the hallucination guardrail replaced the invention instruction
         handler.SentBody.Should().NotContain("Invent it from THEIR market");
-        handler.SentBody.Should().Contain("only when the harvested content itself supports");
+        handler.SentBody.Should().Contain("only when the evidence given above supports them");
     }
 
     [Fact]
@@ -364,9 +371,30 @@ public class GroqLeadEnricherTests
         // Act
         await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, null, CancellationToken.None);
 
-        // Assert — no stray header when there's nothing to label
+        // Assert — no stray block when there's nothing to label. (The evidence guardrail now
+        // names the SECONDARY CONTEXT block "when one is present", so the bare header string
+        // is no longer proof of a block — the lookup's preamble is.)
         var prompt = ExtractPromptContent(handler.SentBody!);
-        prompt.Should().NotContain("SECONDARY CONTEXT");
+        prompt.Should().NotContain("an additional public snippet about the same company");
+        prompt.Should().NotContain("SECONDARY CONTEXT (");
+    }
+
+    [Fact]
+    public async Task EnrichAsync_Prompt_EvidenceRuleAdmitsTheSecondaryContextBlock()
+    {
+        // Arrange — the guardrail and the secondary-context block must not contradict each other:
+        // the block is fetched precisely to support naming decisions, so the rule has to allow it.
+        var handler = new CapturingHandler(ValidBody);
+        var sut = new GroqLeadEnricher(new HttpClient(handler), Opts(), (d, _) => Task.CompletedTask);
+        var secondaryContext = $"{LangSearchSecondaryLookup.Preamble}\nThey sell scheduling software to dental clinics.";
+
+        // Act
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, secondaryContext, CancellationToken.None);
+
+        // Assert
+        var prompt = ExtractPromptContent(handler.SentBody!);
+        prompt.Should().Contain("that evidence is the HARVESTED CONTENT, plus the SECONDARY CONTEXT block when one is present");
+        prompt.Should().NotContain("only when the harvested content itself supports");
     }
 
     private static string ExtractSection(string body, string startMarker, string endMarker)

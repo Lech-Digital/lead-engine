@@ -10,6 +10,10 @@
     var approved = status == "Approved";
     var sent = status == "Sent";
     var skipped = status is "Shelved" or "Rejected";
+    // Only a lead the customer shelved can go back to review. "Rejected" is the engine's own
+    // FIT: NO verdict — those are stored with "-" for subject and draft, so reopening one
+    // would drop a blank lead into the briefing (Lead.Reopen refuses it in the domain too).
+    var shelved = status == "Shelved";
     var hasRecipient = !string.IsNullOrWhiteSpace(lead.RecipientEmail);
     var decisionMaker = lead.ContactLinks.Count > 0 ? lead.ContactLinks[0] : null;
     var quietDays = sent && lead.SentAt is { } sentAt ? (int)(DateTimeOffset.UtcNow - sentAt).TotalDays : 0;
@@ -100,7 +104,7 @@
           {
             <div class="ld-actions">
               <button class="btn btn-ghost" type="submit" asp-page-handler="Save">Save draft</button>
-              @if (approved || skipped) { <button class="btn btn-ghost" type="submit" asp-page-handler="Reopen">Move back to review</button> }
+              @if (approved || shelved) { <button class="btn btn-ghost" type="submit" asp-page-handler="Reopen">Move back to review</button> }
               @if (!skipped) { <button class="btn btn-ghost" type="submit" asp-page-handler="Discard" data-confirm="It moves to History under “Skipped” — you can reopen it anytime." data-confirm-title="Skip @lead.Company?" data-confirm-ok="Skip lead">Skip</button> }
             </div>
           }

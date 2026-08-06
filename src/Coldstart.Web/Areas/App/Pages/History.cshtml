@@ -53,10 +53,16 @@
               else if (lead.Status is "Shelved" or "Rejected")
               {
                 <span class="cz-stbadge st-skip">SKIPPED · @(lead.SkipReason ?? (lead.Status == "Shelved" ? "you" : "not a fit"))</span>
-                <form method="post" asp-page-handler="Reopen" class="cz-reopen-form">
-                  <input type="hidden" name="id" value="@lead.Id">
-                  <button class="cz-why" type="submit">reopen →</button>
-                </form>
+                @* Only a lead YOU shelved can be reopened. A Rejected lead is one the engine
+                   judged a non-fit: it was persisted with "-" for subject and draft, so
+                   reopening it would put a blank lead in the briefing. *@
+                @if (lead.Status == "Shelved")
+                {
+                  <form method="post" asp-page-handler="Reopen" class="cz-reopen-form">
+                    <input type="hidden" name="id" value="@lead.Id">
+                    <button class="cz-why" type="submit">reopen →</button>
+                  </form>
+                }
               }
               else if (isOlder)
               {

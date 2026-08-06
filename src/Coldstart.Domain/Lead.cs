@@ -96,6 +96,10 @@ public sealed class Lead
     {
         if (Status == LeadStatus.Sent)
             throw new DomainException("Cannot reopen a lead that has already been sent.");
+        // Defense in depth behind the UI gate: a Rejected lead is the engine's own FIT: NO
+        // verdict and is persisted with "-" for subject and draft — there is nothing to review.
+        if (Status == LeadStatus.Rejected)
+            throw new DomainException("This lead was judged a non-fit by the engine, so it has no draft to review.");
         Status = LeadStatus.PendingReview;
         SkipReason = null;
     }

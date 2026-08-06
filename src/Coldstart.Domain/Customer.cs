@@ -85,6 +85,8 @@ public sealed class Customer
             throw new DomainException("The complimentary end date must be in the future.");
         Plan = CustomerPlan.Full;
         ComplimentaryUntil = until;
+        SubscriptionEndedAt = null;         // active access stops the retention clock, as ActivateFull does
+        RetentionReminderSent = false;
     }
 
     public void MarkRetentionReminderSent() => RetentionReminderSent = true;

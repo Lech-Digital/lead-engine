@@ -5,6 +5,7 @@ using Coldstart.Infrastructure;
 using Coldstart.Infrastructure.Identity;
 using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -332,6 +333,63 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         response.Headers.Location!.OriginalString.Should().Contain("/Identity/Account/Login");
     }
 
+    [Fact]
+    public async Task SettingsBilling_ComplimentaryCustomer_ShowsHonestCopyAndNoCancelAffordance()
+    {
+        // Arrange — a comp grant sets Plan = Full with no Stripe subscription behind it
+        var client = factory.CreateClient();
+        var email = $"comp-billing-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
+        var until = DateTimeOffset.UtcNow.AddDays(30);
+        await MutateCustomerAsync(email, c => c.GrantComplimentary(until, DateTimeOffset.UtcNow));
+
+        // Act
+        var html = await client.GetStringAsync("/app/settings/billing");
+
+        // Assert — the truth: an end date, nothing to cancel, and what happens afterwards
+        html.Should().Contain("complimentary access until");
+        html.Should().Contain(until.ToString("d MMMM yyyy"));
+        html.Should().Contain("nothing to cancel and no card on file");
+        html.Should().Contain("returns to the free plan");
+        // …and none of the paid-subscription wording or the Stripe portal button
+        html.Should().NotContain("Manage or cancel subscription");
+        html.Should().NotContain("Cancelling takes effect");
+        html.Should().NotContain("change your payment method");
+        html.Should().NotContain("handler=Portal");
+    }
+
+    [Fact]
+    public async Task SettingsBilling_PayingCustomer_StillShowsTheSubscriptionCopyAndPortal()
+    {
+        // Arrange — a genuine Stripe subscription
+        var client = factory.CreateClient();
+        var email = $"paid-billing-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
+        await MutateCustomerAsync(email, c => c.ActivateFull("sub_live_1", DateTimeOffset.UtcNow.AddDays(20)));
+
+        // Act
+        var html = await client.GetStringAsync("/app/settings/billing");
+
+        // Assert — unchanged paying path
+        html.Should().Contain("Full plan");
+        html.Should().Contain("Manage or cancel subscription");
+        html.Should().Contain("handler=Portal");
+        html.Should().NotContain("complimentary access until");
+    }
+
+    // Applies a domain mutation to the given registered user's customer and persists it.
+    private async Task MutateCustomerAsync(string email, Action<Customer> mutate)
+    {
+        using var scope = factory.Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var db = scope.ServiceProvider.GetRequiredService<ColdstartDbContext>();
+        var user = await users.FindByEmailAsync(email);
+        var customer = (await db.Customers.IgnoreQueryFilters().ToListAsync())
+            .Single(c => c.Id.Value == user!.CustomerId!.Value);
+        mutate(customer);
+        await db.SaveChangesAsync();
+    }
+
     // Inserts a real harvested lead into the given registered user's customer via a service scope.
     private async Task AddLeadForUserAsync(string email, string company, string fingerprint)
     {
@@ -449,6 +507,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         html.Should().Contain("Free plan");
         html.Should().Contain("Upgrade to Full");
         html.Should().Contain("handler=Checkout");
+        html.Should().NotContain("complimentary access until");   // free path is untouched by the comp branch
         // rail marks Subscription (not some other fixed item) as the current section
         html.Should().Contain("class=\"rail-item active\" href=\"/app/settings/billing\"");
         html.Should().NotContain("class=\"rail-item active\" href=\"/app\"");

@@ -23,8 +23,9 @@ internal static class DraftSkeletons
         "STRICTLY honest: never invent facts, numbers, names, or results — never claim leads are already found.";
     // The hallucination guardrail (replaces "Invent it from THEIR market").
     internal const string EvidenceRule =
-        "Name specific decision-makers, segments, or companies only when the harvested content itself supports " +
-        "them; if their market is not clear from the content, stay general (\"the customers you're targeting\") — " +
+        "Name specific decision-makers, segments, or companies only when the evidence given above supports them — " +
+        "that evidence is the HARVESTED CONTENT, plus the SECONDARY CONTEXT block when one is present, and nothing " +
+        "else; if their market is not clear from that evidence, stay general (\"the customers you're targeting\") — " +
         "never invent an industry for them, and never reuse an example from these instructions.";
     // The send pipeline (SmtpOutreachMailer.BuildMessage) unconditionally appends a real
     // signature after the composed body. Without this line the model is free to write its

@@ -366,15 +366,6 @@
   ::-webkit-scrollbar-thumb:hover { background: var(--sunrise); }
   ::-webkit-scrollbar-corner { background: var(--daylight); }
 
-  /* dashboard shell (/app app-bar) */
-  .app-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px clamp(20px,5vw,56px); border-bottom: 1px solid var(--line-soft); background: var(--daylight); }
-  .app-nav { display: flex; align-items: center; gap: 16px; }
-  .app-nav a { font-family: var(--mono); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--body-subtle); text-decoration: none; }
-  .app-nav a:hover { color: var(--ink); }
-  .app-nav .cz-id { display: inline-flex; align-items: center; gap: 8px; font-family: var(--body); text-transform: none; letter-spacing: normal; font-weight: 700; color: var(--ink); background: #fff; border: 1px solid var(--line-soft); border-radius: 999px; padding: 7px 14px; font-size: 0.9rem; cursor: pointer; text-decoration: none; }
-  .app-nav .cz-id:hover { color: var(--ink); }
-  .app-nav .cz-id .cz-chev { color: var(--body-subtle); font-size: 0.7rem; }
-
   /* morning briefing header + first-visit explainer (/app) */
   .app-briefing { margin: 34px 0 6px; }
   .app-briefing h1 { font-family: var(--display); font-weight: 800; letter-spacing: -0.02em; font-size: clamp(1.5rem, 3.5vw, 2.1rem); margin: 0; }
@@ -696,13 +687,6 @@
 
 /* ============ Customer zone: phone-width fixes (Android + iPhone) ============ */
 @media (max-width: 640px) {
-  /* App header: let it wrap instead of overflowing; compact the pill + buttons. */
-  .app-bar { flex-wrap: wrap; row-gap: 8px; padding: 10px 20px; }
-  .app-nav { gap: 10px; flex-wrap: wrap; }
-  .app-nav .cz-id { padding: 6px 10px; font-size: 0.82rem; max-width: 140px; }
-  .app-nav .cz-id span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .app-bar .btn, .app-nav .btn { padding: 8px 14px; font-size: 0.85rem; }
-
   /* Briefing header: headline and Review-all stack instead of squeezing. */
   .cz-greet { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
   .cz-greet .btn { align-self: stretch; text-align: center; justify-content: center; }
@@ -724,7 +708,6 @@
    (max() must include the base padding — max(0px, env()) computes to 0 on most phones and
    would strip the .wrap padding entirely.) */
 @supports (padding: max(0px)) {
-  .app-bar { padding-left: max(clamp(20px,5vw,56px), env(safe-area-inset-left)); padding-right: max(clamp(20px,5vw,56px), env(safe-area-inset-right)); }
   .site-nav-row, .wrap { padding-left: max(clamp(20px, 5vw, 56px), env(safe-area-inset-left)); padding-right: max(clamp(20px, 5vw, 56px), env(safe-area-inset-right)); }
 }
 
