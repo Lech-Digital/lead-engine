@@ -101,21 +101,28 @@
               <a class="pz-btn pz-btn-quiet" id="handoff-mailto">✉ Open in email app</a>
               <button class="pz-btn pz-btn-quiet" id="handoff-copy" type="button">⧉ Copy email</button>
               <span class="ld-copied ts" id="handoff-copied" hidden>Copied ✓</span>
+            </div>
+            <p class="pz-hint">Send from your own inbox — <b>@lead.Company sees you, never Coldstart.</b></p>
+
+            <div class="pz-actions">
               <button class="pz-btn pz-btn-primary" type="submit" form="lead-edit" asp-page-handler="MarkSent" id="btn-marksent" disabled="@(!hasRecipient)"
                       data-confirm="This marks the lead as sent and locks it — you won't be able to edit it afterward." data-confirm-title="Mark as sent?" data-confirm-ok="Mark as sent">Mark as sent ✓@(Model.Run ? " → next" : "")</button>
               <span class="ts" id="need-recipient" @(hasRecipient ? "hidden" : null)>Add a recipient first.</span>
-              @if (User.IsInRole(ColdstartRoles.SuperAdmin))
-              {
+              <button class="pz-btn pz-btn-quiet" type="submit" asp-page-handler="Save">Save draft</button>
+              @if (approved || shelved) { <button class="pz-btn pz-btn-quiet" type="submit" asp-page-handler="Reopen">Move back to review</button> }
+              <span class="spacer"></span>
+              @if (!skipped) { <button class="pz-btn pz-btn-danger" type="submit" asp-page-handler="Discard" data-confirm="It moves to History under “Skipped” — you can reopen it anytime." data-confirm-title="Skip @lead.Company?" data-confirm-ok="Skip lead">Skip</button> }
+            </div>
+
+            @if (User.IsInRole(ColdstartRoles.SuperAdmin))
+            {
+              <div class="pz-actions">
+                <span class="ts">Operator only —</span>
                 <button class="pz-btn pz-btn-quiet" type="submit" form="lead-edit" asp-page-handler="SendFromColdstart" id="btn-sendcoldstart" disabled="@(!hasRecipient)"
                         data-confirm="Coldstart will send this email now, from your address. This can't be undone." data-confirm-title="Send this email now?" data-confirm-ok="Send email">Send from Coldstart ✓</button>
                 <span class="ts">Sends the current draft from your Coldstart address, branded.</span>
-              }
-              <span class="spacer"></span>
-              <button class="pz-btn pz-btn-quiet" type="submit" asp-page-handler="Save">Save draft</button>
-              @if (approved || shelved) { <button class="pz-btn pz-btn-quiet" type="submit" asp-page-handler="Reopen">Move back to review</button> }
-              @if (!skipped) { <button class="pz-btn pz-btn-danger" type="submit" asp-page-handler="Discard" data-confirm="It moves to History under “Skipped” — you can reopen it anytime." data-confirm-title="Skip @lead.Company?" data-confirm-ok="Skip lead">Skip</button> }
-            </div>
-            <p class="pz-hint">Send from your own inbox — <b>@lead.Company sees you, never Coldstart.</b></p>
+              </div>
+            }
           }
           else { <p class="app-sub">This lead was sent and is read-only.</p> }
         </form>
