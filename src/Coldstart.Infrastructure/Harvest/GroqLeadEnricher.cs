@@ -139,7 +139,6 @@ internal sealed class GroqLeadEnricher : ILeadEnricher
         \"\"\"
         {(string.IsNullOrWhiteSpace(secondaryContext) ? "" : $"""
 
-        SECONDARY CONTEXT:
         {secondaryContext}
         """)}
 

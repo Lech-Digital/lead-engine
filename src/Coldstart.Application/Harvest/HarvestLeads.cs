@@ -74,9 +74,17 @@ internal sealed class HarvestLeads(
             // Best-effort: one extra public snippet about the company (its own announcement, a
             // founder quote) gives paragraph one something beyond the funding blurb to draw on.
             // Any failure here must never abort the batch — enrichment proceeds without it.
+            // Author alone isn't a sound key (it's a feed's URL host for FundingRssSource /
+            // DutchBusinessNewsSource, an HN username for HackerNewsSource, etc.) — see
+            // SecondaryContextKey. A null key means neither field yields anything usable, so
+            // skip the HTTP call entirely rather than look up known junk.
             string? secondaryContext = null;
-            try { secondaryContext = await secondaryContextLookup.LookupAsync(item.Author, ct); }
-            catch (Exception) when (!ct.IsCancellationRequested) { /* best-effort by contract */ }
+            var secondaryKey = SecondaryContextKey.For(item);
+            if (secondaryKey is not null)
+            {
+                try { secondaryContext = await secondaryContextLookup.LookupAsync(secondaryKey, ct); }
+                catch (Exception) when (!ct.IsCancellationRequested) { /* best-effort by contract */ }
+            }
             var result = await enricher.EnrichAsync(item, runNiche, signal, sender, secondaryContext, ct);
             if (result is null) continue;         // LLM failed/empty → retried next run
             enriched++;

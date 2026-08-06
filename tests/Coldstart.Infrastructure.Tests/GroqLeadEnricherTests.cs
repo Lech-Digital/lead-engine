@@ -338,11 +338,15 @@ public class GroqLeadEnricherTests
     [Fact]
     public async Task EnrichAsync_WithSecondaryContext_PromptContainsSecondaryContextSection()
     {
-        // Arrange / Act — capture prompt with secondaryContext: "They just hired a VP Sales."
+        // Arrange — a realistic snippet exactly as LangSearchSecondaryLookup would produce it:
+        // its own honesty preamble (the sole "SECONDARY CONTEXT" marker — BuildPrompt adds no
+        // label of its own, so production prompts never carry the header twice) plus the hit.
         var handler = new CapturingHandler(ValidBody);
         var sut = new GroqLeadEnricher(new HttpClient(handler), Opts(), (d, _) => Task.CompletedTask);
+        var secondaryContext = $"{LangSearchSecondaryLookup.Preamble}\nThey just hired a VP Sales.";
 
-        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, "They just hired a VP Sales.", CancellationToken.None);
+        // Act
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, secondaryContext, CancellationToken.None);
 
         // Assert
         var prompt = ExtractPromptContent(handler.SentBody!);
@@ -353,13 +357,14 @@ public class GroqLeadEnricherTests
     [Fact]
     public async Task EnrichAsync_NullSecondaryContext_PromptOmitsSection()
     {
-        // Arrange / Act
+        // Arrange
         var handler = new CapturingHandler(ValidBody);
         var sut = new GroqLeadEnricher(new HttpClient(handler), Opts(), (d, _) => Task.CompletedTask);
 
+        // Act
         await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, null, CancellationToken.None);
 
-        // Assert
+        // Assert — no stray header when there's nothing to label
         var prompt = ExtractPromptContent(handler.SentBody!);
         prompt.Should().NotContain("SECONDARY CONTEXT");
     }
