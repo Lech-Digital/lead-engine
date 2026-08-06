@@ -739,11 +739,7 @@
 .pw-toggle:hover { color: var(--ink); }
 .pw-toggle:focus-visible { outline: 2px solid var(--sunrise); }
 
-/* Settings sub-navigation + sources */
-.settings-nav { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 22px; }
-.settings-nav a { padding: 8px 16px; border-radius: 999px; border: 1px solid var(--line-soft); background: #fff; color: var(--body-muted); text-decoration: none; font-size: 0.9rem; font-weight: 600; }
-.settings-nav a:hover { color: var(--ink); border-color: var(--sunrise-soft); }
-.settings-nav a.active { background: var(--ink); border-color: var(--ink); color: #fff; }
+/* Sources */
 .source-row { border-bottom: 1px solid var(--line-soft); }
 .source-row:last-of-type { border-bottom: none; }
 .source-row label { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 12px; align-items: baseline; padding: 14px 2px; cursor: pointer; }
