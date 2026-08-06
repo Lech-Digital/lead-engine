@@ -181,10 +181,69 @@ public class GroqLeadEnricherTests
         // …and it must be placeable in EVERY rotated skeleton: shape 4 has a single paragraph
         // (no "paragraph 2" to put it in) and shape 5's dashed block is exactly two lines.
         handler.SentBody.Should().NotContain("inside paragraph 2");
-        handler.SentBody.Should().Contain("somewhere in the body prose");
-        handler.SentBody.Should().Contain("never in the greeting line");
+        handler.SentBody.Should().Contain("add ONE short sentence to the body prose");
+        handler.SentBody.Should().Contain("never goes in the greeting line");
         handler.SentBody.Should().Contain("never inside a fixed-format block");
-        handler.SentBody.Should().Contain("never as the closing ask");
+        handler.SentBody.Should().Contain("never becomes the closing ask");
+        // The addendum must explicitly outrank a shape's own sentence-count / no-offer-mention
+        // restrictions on its prose part — otherwise shape 5 (whose only prose sentence is
+        // barred from mentioning the offer) has nowhere to place this line. Decoded via
+        // ExtractPromptContent because System.Text.Json's default encoder escapes apostrophes
+        // (' -> ') in the raw request body, and the wording below contains one.
+        var decodedPrompt = ExtractPromptContent(handler.SentBody!);
+        decodedPrompt.Should().Contain("takes precedence over that shape's sentence-count limit");
+        decodedPrompt.Should().Contain("becomes two");
+        decodedPrompt.Should().Contain("exceed it by exactly this one sentence");
+    }
+
+    [Fact]
+    public async Task EnrichAsync_WithMentionSourceTool_AcrossEveryDraftShape_CarriesAddendumAndItsPrecedenceWording()
+    {
+        // Arrange — round-1 review Finding (Important): the dogfood addendum used to tell the
+        // model to "fit the shape above rather than bend it", but shape 5's only prose part is
+        // capped at EXACTLY one sentence and explicitly bars an offer mention — there was
+        // nowhere the addendum's sentence could legally go. The fix makes the addendum state
+        // that it ADDS a sentence and OUTRANKS a shape's sentence-count / no-offer-mention
+        // limits. Pin that guarantee for EVERY one of the five rotated shapes (not just
+        // whichever one a fixed fixture happens to hash to), so a future edit to the shapes or
+        // the addendum that reintroduces the contradiction on any shape fails this suite.
+        const int shapeCount = 5;
+        var idsByShape = Enumerable.Range(0, 500).Select(i => i.ToString())
+            .GroupBy(id => DraftSkeletons.IndexFor(new RawItem("hn", id, "", "", "", "", "").Fingerprint, shapeCount))
+            .ToDictionary(g => g.Key, g => g.First());
+        idsByShape.Keys.Should().BeEquivalentTo(Enumerable.Range(0, shapeCount),
+            "500 fingerprints must land on all 5 shapes at least once");
+
+        var sender = new SenderContext(Brief: null, MentionSourceTool: true);
+
+        for (var shape = 0; shape < shapeCount; shape++)
+        {
+            var item = new RawItem("hn", idsByShape[shape], "", "hiring outbound SDR", "author", "https://x/1", "");
+            var handler = new CapturingHandler(ValidBody);
+            var sut = new GroqLeadEnricher(new HttpClient(handler), Opts(), (d, _) => Task.CompletedTask);
+
+            // Act
+            await sut.EnrichAsync(item, Niche, Signal, sender, null, CancellationToken.None);
+
+            // Assert — every shape's composed prompt carries the addendum itself and the
+            // precedence wording that makes it satisfiable regardless of the shape's own
+            // sentence-count / no-offer-mention restrictions.
+            var prompt = ExtractPromptContent(handler.SentBody!);
+            prompt.Should().Contain("Coldstart", $"shape {shape} must carry the dogfood addendum");
+            prompt.Should().Contain("add ONE short sentence to the body prose",
+                $"shape {shape} must carry the addendum's core instruction");
+            prompt.Should().Contain("takes precedence over that shape's sentence-count limit",
+                $"shape {shape} must carry the precedence-over-sentence-count wording");
+            prompt.Should().Contain("no offer mention\" restriction on its prose part",
+                $"shape {shape} must carry the precedence-over-no-offer-mention wording");
+            prompt.Should().Contain("becomes two", $"shape {shape} must state the one-sentence-becomes-two rule");
+            prompt.Should().Contain("exceed it by exactly this one sentence",
+                $"shape {shape} must state the exceed-the-cap-by-one rule");
+            prompt.Should().Contain("never goes in the greeting line", $"shape {shape} must still bar the greeting");
+            prompt.Should().Contain("never inside a fixed-format block",
+                $"shape {shape} must still bar fixed-format blocks (shape 5's two-line dashed list)");
+            prompt.Should().Contain("never becomes the closing ask", $"shape {shape} must still bar the closing ask");
+        }
     }
 
     [Fact]
