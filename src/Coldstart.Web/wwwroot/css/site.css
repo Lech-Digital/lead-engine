@@ -778,3 +778,76 @@
   /* Fixed overlay on mobile, so the content column reclaims the full width. */
   .rail-main { margin-left: 0; }
 }
+
+/* ---- portal design system (.pz) ----
+   One vocabulary for every page inside the rail: a page header, a card, a form
+   field, and a single primary action per view. Pages compose these instead of
+   inventing their own panels, so the portal reads as one product.
+   Lives after the rail block so .rail-main overrides above still apply. */
+.pz-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 6px; }
+.pz-head h1 { font-family: var(--display); font-weight: 800; letter-spacing: -0.025em; font-size: clamp(1.5rem, 2.6vw, 2rem); margin: 0; color: var(--ink); line-height: 1.1; }
+.pz-sub { margin: 6px 0 0; color: var(--body-subtle); font-size: 0.94rem; }
+.pz-count { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--body-subtle); background: #fff; border: 1px solid var(--line-soft); border-radius: 999px; padding: 5px 11px; white-space: nowrap; }
+
+/* Queue rows: company and why-now read first, subject second. */
+.pz-queue { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+.pz-lead { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 16px; background: #fff; border: 1px solid var(--line-soft); border-radius: 14px; padding: 16px 18px; text-decoration: none; transition: border-color .15s, box-shadow .15s, transform .15s; }
+.pz-lead:hover { border-color: var(--sunrise-soft); box-shadow: 0 6px 18px rgba(22,25,43,.06); transform: translateY(-1px); }
+.pz-lead-co { font-family: var(--display); font-weight: 800; font-size: 1.06rem; color: var(--ink); letter-spacing: -0.01em; text-decoration: none; }
+.pz-lead-subj { margin: 7px 0 0; color: var(--body-muted); font-size: 0.95rem; }
+.pz-lead-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pz-why { display: inline-flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--sunrise-deep); background: #FFF1EA; border-radius: 999px; padding: 3px 9px; }
+.pz-row-actions { display: flex; align-items: center; gap: 8px; }
+.pz-skip { border: 1px solid var(--line-soft); background: #fff; color: var(--body-subtle); border-radius: 10px; width: 34px; height: 34px; cursor: pointer; font-size: 0.9rem; }
+.pz-skip:hover { color: var(--sunrise-deep); border-color: var(--sunrise-soft); }
+
+/* Detail: the working surface is wide, context stays quiet beside it. */
+.pz-detail { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(260px, 0.85fr); gap: 22px; align-items: start; margin-top: 20px; }
+.pz-card { background: #fff; border: 1px solid var(--line-soft); border-radius: 16px; padding: 20px 22px; }
+.pz-card + .pz-card { margin-top: 14px; }
+.pz-card h2 { font-family: var(--display); font-size: 1rem; font-weight: 800; margin: 0 0 14px; color: var(--ink); letter-spacing: -0.01em; }
+
+.pz-field { margin-bottom: 14px; }
+.pz-field label { display: block; font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.11em; text-transform: uppercase; color: var(--body-subtle); margin-bottom: 6px; }
+.pz-field input, .pz-field textarea, .pz-field select { width: 100%; border: 1px solid var(--line-soft); border-radius: 10px; padding: 11px 13px; font-family: var(--body); font-size: 0.96rem; color: var(--ink); background: #FEFDFB; }
+.pz-field textarea { line-height: 1.6; resize: vertical; }
+.pz-field input:focus, .pz-field textarea:focus, .pz-field select:focus { outline: 2px solid var(--sunrise-soft); outline-offset: 1px; border-color: transparent; }
+.pz-hint { font-size: 0.82rem; color: var(--body-subtle); margin: 6px 0 0; }
+
+/* One primary action per view; everything else is visibly secondary. */
+.pz-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 4px; padding-top: 16px; border-top: 1px solid var(--line-soft); }
+.pz-actions .spacer { margin-left: auto; }
+.pz-btn { border-radius: 11px; padding: 11px 18px; font-family: var(--body); font-weight: 700; font-size: 0.93rem; cursor: pointer; border: 1px solid transparent; text-decoration: none; display: inline-flex; align-items: center; gap: 7px; }
+.pz-btn-primary { background: var(--sunrise); color: #fff; }
+.pz-btn-primary:hover { background: var(--sunrise-deep); }
+.pz-btn-primary:disabled { background: var(--line-soft); color: var(--body-subtle); cursor: not-allowed; }
+.pz-btn-quiet { background: #fff; border-color: var(--line-soft); color: var(--body-muted); }
+.pz-btn-quiet:hover { color: var(--ink); border-color: var(--body-subtle); }
+.pz-btn-danger { background: none; border-color: transparent; color: var(--body-subtle); }
+.pz-btn-danger:hover { color: #B4451F; }
+
+/* Facts as a scannable list rather than a form. */
+.pz-facts { display: flex; flex-direction: column; margin: 0; }
+.pz-fact { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line-soft); font-size: 0.9rem; }
+.pz-fact:last-child { border-bottom: 0; }
+.pz-fact dt { color: var(--body-subtle); }
+.pz-fact dd { margin: 0; color: var(--ink); font-weight: 600; text-align: right; }
+.pz-note { background: #FFFDF9; border: 1px solid var(--line-soft); border-radius: 11px; padding: 11px 13px; font-size: 0.9rem; color: var(--body-muted); }
+
+/* Status pills: one shape, three meanings. */
+.pz-pill { font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.09em; text-transform: uppercase; font-weight: 700; padding: 4px 10px; border-radius: 999px; }
+.pz-pill-yes { background: rgba(60,122,112,.14); color: #2c6a60; }
+.pz-pill-maybe { background: #FFF1EA; color: var(--sunrise-deep); }
+.pz-pill-sent { background: rgba(22,25,43,.07); color: var(--body-muted); }
+
+.pz-settings { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; }
+.pz-settings .full { grid-column: 1 / -1; }
+.pz-empty { color: var(--body-subtle); background: #fff; border: 1px dashed var(--line-soft); border-radius: 14px; padding: 26px; text-align: center; }
+
+@media (max-width: 900px) {
+  .pz-detail { grid-template-columns: 1fr; }
+  .pz-settings { grid-template-columns: 1fr; }
+  .pz-head { flex-direction: column; gap: 10px; }
+  .pz-lead { grid-template-columns: 1fr; }
+  .pz-row-actions { justify-content: flex-start; }
+}
