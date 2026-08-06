@@ -861,6 +861,18 @@
 .pz-row-link:hover { color: var(--sunrise-deep); }
 .pz-cell-sub { display: block; margin-top: 2px; font-size: 0.78rem; color: var(--body-subtle); font-weight: 400; white-space: nowrap; }
 
+/* Cockpit KPI tiles: plain numbers over a label, no chart chrome — scannable in a glance.
+   A warning has to read differently from a stat at rest: a sunrise-toned pill for the reason,
+   and the whole table row tinted so it never blends into the ordinary rows around it. */
+.pz-stats { display: flex; flex-wrap: wrap; gap: 26px 36px; }
+.pz-stat { display: flex; flex-direction: column; gap: 4px; min-width: 88px; }
+.pz-stat-num { font-family: var(--display); font-weight: 800; font-size: 1.7rem; letter-spacing: -0.02em; color: var(--ink); line-height: 1; }
+.pz-stat-label { font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--body-subtle); }
+.pz-stat-sub { font-size: 0.78rem; color: var(--body-subtle); }
+.pz-flag { display: inline-flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--sunrise-deep); background: #FFF1EA; border-radius: 999px; padding: 3px 9px; white-space: nowrap; }
+.pz-table tbody tr.pz-row-alarm { background: #FFF8F4; }
+.pz-table tbody tr.pz-row-alarm:hover { background: #FFF1EA; }
+
 @media (max-width: 900px) {
   .pz-detail { grid-template-columns: 1fr; }
   .pz-settings { grid-template-columns: 1fr; }
@@ -868,4 +880,6 @@
   .pz-lead { grid-template-columns: 1fr; }
   .pz-row-actions { justify-content: flex-start; }
   .pz-table th, .pz-table td { padding: 10px 12px; font-size: 0.84rem; }
+  .pz-stats { gap: 18px 28px; }
+  .pz-stat-num { font-size: 1.4rem; }
 }

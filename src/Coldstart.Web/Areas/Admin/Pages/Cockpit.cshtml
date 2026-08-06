@@ -6,54 +6,61 @@
   <partial name="_AdminSidebar" />
   <div class="rail-main">
 <main class="wrap app-zone">
-  <h1 class="cz-h1">Cockpit</h1>
-  <p class="settings-note">Last 7 days at a glance.</p>
-
-  <section class="panel">
-    <div style="display:flex;gap:26px;flex-wrap:wrap;">
-      <div><span style="font-size:1.6rem;font-weight:800;">@Model.PayingCustomers</span><br><span class="ts">paying customers</span></div>
-      <div><span style="font-size:1.6rem;font-weight:800;">@Model.FoundThisWeek</span><br><span class="ts">leads found</span></div>
-      <div><span style="font-size:1.6rem;font-weight:800;">@Model.SentThisWeek</span><br><span class="ts">emails sent</span></div>
-      <div><span style="font-size:1.6rem;font-weight:800;">@Model.OutcomesThisWeek</span><br><span class="ts">outcomes</span></div>
-      <div><span style="font-size:1.6rem;font-weight:800;">@Model.InquiriesThisWeek</span><br><span class="ts">inquiries</span></div>
-      <div><span style="font-size:1.6rem;font-weight:800;">@Model.RunsThisWeek</span><br><span class="ts">engine runs · @Model.SignalsReadThisWeek signals</span></div>
-      <div><span style="font-size:1.6rem;font-weight:800;">@Model.Exclusions</span><br><span class="ts">exclusions</span></div>
+  <div class="pz-head">
+    <div>
+      <h1>Cockpit</h1>
+      <p class="pz-sub">Business vitals and per-customer engine health, last 7 days.</p>
     </div>
-  </section>
+  </div>
 
-  <section class="panel">
-    <h2 class="app-group-head">Engine health per customer</h2>
-    <table style="width:100%;border-collapse:collapse;">
-      <thead><tr>
-        <th style="text-align:left;padding:8px 6px;">Customer</th>
-        <th style="text-align:left;padding:8px 6px;">Plan</th>
-        <th style="text-align:left;padding:8px 6px;">Last harvest</th>
-        <th style="text-align:right;padding:8px 6px;">Leads</th>
-        <th style="text-align:right;padding:8px 6px;">Pending</th>
-        <th style="text-align:right;padding:8px 6px;">Sent</th>
-        <th style="text-align:right;padding:8px 6px;">Outcomes</th>
-        <th style="text-align:left;padding:8px 6px;">Flags</th>
-      </tr></thead>
-      <tbody>
-      @foreach (var row in Model.Customers)
-      {
-        <tr style="border-top:1px solid var(--line-soft);@(row.Alarm ? "background:#FDF0EC;" : "")">
-          <td style="padding:8px 6px;font-weight:600;">@row.Name</td>
-          <td style="padding:8px 6px;"><span class="plan-badge @(row.Plan == "Full" ? "plan-full" : "plan-free")">@row.Plan</span></td>
-          <td style="padding:8px 6px;">@row.HarvestStatus@(row.LastHarvestAt is { } at ? $" · {at:dd MMM HH:mm}" : "")</td>
-          <td style="padding:8px 6px;text-align:right;">@row.TotalLeads</td>
-          <td style="padding:8px 6px;text-align:right;">@row.PendingLeads</td>
-          <td style="padding:8px 6px;text-align:right;">@row.SentLeads</td>
-          <td style="padding:8px 6px;text-align:right;">@row.Outcomes</td>
-          <td style="padding:8px 6px;">
-            @if (row.Alarm) { <span title="Failed harvest or stale engine">⚠️</span> }
-            @if (row.RetentionDeadline is { } deadline) { <span class="ts">🗑 delete by @deadline.ToString("dd MMM")</span> }
-          </td>
-        </tr>
-      }
-      </tbody>
-    </table>
-  </section>
+  <div class="pz-card">
+    <h2>Last 7 days</h2>
+    <div class="pz-stats">
+      <div class="pz-stat"><span class="pz-stat-num">@Model.PayingCustomers</span><span class="pz-stat-label">Paying customers</span></div>
+      <div class="pz-stat"><span class="pz-stat-num">@Model.FoundThisWeek</span><span class="pz-stat-label">Leads found</span></div>
+      <div class="pz-stat"><span class="pz-stat-num">@Model.SentThisWeek</span><span class="pz-stat-label">Emails sent</span></div>
+      <div class="pz-stat"><span class="pz-stat-num">@Model.OutcomesThisWeek</span><span class="pz-stat-label">Outcomes</span></div>
+      <div class="pz-stat"><span class="pz-stat-num">@Model.InquiriesThisWeek</span><span class="pz-stat-label">Inquiries</span></div>
+      <div class="pz-stat"><span class="pz-stat-num">@Model.RunsThisWeek</span><span class="pz-stat-label">Engine runs</span><span class="pz-stat-sub">@Model.SignalsReadThisWeek signals read</span></div>
+      <div class="pz-stat"><span class="pz-stat-num">@Model.Exclusions</span><span class="pz-stat-label">Exclusions</span></div>
+    </div>
+  </div>
+
+  <div class="pz-card">
+    <h2>Engine health per customer</h2>
+    @if (Model.Customers.Count == 0)
+    {
+      <p class="pz-empty">No customers yet — invite one from Companies &amp; invites to see engine health here.</p>
+    }
+    else
+    {
+      <div class="pz-table-wrap">
+        <table class="pz-table">
+          <thead><tr>
+            <th>Customer</th><th>Plan</th><th>Last harvest</th><th>Leads</th><th>Pending</th><th>Sent</th><th>Outcomes</th><th>Flags</th>
+          </tr></thead>
+          <tbody>
+          @foreach (var row in Model.Customers)
+          {
+            <tr class="@(row.Alarm ? "pz-row-alarm" : null)">
+              <td>@row.Name</td>
+              <td><span class="pz-pill @(row.Plan == "Full" ? "pz-pill-yes" : "pz-pill-sent")">@row.Plan</span></td>
+              <td>@row.HarvestStatus@(row.LastHarvestAt is { } at ? $" · {at:dd MMM HH:mm}" : "")</td>
+              <td>@row.TotalLeads</td>
+              <td>@row.PendingLeads</td>
+              <td>@row.SentLeads</td>
+              <td>@row.Outcomes</td>
+              <td>
+                @if (row.AlarmReason is { } reason) { <span class="pz-flag">⚠ @reason</span> }
+                @if (row.RetentionDeadline is { } deadline) { <span class="pz-cell-sub">Delete by @deadline.ToString("dd MMM")</span> }
+              </td>
+            </tr>
+          }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
 </main>
   </div>
 </div>

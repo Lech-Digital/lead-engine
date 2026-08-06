@@ -6,14 +6,15 @@
   <partial name="_AdminSidebar" />
   <div class="rail-main">
 <main class="wrap app-zone">
-  <section class="app-briefing">
-    <h1>Mailbox</h1>
-    <p class="app-briefing-ts">info@getcoldstart.nl · INBOX</p>
-  </section>
-
-  <div class="mail-actions">
-    <a class="btn btn-primary" href="/admin/mailbox/compose">Compose</a>
-    <a class="btn btn-ghost" href="/admin/mailbox">Refresh</a>
+  <div class="pz-head">
+    <div>
+      <h1>Mailbox</h1>
+      <p class="pz-sub">The shared info@getcoldstart.nl inbox — read, reply and start new threads without leaving admin.</p>
+    </div>
+    <div class="pz-row-actions">
+      <a class="pz-btn pz-btn-quiet" href="/admin/mailbox">Refresh</a>
+      <a class="pz-btn pz-btn-primary" href="/admin/mailbox/compose">Compose</a>
+    </div>
   </div>
 
   @if (Model.Unreachable)
@@ -23,25 +24,39 @@
   else if (Model.Mail is { } mail)
   {
     @if (@TempData["MailFlash"] is string flash) { <p class="mail-flash">@flash</p> }
-    <div class="mail-list">
-      @foreach (var m in mail.Items)
+    <div class="pz-card">
+      <h2>Inbox</h2>
+      @if (mail.Items.Count == 0)
       {
-        <a class="mail-row @(m.Seen ? "" : "mail-row-unseen")" href="/admin/mailbox/@m.Uid">
-          <span class="mail-from">@(string.IsNullOrWhiteSpace(m.FromName) ? m.FromAddress : m.FromName)</span>
-          <span class="mail-subj">@m.Subject @(m.HasAttachments ? "📎" : "")</span>
-          <span class="ts mail-date">@m.Date.ToString("dd MMM · HH:mm", System.Globalization.CultureInfo.InvariantCulture)</span>
-        </a>
+        <p class="pz-empty">Inbox empty — nothing to read.</p>
       }
-      @if (mail.Items.Count == 0) { <p class="mail-empty">Inbox empty — nothing to read.</p> }
+      else
+      {
+        <div class="mail-list">
+          @foreach (var m in mail.Items)
+          {
+            <a class="mail-row @(m.Seen ? "" : "mail-row-unseen")" href="/admin/mailbox/@m.Uid">
+              <span class="mail-from">@(string.IsNullOrWhiteSpace(m.FromName) ? m.FromAddress : m.FromName)</span>
+              <span class="mail-subj">@m.Subject @(m.HasAttachments ? "📎" : "")</span>
+              <span class="ts mail-date">@m.Date.ToString("dd MMM · HH:mm", System.Globalization.CultureInfo.InvariantCulture)</span>
+            </a>
+          }
+        </div>
+      }
+      @if (mail.Page > 1 || mail.TotalCount > mail.Page * mail.PageSize)
+      {
+        <div class="pz-actions">
+          @if (mail.TotalCount > mail.Page * mail.PageSize)
+          {
+            <a class="pz-btn pz-btn-quiet" href="/admin/mailbox?page=@(mail.Page + 1)">Older →</a>
+          }
+          @if (mail.Page > 1)
+          {
+            <a class="pz-btn pz-btn-quiet" href="/admin/mailbox?page=@(mail.Page - 1)">← Newer</a>
+          }
+        </div>
+      }
     </div>
-    @if (mail.TotalCount > mail.Page * mail.PageSize)
-    {
-      <a class="btn btn-ghost" href="/admin/mailbox?page=@(mail.Page + 1)">Older →</a>
-    }
-    @if (mail.Page > 1)
-    {
-      <a class="btn btn-ghost" href="/admin/mailbox?page=@(mail.Page - 1)">← Newer</a>
-    }
   }
 </main>
   </div>
