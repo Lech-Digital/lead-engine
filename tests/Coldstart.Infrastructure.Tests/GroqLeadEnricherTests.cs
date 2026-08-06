@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using Coldstart.Application.Harvest;
 using Coldstart.Domain;
 using Coldstart.Infrastructure.Harvest;
@@ -216,24 +217,49 @@ public class GroqLeadEnricherTests
     }
 
     [Fact]
-    public async Task EnrichAsync_Always_SubjectInstructionCarriesLengthAndStyleConstraints()
+    public async Task EnrichAsync_AcrossDifferentFingerprints_SubjectRotatesButIsDeterministicPerFingerprint()
     {
         // Arrange
-        // NOTE: renamed from EnrichAsync_Always_SubjectFollowsTheirMomentPlusIdeaPattern.
-        // That test asserted "an idea for", the old single hard-coded subject pattern. Subjects
-        // now rotate across 4 structurally different patterns (DraftSkeletons.SubjectInstruction)
-        // keyed by fingerprint, and "an idea for" is only one of them — pinning to it fails for
-        // whichever pattern this fixture's fingerprint doesn't hash to. Updated to assert the
-        // constraint every subject pattern shares instead of one pattern's exact wording.
-        var handler = new CapturingHandler(ValidBody);
-        var sut = new GroqLeadEnricher(new HttpClient(handler), Opts(), (d, _) => Task.CompletedTask);
+        // FIX (round-1 review, Finding 3): the previous version of this test
+        // (EnrichAsync_Always_SubjectFollowsTheirMomentPlusIdeaPattern, then renamed to
+        // EnrichAsync_Always_SubjectInstructionCarriesLengthAndStyleConstraints) only asserted
+        // literal suffix text ("SUBJECT:", "Max 10 words, no clickbait, no emojis.") that was
+        // present identically in the OLD hardcoded subject line — it would have passed unchanged
+        // against pre-diff code and verified nothing about the rotation. Rewritten to drive
+        // enrichment across several distinct fingerprints and assert (a) more than one distinct
+        // subject instruction is emitted across them and (b) each fingerprint deterministically
+        // reproduces its own expected instruction — computed via DraftSkeletons.SubjectInstruction
+        // rather than a hardcoded pattern index, so this survives future edits to pattern wording.
+        var ids = Enumerable.Range(0, 20).Select(i => i.ToString()).ToList();
+        var items = ids.Select(id => new RawItem("hn", id, "", "hiring outbound SDR", "author", "https://x/1", "")).ToList();
+        var expectedSubjects = items.ToDictionary(i => i.ExternalId, i => DraftSkeletons.SubjectInstruction(i.Fingerprint));
 
-        // Act
-        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
+        // Act — enrich each item independently and decode the actual prompt sent
+        var actualSubjects = new Dictionary<string, string>();
+        foreach (var item in items)
+        {
+            var handler = new CapturingHandler(ValidBody);
+            var sut = new GroqLeadEnricher(new HttpClient(handler), Opts(), (d, _) => Task.CompletedTask);
+            await sut.EnrichAsync(item, Niche, Signal, SenderContext.None, CancellationToken.None);
+            actualSubjects[item.ExternalId] = ExtractPromptContent(handler.SentBody!);
+        }
 
-        // Assert
-        handler.SentBody.Should().Contain("SUBJECT:");
-        handler.SentBody.Should().Contain("Max 10 words, no clickbait, no emojis.");
+        // Assert — the rotation actually happened: more than one distinct subject instruction
+        // across the batch, and every fingerprint reproduced exactly its own expected one.
+        expectedSubjects.Values.Distinct().Count().Should().BeGreaterThan(1);
+        foreach (var id in ids)
+            actualSubjects[id].Should().Contain(expectedSubjects[id]);
+
+        // Assert — same fingerprint, enriched twice independently, yields the identical
+        // subject instruction both times (determinism through the full BuildPrompt wiring,
+        // not just DraftSkeletons in isolation).
+        var repeatHandler1 = new CapturingHandler(ValidBody);
+        var repeatSut1 = new GroqLeadEnricher(new HttpClient(repeatHandler1), Opts(), (d, _) => Task.CompletedTask);
+        await repeatSut1.EnrichAsync(items[0], Niche, Signal, SenderContext.None, CancellationToken.None);
+        var repeatHandler2 = new CapturingHandler(ValidBody);
+        var repeatSut2 = new GroqLeadEnricher(new HttpClient(repeatHandler2), Opts(), (d, _) => Task.CompletedTask);
+        await repeatSut2.EnrichAsync(items[0], Niche, Signal, SenderContext.None, CancellationToken.None);
+        ExtractPromptContent(repeatHandler1.SentBody!).Should().Be(ExtractPromptContent(repeatHandler2.SentBody!));
     }
 
     [Fact]
@@ -315,4 +341,10 @@ public class GroqLeadEnricherTests
         var end = body.IndexOf(endMarker, start, StringComparison.Ordinal);
         return body[start..end];
     }
+
+    // Decodes the raw captured JSON request body back into the actual prompt string BuildPrompt
+    // produced (undoing JSON escaping of embedded quotes), so assertions can Contain()-match
+    // instruction text that itself contains double quotes (e.g. the "Hi there," greeting rule).
+    private static string ExtractPromptContent(string body) =>
+        JsonDocument.Parse(body).RootElement.GetProperty("messages")[1].GetProperty("content").GetString()!;
 }

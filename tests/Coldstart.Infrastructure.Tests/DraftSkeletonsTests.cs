@@ -61,14 +61,38 @@ public class DraftSkeletonsTests
             .Select(i => DraftSkeletons.NormalDraftInstruction($"lead-{i}", niche))
             .Distinct().ToList();
 
-        // Assert — every skeleton keeps greeting rule, honesty and banned list
+        // Assert — every skeleton keeps greeting rule, honesty, banned list, and the
+        // no-signature instruction (round-1 review finding: the send pipeline unconditionally
+        // appends a real signature, so the model must never write its own).
         variants.Should().HaveCount(5);
         variants.Should().AllSatisfy(v =>
         {
             v.Should().Contain("Hi there,");
             v.Should().Contain("Never guess or invent a name");
             v.Should().Contain("Banned:");
+            v.Should().Contain("No signature (one is added on send).");
         });
+    }
+
+    [Fact]
+    public void NormalDraftInstruction_FiveVariants_HaveDistinctParagraphStructures()
+    {
+        // Arrange — sample enough keys to hit all 5 variants (mirrors the invariants test above)
+        var niche = new NicheOptions { SenderName = "Ann", SenderTitle = "Founder" };
+        var variants = Enumerable.Range(0, 200)
+            .Select(i => DraftSkeletons.NormalDraftInstruction($"lead-{i}", niche))
+            .Distinct().ToList();
+        variants.Should().HaveCount(5);
+
+        // Act — count the structural directive lines ("- ...") per variant, a mechanical
+        // proxy for paragraph COUNT: the axis a spam filter (and a human skimming a batch)
+        // actually notices across sends, as opposed to which noun frames paragraph 1.
+        var bulletCounts = variants
+            .Select(v => v.Split('\n').Count(l => l.TrimStart().StartsWith("- ")))
+            .ToList();
+
+        // Assert — the five shapes are not all the same paragraph count
+        bulletCounts.Distinct().Count().Should().BeGreaterThan(1);
     }
 
     [Fact]
@@ -79,13 +103,16 @@ public class DraftSkeletonsTests
             .Select(i => DraftSkeletons.FixedPitchDraftInstruction($"lead-{i}"))
             .Distinct().ToList();
 
-        // Assert
+        // Assert — round-1 review also asked for the no-signature line defensively here: the
+        // AI hook is composed BEFORE the pitch/CTA blocks, so nothing stops the model writing
+        // its own sign-off first.
         variants.Should().HaveCount(3);
         variants.Should().AllSatisfy(v =>
         {
             v.Should().Contain("> ");                       // quoted analysis stays
             v.Should().Contain("do NOT sell");              // appended-pitch contract stays
             v.Should().Contain("never claim leads are already found");
+            v.Should().Contain("No signature (one is added on send).");
         });
     }
 }
