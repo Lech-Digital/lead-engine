@@ -828,10 +828,13 @@
 
 /* Facts as a scannable list rather than a form. */
 .pz-facts { display: flex; flex-direction: column; margin: 0; }
-.pz-fact { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line-soft); font-size: 0.9rem; }
+/* Stacked, not two columns: in a ~260px sidebar a right-aligned value wraps
+   raggedly. Label above, value below, both left-aligned — and the label reuses
+   the field-label treatment so forms and facts read as one family. */
+.pz-fact { display: flex; flex-direction: column; gap: 3px; padding: 10px 0; border-bottom: 1px solid var(--line-soft); font-size: 0.9rem; }
 .pz-fact:last-child { border-bottom: 0; }
-.pz-fact dt { color: var(--body-subtle); }
-.pz-fact dd { margin: 0; color: var(--ink); font-weight: 600; text-align: right; }
+.pz-fact dt { font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--body-subtle); }
+.pz-fact dd { margin: 0; color: var(--ink); font-weight: 600; overflow-wrap: anywhere; }
 .pz-note { background: #FFFDF9; border: 1px solid var(--line-soft); border-radius: 11px; padding: 11px 13px; font-size: 0.9rem; color: var(--body-muted); }
 
 /* Status pills: one shape, three meanings. */
