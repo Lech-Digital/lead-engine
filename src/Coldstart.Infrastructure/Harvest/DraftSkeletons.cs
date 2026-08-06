@@ -58,10 +58,14 @@ internal static class DraftSkeletons
     //                          body paragraph, then the ask alone — three short parts, not the
     //                          fuller 3-paragraph shape of #1.
     //   4. Ultra-short        — greeting + ONE paragraph total, the ask as its last sentence.
-    //   5. Inverted           — greeting + 2 paragraphs, but paragraph 1 opens with the offer's
-    //                          outcome BEFORE any mention of their moment; paragraph 2 supplies
-    //                          the reason it's aimed at THEM and folds in the ask. Reverses the
-    //                          conventional reason-then-offer order entirely.
+    //   5. Prose-plus-list    — greeting + one short prose sentence grounded in their world, then
+    //                          a two-line em-dash ("— ") list naming two concrete things, then a
+    //                          single closing line carrying the ask. A round-2 rework: the
+    //                          original #5 opened with the offer before their moment, which broke
+    //                          the System prompt's "never open with your own product" rule — this
+    //                          shape instead earns its structural distinctness from the dashed-
+    //                          list block (a shape none of the other four use), while still
+    //                          opening in their world like every other variant.
     private static readonly Func<NicheOptions, string>[] NormalShapes =
     [
         n => $"""
@@ -102,10 +106,11 @@ internal static class DraftSkeletons
         Reads like a busy peer typed it in 40 seconds. {Banned}
         """,
         n => $"""
-        DRAFT: a short email from {n.SenderName} ({n.SenderTitle}) — greeting line, then exactly 2 paragraphs separated by ONE blank line, in REVERSED order from every other shape: the offer's outcome opens the email, their specific moment and the ask come after:
+        DRAFT: a short email from {n.SenderName} ({n.SenderTitle}) — a shape none of the other variants use: greeting line, then ONE short prose sentence as its own paragraph, then a two-line dashed list as one block, then ONE closing line carrying the ask — each part separated by ONE blank line. Opens in THEIR world, same as every other variant — never with the offer:
         {Greeting}
-        - Paragraph 1 (offer-first, 1-2 sentences): open directly with the specific outcome the offer creates for someone in their position — a plain opening claim about that outcome, framed toward them — before any mention of their moment. No question here.
-        - Paragraph 2 (reason + ask folded in, 1-2 sentences): now ground that opening claim in the concrete fact from their content — why THEM specifically — then, in this SAME paragraph, one friendly, low-effort closing question. If the OFFER includes anything free or no-commitment, offer exactly that.
+        - Prose paragraph (its OWN paragraph, EXACTLY one sentence): grounded in the concrete thing from their content — their world, not the offer — no compliment, no offer mention here.
+        - Dashed list (its OWN block, EXACTLY two lines, each starting with an em dash and a space "— ", no blank line between the two lines, never a third line): each line names one specific concrete thing in a few words — for example the change their moment creates on one line, and what it puts pressure on for them on the other. Plain, short, one clause per line.
+        - Closing line (its OWN paragraph, exactly ONE line, the ask ALONE and nothing else): the low-effort ask. If the OFFER includes anything free or no-commitment, the ask must offer exactly that.
         {NoSignature}
         {Honesty} {EvidenceRule}
         Short, human, no marketing voice. {Banned}

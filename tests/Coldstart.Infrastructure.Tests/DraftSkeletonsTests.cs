@@ -96,6 +96,27 @@ public class DraftSkeletonsTests
     }
 
     [Fact]
+    public void NormalDraftInstruction_FiveVariants_ExactlyOneUsesTheDashedListShape()
+    {
+        // Arrange — round-2 rework: shape 5 (the reworked former "Inverted" variant) shares its
+        // paragraph-block count (4) with shapes 1 and 3, so bullet-count alone no longer proves
+        // it apart from them. Its actual structural signature is the two-line em-dash ("— ")
+        // list block — a form none of the other four shapes use — which is what visually and
+        // structurally sets it apart. This test locks that in as a permanent regression guard.
+        var niche = new NicheOptions { SenderName = "Ann", SenderTitle = "Founder" };
+        var variants = Enumerable.Range(0, 200)
+            .Select(i => DraftSkeletons.NormalDraftInstruction($"lead-{i}", niche))
+            .Distinct().ToList();
+        variants.Should().HaveCount(5);
+
+        // Act
+        var withDashedList = variants.Count(v => v.Contains("em dash"));
+
+        // Assert — exactly one of the five shapes uses the dashed-list construct
+        withDashedList.Should().Be(1);
+    }
+
+    [Fact]
     public void FixedPitchDraftInstruction_AllVariants_KeepQuotedAnalysisAndHonesty()
     {
         // Act
