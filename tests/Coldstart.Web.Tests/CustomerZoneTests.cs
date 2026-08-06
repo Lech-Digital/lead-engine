@@ -449,7 +449,10 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         html.Should().Contain("Free plan");
         html.Should().Contain("Upgrade to Full");
         html.Should().Contain("handler=Checkout");
-        html.Should().Contain("rail-item active"); // rail marks Subscription as the current section
+        // rail marks Subscription (not some other fixed item) as the current section
+        html.Should().Contain("class=\"rail-item active\" href=\"/app/settings/billing\"");
+        html.Should().NotContain("class=\"rail-item active\" href=\"/app\"");
+        System.Text.RegularExpressions.Regex.Matches(html, "rail-item active").Count.Should().Be(1);
     }
 
     [Fact]
@@ -510,7 +513,31 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Act
         var html = await client.GetStringAsync("/app/settings/company");
 
-        // Assert
-        html.Should().Contain("rail-item active");
+        // Assert — the active class sits on the Company item specifically (its href),
+        // not merely somewhere on the page, and there is exactly one active item —
+        // a "same item always active" regression (e.g. Briefing stuck active) would
+        // fail both the exact-pair check and the not-Briefing check below.
+        html.Should().Contain("class=\"rail-item active\" href=\"/app/settings/company\"");
+        html.Should().NotContain("class=\"rail-item active\" href=\"/app\"");
+        System.Text.RegularExpressions.Regex.Matches(html, "rail-item active").Count.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task History_ActiveRailItem_MarksHistorySection_NotBriefing()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var email = $"rail-hist-active-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
+
+        // Act
+        var html = await client.GetStringAsync("/app/history");
+
+        // Assert — same shape as the Settings/Company case above, on a different page,
+        // so a bug that always marks Briefing (or any fixed item) active is caught
+        // regardless of which page it happens to be tested against.
+        html.Should().Contain("class=\"rail-item active\" href=\"/app/history\"");
+        html.Should().NotContain("class=\"rail-item active\" href=\"/app\"");
+        System.Text.RegularExpressions.Regex.Matches(html, "rail-item active").Count.Should().Be(1);
     }
 }
