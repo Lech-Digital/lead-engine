@@ -847,10 +847,44 @@
 .pz-settings .full { grid-column: 1 / -1; }
 .pz-empty { color: var(--body-subtle); background: #fff; border: 1px dashed var(--line-soft); border-radius: 14px; padding: 26px; text-align: center; }
 
+/* Scannable rows of structured data (the admin area's lists) — a table dressed in the
+   same tokens as everything else, wrapped so it scrolls on its own rather than the page. */
+.pz-table-wrap { overflow-x: auto; border: 1px solid var(--line-soft); border-radius: 14px; background: #fff; }
+.pz-table { width: 100%; border-collapse: collapse; }
+/* nowrap keeps short cells (dates, counts, status) on one line, but a long value
+   — an email address, a company name — must wrap rather than force a horizontal
+   scrollbar inside a card, where the palette-matched amber thumb reads as a
+   stray progress bar. Opt individual cells out with .pz-cell-wrap. */
+.pz-table th, .pz-table td { padding: 12px 16px; text-align: left; vertical-align: middle; font-size: 0.88rem; white-space: nowrap; }
+.pz-table td.pz-cell-wrap, .pz-table th.pz-cell-wrap { white-space: normal; overflow-wrap: anywhere; }
+.pz-table thead th { font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--body-subtle); background: var(--daylight); border-bottom: 1px solid var(--line-soft); }
+.pz-table tbody tr { border-bottom: 1px solid var(--line-soft); }
+.pz-table tbody tr:last-child { border-bottom: 0; }
+.pz-table tbody tr:hover { background: var(--daylight); }
+.pz-table td { color: var(--ink); }
+.pz-row-link { font-family: var(--display); font-weight: 800; color: var(--ink); text-decoration: none; letter-spacing: -0.01em; }
+.pz-row-link:hover { color: var(--sunrise-deep); }
+.pz-cell-sub { display: block; margin-top: 2px; font-size: 0.78rem; color: var(--body-subtle); font-weight: 400; white-space: nowrap; }
+
+/* Cockpit KPI tiles: plain numbers over a label, no chart chrome — scannable in a glance.
+   A warning has to read differently from a stat at rest: a sunrise-toned pill for the reason,
+   and the whole table row tinted so it never blends into the ordinary rows around it. */
+.pz-stats { display: flex; flex-wrap: wrap; gap: 26px 36px; }
+.pz-stat { display: flex; flex-direction: column; gap: 4px; min-width: 88px; }
+.pz-stat-num { font-family: var(--display); font-weight: 800; font-size: 1.7rem; letter-spacing: -0.02em; color: var(--ink); line-height: 1; }
+.pz-stat-label { font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--body-subtle); }
+.pz-stat-sub { font-size: 0.78rem; color: var(--body-subtle); }
+.pz-flag { display: inline-flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--sunrise-deep); background: #FFF1EA; border-radius: 999px; padding: 3px 9px; white-space: nowrap; }
+.pz-table tbody tr.pz-row-alarm { background: #FFF8F4; }
+.pz-table tbody tr.pz-row-alarm:hover { background: #FFF1EA; }
+
 @media (max-width: 900px) {
   .pz-detail { grid-template-columns: 1fr; }
   .pz-settings { grid-template-columns: 1fr; }
   .pz-head { flex-direction: column; gap: 10px; }
   .pz-lead { grid-template-columns: 1fr; }
   .pz-row-actions { justify-content: flex-start; }
+  .pz-table th, .pz-table td { padding: 10px 12px; font-size: 0.84rem; }
+  .pz-stats { gap: 18px 28px; }
+  .pz-stat-num { font-size: 1.4rem; }
 }

@@ -97,10 +97,11 @@ public class AdminInviteTests(ColdstartWebFactory factory) : IClassFixture<Colds
         {
             ["Input.Company"] = "Resend Co", ["Input.Email"] = invitee, ["Input.Niche"] = "test niche",
         });
+        var customerId = await CustomerIdForAsync(invitee);
         factory.Email.Sent.Clear();
 
-        // Act
-        var html = await TestAuth.PostFormReadAsync(client, "/admin?handler=Resend", new()
+        // Act — Resend now lives on the customer's own detail page, not /admin
+        var html = await TestAuth.PostFormReadAsync(client, $"/admin/customers/{customerId}?handler=Resend", new()
         {
             ["email"] = invitee,
         });
@@ -108,8 +109,8 @@ public class AdminInviteTests(ColdstartWebFactory factory) : IClassFixture<Colds
         // Assert
         html.Should().Contain($"Invitation re-sent to {invitee}");
         factory.Email.Sent.Should().ContainSingle(m => m.To == invitee);
-        // Regression: Resend must not leak spurious "Input" model-binding validation errors
-        // (the [BindProperty] Input model is not part of this handler's own form).
+        // Regression (moved from the old /admin page): a row action that only posts a bare
+        // "email" field must not leak an unrelated model's validation errors into the response.
         html.Should().NotContain("validation-summary-errors");
     }
 
@@ -125,9 +126,10 @@ public class AdminInviteTests(ColdstartWebFactory factory) : IClassFixture<Colds
         {
             ["Input.Company"] = "Revoke Co", ["Input.Email"] = invitee, ["Input.Niche"] = "test niche",
         });
+        var customerId = await CustomerIdForAsync(invitee);
 
-        // Act
-        var html = await TestAuth.PostFormReadAsync(client, "/admin?handler=Revoke", new()
+        // Act — Revoke now lives on the customer's own detail page, not /admin
+        var html = await TestAuth.PostFormReadAsync(client, $"/admin/customers/{customerId}?handler=Revoke", new()
         {
             ["email"] = invitee,
         });
@@ -139,5 +141,12 @@ public class AdminInviteTests(ColdstartWebFactory factory) : IClassFixture<Colds
         (await users.FindByEmailAsync(invitee)).Should().BeNull();
         // Regression: same spurious-validation-error leak as Resend (see above).
         html.Should().NotContain("validation-summary-errors");
+    }
+
+    private async Task<Guid> CustomerIdForAsync(string email)
+    {
+        using var scope = factory.Services.CreateScope();
+        var mgr = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        return (await mgr.FindByEmailAsync(email))!.CustomerId!.Value;
     }
 }

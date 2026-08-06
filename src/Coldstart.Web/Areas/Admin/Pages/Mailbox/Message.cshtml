@@ -13,17 +13,30 @@
   }
   else if (m is not null)
   {
-    <section class="app-briefing"><h1>@m.Subject</h1></section>
-    <dl class="mail-head">
-      <dt>From</dt><dd>@(string.IsNullOrWhiteSpace(m.FromName) ? m.FromAddress : $"{m.FromName} <{m.FromAddress}>")</dd>
-      <dt>To</dt><dd>@m.To</dd>
-      <dt>Date</dt><dd><span class="ts">@m.Date.ToString("dd MMM yyyy · HH:mm", System.Globalization.CultureInfo.InvariantCulture)</span></dd>
-    </dl>
+    <div class="pz-head">
+      <div>
+        <h1>@m.Subject</h1>
+        <p class="pz-sub">Message from the shared inbox.</p>
+      </div>
+      <a class="pz-btn pz-btn-quiet" href="/admin/mailbox">← Inbox</a>
+    </div>
 
-    <div class="mail-actions">
-      <a class="btn btn-primary" href="/admin/mailbox/compose?replyTo=@m.Uid">Reply</a>
-      <form method="post" asp-page-handler="MarkUnread" asp-route-uid="@m.Uid"><button class="btn btn-ghost" type="submit">Mark unread</button></form>
-      <button class="btn btn-ghost" type="button" onclick="document.getElementById('confirm-delete').showModal()">Delete</button>
+    <div class="pz-card">
+      <dl class="pz-facts">
+        <div class="pz-fact"><dt>From</dt><dd>@(string.IsNullOrWhiteSpace(m.FromName) ? m.FromAddress : $"{m.FromName} <{m.FromAddress}>")</dd></div>
+        <div class="pz-fact"><dt>To</dt><dd>@m.To</dd></div>
+        <div class="pz-fact"><dt>Date</dt><dd class="ts">@m.Date.ToString("dd MMM yyyy · HH:mm", System.Globalization.CultureInfo.InvariantCulture)</dd></div>
+      </dl>
+      <div class="pz-actions">
+        <a class="pz-btn pz-btn-primary" href="/admin/mailbox/compose?replyTo=@m.Uid">Reply</a>
+        <form method="post" asp-page-handler="MarkUnread" asp-route-uid="@m.Uid"><button class="pz-btn pz-btn-quiet" type="submit">Mark unread</button></form>
+        <span class="spacer"></span>
+        <form method="post" asp-page-handler="Delete" asp-route-uid="@m.Uid">
+          <button class="pz-btn pz-btn-danger" type="submit"
+                  data-confirm="This permanently deletes &quot;@m.Subject&quot;."
+                  data-confirm-title="Delete this message?" data-confirm-ok="Delete">Delete</button>
+        </form>
+      </div>
     </div>
 
     @if (m.HtmlBody is not null)
@@ -45,17 +58,6 @@
         }
       </div>
     }
-
-    <dialog id="confirm-delete" class="lead-modal">
-      <form method="post" asp-page-handler="Delete" asp-route-uid="@m.Uid" class="lead-modal-card">
-        <p class="lead-modal-eyebrow">Delete message</p>
-        <h2 class="lead-modal-title">Delete "@m.Subject"?</h2>
-        <div class="lead-modal-actions">
-          <button class="btn btn-primary" type="submit">Delete</button>
-          <button class="btn btn-ghost" type="button" onclick="this.closest('dialog').close()">Cancel</button>
-        </div>
-      </form>
-    </dialog>
   }
 </main>
   </div>

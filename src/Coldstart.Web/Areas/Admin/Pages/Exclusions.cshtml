@@ -6,52 +6,65 @@
   <partial name="_AdminSidebar" />
   <div class="rail-main">
 <main class="wrap app-zone">
-  <h1 class="cz-h1">Exclusions</h1>
-  <p class="settings-note">Companies that objected to processing (GDPR art. 21). Anything matching these values — case-insensitive, substring — never enters a harvest again, for any customer. Add the company name as it appears in the wild; add the domain as a second entry when known.</p>
+  <div class="pz-head">
+    <div>
+      <h1>Exclusions</h1>
+      <p class="pz-sub">Companies that objected to processing (GDPR art. 21) — anything matching a value here, case-insensitive, is skipped by every future harvest for every customer.</p>
+    </div>
+    <span class="pz-count">@Model.Rows.Count exclusion@(Model.Rows.Count == 1 ? "" : "s")</span>
+  </div>
 
   @if (Model.StatusMessage is not null) { <p class="form-status">@Model.StatusMessage</p> }
 
-  <section class="panel">
-    <form method="post" asp-page-handler="Add" class="cz-search" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-      <input type="text" name="value" placeholder="Company name or domain (min. 3 chars)" required minlength="3" maxlength="200" style="flex:1;min-width:220px;">
-      <input type="text" name="note" placeholder="Note (who objected, when)" maxlength="500" style="flex:1;min-width:220px;">
-      <button class="btn btn-primary" type="submit">Exclude</button>
+  <div class="pz-card">
+    <h2>Add an exclusion</h2>
+    <form method="post" asp-page-handler="Add">
+      <div class="pz-field">
+        <label for="value">Company name or domain</label>
+        <input type="text" name="value" id="value" placeholder="e.g. Acme BV or acme.nl" required minlength="3" maxlength="200">
+      </div>
+      <div class="pz-field">
+        <label for="note">Note</label>
+        <input type="text" name="note" id="note" placeholder="who objected, when">
+      </div>
+      <p class="pz-hint">Add the company name as it appears in the wild; add the domain as a second entry when you know it.</p>
+      <div class="pz-actions"><button class="pz-btn pz-btn-primary" type="submit">Exclude</button></div>
     </form>
-  </section>
+  </div>
 
-  <section class="panel">
+  <div class="pz-card">
+    <h2>Excluded</h2>
     @if (Model.Rows.Count == 0)
     {
-      <p class="settings-note">No exclusions yet. When an objection arrives at info@getcoldstart.nl, add it here the same day.</p>
+      <p class="pz-empty">No exclusions yet. When an objection arrives at info@getcoldstart.nl, add it here the same day.</p>
     }
     else
     {
-      <table style="width:100%;border-collapse:collapse;">
-        <thead><tr>
-          <th style="text-align:left;padding:8px 6px;">Value</th>
-          <th style="text-align:left;padding:8px 6px;">Note</th>
-          <th style="text-align:left;padding:8px 6px;">Added</th>
-          <th></th>
-        </tr></thead>
-        <tbody>
-        @foreach (var row in Model.Rows)
-        {
-          <tr style="border-top:1px solid var(--line-soft);">
-            <td style="padding:8px 6px;"><code>@row.Value</code></td>
-            <td style="padding:8px 6px;">@row.Note</td>
-            <td style="padding:8px 6px;">@row.CreatedAt.ToString("d MMM yyyy")</td>
-            <td style="padding:8px 6px;text-align:right;">
-              <form method="post" asp-page-handler="Remove" style="display:inline;">
-                <input type="hidden" name="id" value="@row.Id">
-                <button class="btn btn-ghost" type="submit">Remove</button>
-              </form>
-            </td>
-          </tr>
-        }
-        </tbody>
-      </table>
+      <div class="pz-table-wrap">
+        <table class="pz-table">
+          <thead><tr><th>Value</th><th>Note</th><th>Added</th><th></th></tr></thead>
+          <tbody>
+          @foreach (var row in Model.Rows)
+          {
+            <tr>
+              <td><code>@row.Value</code></td>
+              <td>@row.Note</td>
+              <td>@row.CreatedAt.ToString("d MMM yyyy")</td>
+              <td>
+                <form method="post" asp-page-handler="Remove">
+                  <input type="hidden" name="id" value="@row.Id">
+                  <button class="pz-btn pz-btn-danger" type="submit"
+                          data-confirm="This lets &quot;@row.Value&quot; be contacted again by future harvests."
+                          data-confirm-title="Remove this exclusion?" data-confirm-ok="Remove">Remove</button>
+                </form>
+              </td>
+            </tr>
+          }
+          </tbody>
+        </table>
+      </div>
     }
-  </section>
+  </div>
 </main>
   </div>
 </div>

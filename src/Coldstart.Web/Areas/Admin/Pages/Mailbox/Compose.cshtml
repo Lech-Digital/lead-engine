@@ -6,20 +6,28 @@
   <partial name="_AdminSidebar" />
   <div class="rail-main">
 <main class="wrap app-zone">
-  <section class="app-briefing"><h1>New message</h1><p class="app-briefing-ts">from info@getcoldstart.nl</p></section>
+  <div class="pz-head">
+    <div>
+      <h1>New message</h1>
+      <p class="pz-sub">Sends from info@getcoldstart.nl.</p>
+    </div>
+    <a class="pz-btn pz-btn-quiet" href="/admin/mailbox">← Inbox</a>
+  </div>
 
   @if (Model.SendError is not null) { <p class="mail-error">@Model.SendError</p> }
   @if (Model.PrefillFailed) { <p class="mail-note">Couldn't load the original message — you can still compose a new one.</p> }
-  <div asp-validation-summary="All" class="field-error"></div>
 
-  <form method="post" class="lp-form">
-    <input type="hidden" asp-for="Input.InReplyTo">
-    <input type="hidden" asp-for="Input.References">
-    <div class="field"><label asp-for="Input.To">To</label><input asp-for="Input.To" type="email" required></div>
-    <div class="field"><label asp-for="Input.Subject">Subject</label><input asp-for="Input.Subject" required></div>
-    <div class="field"><label asp-for="Input.Body">Message</label><textarea asp-for="Input.Body" rows="14" required></textarea></div>
-    <button class="btn btn-primary" type="submit">Send →</button>
-  </form>
+  <div class="pz-card">
+    <form method="post">
+      <div asp-validation-summary="All" class="field-error"></div>
+      <input type="hidden" asp-for="Input.InReplyTo">
+      <input type="hidden" asp-for="Input.References">
+      <div class="pz-field"><label asp-for="Input.To">To</label><input asp-for="Input.To" type="email" required></div>
+      <div class="pz-field"><label asp-for="Input.Subject">Subject</label><input asp-for="Input.Subject" required></div>
+      <div class="pz-field"><label asp-for="Input.Body">Message</label><textarea asp-for="Input.Body" rows="14" required></textarea></div>
+      <div class="pz-actions"><button class="pz-btn pz-btn-primary" type="submit">Send</button></div>
+    </form>
+  </div>
 </main>
   </div>
 </div>

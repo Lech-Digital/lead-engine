@@ -10,12 +10,14 @@ using Xunit;
 
 namespace Coldstart.Web.Tests;
 
+// Companies list (/admin) is now one row per customer with a link through to its own detail page
+// (/admin/customers/{id}), where the per-user and per-plan controls actually live.
 public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<ColdstartWebFactory>
 {
     [Fact]
-    public async Task Overview_ListsInvitedAndActiveUsersWithStatus()
+    public async Task Overview_ListsCompanies_AndTheirDetailPagesShowEachUsersStatus()
     {
-        // Arrange — a SuperAdmin session, one pending invite, one active user
+        // Arrange — a SuperAdmin session, one pending invite, one active user, each their own company
         var client = factory.CreateClient();
         var admin = $"boss-{Guid.NewGuid():N}@test.com";
         await TestAuth.SignInAsync(factory, client, admin, "Passw0rd!long", ColdstartRoles.SuperAdmin);
@@ -27,12 +29,29 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
         var active = $"active-{Guid.NewGuid():N}@test.com";
         await TestAuth.CreateUserAsync(factory, active, "Passw0rd!long");   // EmailConfirmed=true => Active
 
-        // Act
-        var html = await client.GetStringAsync("/admin");
+        Guid pendingCustomerId, activeCustomerId;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var mgr = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            pendingCustomerId = (await mgr.FindByEmailAsync(pending))!.CustomerId!.Value;
+            activeCustomerId = (await mgr.FindByEmailAsync(active))!.CustomerId!.Value;
+        }
 
-        // Assert — each email's status must appear within that email's own table row, not just anywhere on the page
-        RowContaining(html, pending).Should().Contain("Pending");
-        RowContaining(html, active).Should().Contain("Active");
+        // Act — the companies list itself
+        var overview = await client.GetStringAsync("/admin");
+
+        // Assert — each company is listed and links through to its own detail page
+        overview.Should().Contain("Pending Co");
+        overview.Should().Contain($"/admin/customers/{pendingCustomerId}");
+        overview.Should().Contain($"/admin/customers/{activeCustomerId}");
+
+        // Assert — the detail page is where each user's own status actually lives now; each
+        // email's status must appear within that email's own table row, not just anywhere on the page
+        var pendingDetail = await client.GetStringAsync($"/admin/customers/{pendingCustomerId}");
+        RowContaining(pendingDetail, pending).Should().Contain("Pending");
+
+        var activeDetail = await client.GetStringAsync($"/admin/customers/{activeCustomerId}");
+        RowContaining(activeDetail, active).Should().Contain("Active");
     }
 
     // Extracts the single <tr>...</tr> that contains the given text, so status assertions are row-scoped
@@ -54,10 +73,11 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
         await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         var invitee = $"resend-{Guid.NewGuid():N}@test.com";
         await TestAuth.PostFormAsync(client, "/admin?handler=Invite", new() { ["Input.Company"] = "Re Co", ["Input.Email"] = invitee, ["Input.Niche"] = "test niche" });
+        var customerId = await CustomerIdForAsync(invitee);
         factory.Email.Sent.Clear();
 
-        // Act
-        await TestAuth.PostFormAsync(client, "/admin?handler=Resend", new() { ["email"] = invitee });
+        // Act — Resend now lives on the customer's own detail page
+        await TestAuth.PostFormAsync(client, $"/admin/customers/{customerId}?handler=Resend", new() { ["email"] = invitee });
 
         // Assert
         factory.Email.Sent.Should().ContainSingle(m => m.To == invitee);
@@ -71,18 +91,14 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
         await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         var invitee = $"revoke-{Guid.NewGuid():N}@test.com";
         await TestAuth.PostFormAsync(client, "/admin?handler=Invite", new() { ["Input.Company"] = "Rev Co", ["Input.Email"] = invitee, ["Input.Niche"] = "test niche" });
+        var customerId = await CustomerIdForAsync(invitee);
 
-        Guid customerId;
-        using (var setupScope = factory.Services.CreateScope())
-        {
-            var mgr0 = setupScope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-            customerId = (await mgr0.FindByEmailAsync(invitee))!.CustomerId!.Value;
-        }
-
-        // Act
-        await TestAuth.PostFormAsync(client, "/admin?handler=Revoke", new() { ["email"] = invitee });
+        // Act — Revoke now lives on the customer's own detail page. It deletes the customer
+        // entirely (it was the only account), so the response redirects to /admin.
+        var response = await TestAuth.PostFormAsync(client, $"/admin/customers/{customerId}?handler=Revoke", new() { ["email"] = invitee });
 
         // Assert — both the user and its provisioned tenant are gone
+        response.RequestMessage!.RequestUri!.AbsolutePath.Should().Be("/admin");
         using var scope = factory.Services.CreateScope();
         var mgr = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         (await mgr.FindByEmailAsync(invitee)).Should().BeNull();
@@ -101,9 +117,10 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
         await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
         var invitee = $"copy-{Guid.NewGuid():N}@test.com";
         await TestAuth.PostFormAsync(client, "/admin?handler=Invite", new() { ["Input.Company"] = "Copy Co", ["Input.Email"] = invitee, ["Input.Niche"] = "test niche" });
+        var customerId = await CustomerIdForAsync(invitee);
 
         // Act
-        var html = await TestAuth.PostFormReadAsync(client, "/admin?handler=CopyLink", new() { ["email"] = invitee });
+        var html = await TestAuth.PostFormReadAsync(client, $"/admin/customers/{customerId}?handler=CopyLink", new() { ["email"] = invitee });
 
         // Assert
         html.Should().Contain("/Identity/Account/ResetPassword").And.Contain(System.Net.WebUtility.UrlEncode(invitee).Replace("%40", "@"));
@@ -118,14 +135,17 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
         var target = $"blockme-{Guid.NewGuid():N}@test.com";
         await TestAuth.CreateUserAsync(factory, target, "Passw0rd!long");
         string userId;
+        Guid customerId;
         using (var scope = factory.Services.CreateScope())
         {
             var mgr = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-            userId = (await mgr.FindByEmailAsync(target))!.Id;
+            var user = (await mgr.FindByEmailAsync(target))!;
+            userId = user.Id;
+            customerId = user.CustomerId!.Value;
         }
 
         // Act — block, then attempt to log in on a fresh client
-        await TestAuth.PostFormAsync(admin, "/admin?handler=Block", new() { ["id"] = userId });
+        await TestAuth.PostFormAsync(admin, $"/admin/customers/{customerId}?handler=Block", new() { ["userId"] = userId });
         var blocked = factory.CreateClient(new() { AllowAutoRedirect = false });
         await TestAuth.PostFormAsync(blocked, "/Identity/Account/Login",
             new() { ["Input.Email"] = target, ["Input.Password"] = "Passw0rd!long", ["Input.RememberMe"] = "false" });
@@ -136,7 +156,7 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
         appWhileBlocked.Headers.Location!.OriginalString.Should().Contain("/Identity/Account/Login");
 
         // Act — unblock, then log in again
-        await TestAuth.PostFormAsync(admin, "/admin?handler=Unblock", new() { ["id"] = userId });
+        await TestAuth.PostFormAsync(admin, $"/admin/customers/{customerId}?handler=Unblock", new() { ["userId"] = userId });
         var ok = factory.CreateClient(new() { AllowAutoRedirect = false });
         await TestAuth.PostFormAsync(ok, "/Identity/Account/Login",
             new() { ["Input.Email"] = target, ["Input.Password"] = "Passw0rd!long", ["Input.RememberMe"] = "false" });
@@ -164,10 +184,11 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
             customerId = user.CustomerId!.Value;
         }
 
-        // Act
-        await TestAuth.PostFormAsync(admin, "/admin?handler=Remove", new() { ["id"] = userId });
+        // Act — Remove also deletes the tenant, so this redirects to /admin
+        var response = await TestAuth.PostFormAsync(admin, $"/admin/customers/{customerId}?handler=Remove", new() { ["userId"] = userId });
 
         // Assert — both the user and its tenant are gone
+        response.RequestMessage!.RequestUri!.AbsolutePath.Should().Be("/admin");
         using var scope2 = factory.Services.CreateScope();
         var users = scope2.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         (await users.FindByEmailAsync(target)).Should().BeNull();
@@ -181,7 +202,9 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
     [Fact]
     public async Task Remove_SuperAdmin_IsRejected()
     {
-        // Arrange
+        // Arrange — the SuperAdmin has no company of their own, so exercise the guard for
+        // removing them from an unrelated customer's detail page (the guard is keyed by the
+        // target account's own role, not by which customer's page the request came through).
         var admin = factory.CreateClient();
         var bossEmail = $"boss-{Guid.NewGuid():N}@test.com";
         await TestAuth.SignInAsync(factory, admin, bossEmail, "Passw0rd!long", ColdstartRoles.SuperAdmin);
@@ -191,13 +214,24 @@ public class AdminConsoleTests(ColdstartWebFactory factory) : IClassFixture<Cold
             var mgr = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
             bossId = (await mgr.FindByEmailAsync(bossEmail))!.Id;
         }
+        var otherEmail = $"other-{Guid.NewGuid():N}@test.com";
+        await TestAuth.PostFormAsync(admin, "/admin?handler=Invite",
+            new() { ["Input.Company"] = "Other Co", ["Input.Email"] = otherEmail, ["Input.Niche"] = "test niche" });
+        var otherCustomerId = await CustomerIdForAsync(otherEmail);
 
         // Act — try to remove self (a SuperAdmin)
-        await TestAuth.PostFormAsync(admin, "/admin?handler=Remove", new() { ["id"] = bossId });
+        await TestAuth.PostFormAsync(admin, $"/admin/customers/{otherCustomerId}?handler=Remove", new() { ["userId"] = bossId });
 
         // Assert — still there
         using var scope2 = factory.Services.CreateScope();
         var users = scope2.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         (await users.FindByEmailAsync(bossEmail)).Should().NotBeNull();
+    }
+
+    private async Task<Guid> CustomerIdForAsync(string email)
+    {
+        using var scope = factory.Services.CreateScope();
+        var mgr = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        return (await mgr.FindByEmailAsync(email))!.CustomerId!.Value;
     }
 }
