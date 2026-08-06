@@ -26,7 +26,6 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
 
         // Assert
         html.Should().Contain("Patronus AI");
-        html.Should().Contain(email); // customer named from the user's email
         html.Should().Contain("A thought after the $50M"); // subject renders
         html.Should().Contain("lead-row"); // compact row markup, not the old plain table
     }
@@ -98,19 +97,16 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         var htmlA = await clientA.GetStringAsync("/app");
         var htmlB = await clientB.GetStringAsync("/app");
 
-        // Assert
-        htmlA.Should().Contain(emailA);
+        // Assert — the rail carries no per-customer identifier, so scoping is proven via
+        // each customer's own lead data instead of the (now-removed) header email/company chip.
         htmlA.Should().Contain("Acme A");
-        htmlA.Should().NotContain(emailB);
         htmlA.Should().NotContain("Acme B");
-        htmlB.Should().Contain(emailB);
         htmlB.Should().Contain("Acme B");
-        htmlB.Should().NotContain(emailA);
         htmlB.Should().NotContain("Acme A");
     }
 
     [Fact]
-    public async Task App_ShowsCompanyChip_LinkingToProfile_NotTheFullCard()
+    public async Task App_LinksToCompanySettings_ViaRail_NotTheFullProfileCard()
     {
         // Arrange
         var client = factory.CreateClient();
@@ -120,8 +116,8 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Act
         var html = await client.GetStringAsync("/app");
 
-        // Assert — a compact chip links to the profile page; the full card is NOT on /app
-        html.Should().Contain("href=\"/app/settings\"");
+        // Assert — the rail links to Company settings; the full profile card is NOT on /app
+        html.Should().Contain("href=\"/app/settings/company\"");
         html.Should().NotContain("Add your company details");   // moved to the profile page
     }
 
@@ -307,7 +303,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
     }
 
     [Fact]
-    public async Task Profile_UsesAppBarShell_NotTheNarrowAuthCard()
+    public async Task Profile_UsesRailShell_NotTheNarrowAuthCard()
     {
         // Arrange
         var client = factory.CreateClient();
@@ -316,8 +312,8 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         // Act
         var html = await client.GetStringAsync("/app/settings/outreach");
 
-        // Assert — top app-bar nav (like the lead pages), grouped panels, no auth-card shell
-        html.Should().Contain("app-bar");
+        // Assert — full-height rail nav (like every other app page), grouped panels, no auth-card shell
+        html.Should().Contain("id=\"app-rail\"");
         html.Should().Contain("panel");
         html.Should().NotContain("auth-card");
     }
@@ -453,7 +449,7 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         html.Should().Contain("Free plan");
         html.Should().Contain("Upgrade to Full");
         html.Should().Contain("handler=Checkout");
-        html.Should().Contain("settings-nav");
+        html.Should().Contain("rail-item active"); // rail marks Subscription as the current section
     }
 
     [Fact]
@@ -482,5 +478,39 @@ public class CustomerZoneTests(ColdstartWebFactory factory) : IClassFixture<Cold
         sent.Should().Contain("email");
         factory.Email.Sent.Skip(before).Should().Contain(m =>
             m.To == email && m.Subject.Contains("morning briefing") && m.TextBody.Contains("Acme"));
+    }
+
+    [Fact]
+    public async Task Briefing_RendersRailWithNavAndLogoutConfirm()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var email = $"rail-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
+
+        // Act
+        var html = await client.GetStringAsync("/app");
+
+        // Assert
+        html.Should().Contain("id=\"app-rail\"");
+        html.Should().Contain(">Briefing<");
+        html.Should().Contain(">History<");
+        html.Should().Contain("data-confirm-title=\"Log out?\"");
+        html.Should().NotContain("settings-nav");   // pills are gone
+    }
+
+    [Fact]
+    public async Task Settings_ActiveRailItem_MarksCurrentSection()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        var email = $"rail-set-{Guid.NewGuid():N}@test.com";
+        await TestAuth.SignInAsync(factory, client, email, "Passw0rd!long");
+
+        // Act
+        var html = await client.GetStringAsync("/app/settings/company");
+
+        // Assert
+        html.Should().Contain("rail-item active");
     }
 }

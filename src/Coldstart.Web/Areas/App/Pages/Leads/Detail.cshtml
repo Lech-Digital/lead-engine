@@ -29,11 +29,9 @@
          url.StartsWith("https://", StringComparison.OrdinalIgnoreCase));
 }
 
-<header class="app-bar">
-  <a class="wordmark" href="/">coldstart<i>*</i></a>
-  <nav class="app-nav"><a href="/app">Your briefing</a><a class="app-navlink" href="/app/history">History</a></nav>
-</header>
-
+<div class="rail-shell">
+  <partial name="_AppSidebar" />
+  <div class="rail-main">
 <main class="wrap app-zone lead-detail">
   <p class="auth-alt cz-back"><a href="/app">← Back to your briefing</a></p>
 
@@ -225,5 +223,8 @@
 
   <partial name="/Pages/Shared/_ConfirmDialog.cshtml" />
 </main>
+  </div>
+</div>
+<script src="~/js/app-rail.js" defer asp-append-version="true"></script>
 <script src="~/js/lead-detail.js" defer asp-append-version="true"></script>
 <script src="~/js/app-confirm.js" defer asp-append-version="true"></script>

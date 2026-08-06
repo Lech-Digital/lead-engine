@@ -1,0 +1,29 @@
+@* Shared full-height rail nav for every /app page. ViewData["AppNav"] marks the
+   active section: "briefing" | "history" | "company" | "outreach" | "sources" |
+   "notifications" | "billing" | "account" (or omitted — no item active).
+   The Subscription item is always rendered (not gated on plan) — /app/settings/billing
+   renders a sensible upgrade pitch for Free customers, so the link is never a dead end. *@
+@{ var nav = (string?)ViewData["AppNav"] ?? ""; }
+<div class="rail-topbar">
+  <button class="rail-burger" id="rail-burger" aria-label="Menu" aria-expanded="false">☰</button>
+  <a class="rail-wordmark" href="/app">coldstart<i>*</i></a>
+</div>
+<aside class="rail" id="app-rail" aria-label="App navigation">
+  <a class="rail-wordmark" href="/app">coldstart<i>*</i></a>
+  <nav class="rail-nav">
+    <a class="rail-item @(nav == "briefing" ? "active" : null)" href="/app">Briefing</a>
+    <a class="rail-item @(nav == "history" ? "active" : null)" href="/app/history">History</a>
+    <span class="rail-group">Settings</span>
+    <a class="rail-item @(nav == "company" ? "active" : null)" href="/app/settings/company">Company</a>
+    <a class="rail-item @(nav == "outreach" ? "active" : null)" href="/app/settings/outreach">Outreach</a>
+    <a class="rail-item @(nav == "sources" ? "active" : null)" href="/app/settings/sources">Sources</a>
+    <a class="rail-item @(nav == "notifications" ? "active" : null)" href="/app/settings/notifications">Notifications</a>
+    <a class="rail-item @(nav == "billing" ? "active" : null)" href="/app/settings/billing">Subscription</a>
+    <a class="rail-item @(nav == "account" ? "active" : null)" href="/app/settings/account">Account</a>
+    <form method="post" asp-page="/Account/Logout" asp-area="Identity" style="margin-top:auto; display:contents;">
+      <button class="rail-logout" type="submit"
+              data-confirm="You'll need to sign in again to see your briefing."
+              data-confirm-title="Log out?" data-confirm-ok="Log out">Log out</button>
+    </form>
+  </nav>
+</aside>

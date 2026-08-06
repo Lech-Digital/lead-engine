@@ -5,14 +5,9 @@
     Layout = "/Pages/Shared/_Layout.cshtml";
 }
 
-<header class="app-bar">
-  <a class="wordmark" href="/">coldstart<i>*</i></a>
-  <nav class="app-nav">
-    <a class="app-navlink" href="/app">Briefing</a>
-    <form method="post" asp-page="/Account/Logout" asp-area="Identity"><button class="btn btn-ghost" type="submit">Log out</button></form>
-  </nav>
-</header>
-
+<div class="rail-shell">
+  <partial name="_AppSidebar" />
+  <div class="rail-main">
 <main class="wrap app-zone">
   <div class="cz-greet">
     <h1>Billing</h1>
@@ -38,3 +33,8 @@
     </form>
   }
 </main>
+  </div>
+</div>
+<partial name="/Pages/Shared/_ConfirmDialog.cshtml" />
+<script src="~/js/app-rail.js" defer asp-append-version="true"></script>
+<script src="~/js/app-confirm.js" defer asp-append-version="true"></script>
