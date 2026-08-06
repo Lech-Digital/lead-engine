@@ -111,6 +111,19 @@ internal static class AdminEndpoints
             return Results.Ok(new { message = result.Message, until = result.Until, emailSent });
         });
 
+        group.MapDelete("/customers/{id:guid}/complimentary", async (
+            Guid id, Coldstart.Application.Billing.ICancelComplimentaryAccess cancel, CancellationToken ct) =>
+        {
+            // Cancelling a comp grant never emails the customer — only granting notifies.
+            var result = await cancel.ExecuteAsync(id, ct);
+            if (!result.Succeeded)
+                return result.Message.Contains("No such customer")
+                    ? Results.Problem(statusCode: 404, title: result.Message)
+                    : Results.Problem(statusCode: 400, title: result.Message);
+
+            return Results.Ok(new { message = result.Message });
+        });
+
         group.MapPost("/users/{email}/block", async (string email, AdminUserService admin, CancellationToken ct) =>
             ToHttp(await admin.BlockAsync(email, actorEmail: null, ct)));
 

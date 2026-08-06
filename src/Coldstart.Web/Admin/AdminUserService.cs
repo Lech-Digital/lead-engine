@@ -1,13 +1,17 @@
 using System.Security.Cryptography;
 using System.Text;
+using Coldstart.Application.Billing;
 using Coldstart.Application.Customers;
 using Coldstart.Application.Harvest;
 using Coldstart.Application.Ports;
+using Coldstart.Domain;
 using Coldstart.Infrastructure.Identity;
+using Coldstart.Infrastructure.Notifications;
 using Coldstart.Web.Email;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Coldstart.Web.Admin;
 
@@ -15,7 +19,9 @@ internal enum AdminOutcome { Ok, NotFound, Forbidden, Conflict }
 
 public sealed record AdminUserRow(
     string Id, string Email, string Company, string Role, string Status,
-    int? DaysLeft, bool CanManage, Guid? CustomerId);
+    int? DaysLeft, bool CanManage, Guid? CustomerId,
+    CustomerPlan? Plan = null, bool HasSubscription = false, DateTimeOffset? ComplimentaryUntil = null,
+    HarvestStatus? HarvestStatus = null, DateTimeOffset? LastHarvestAt = null);
 
 internal sealed record AdminActionResult(
     AdminOutcome Outcome, string Message, string? SetPasswordLink = null, Guid? CustomerId = null)
@@ -37,13 +43,16 @@ internal sealed class AdminUserService(
     IEmailSender email,
     ISearchProfileGenerator profileGen,
     IHarvestQueue harvestQueue,
+    IGrantComplimentaryAccess grantComplimentary,
+    ICancelComplimentaryAccess cancelComplimentary,
+    IOptions<NotificationsOptions> notifications,
     LinkGenerator links,
     IHttpContextAccessor httpContextAccessor)
 {
     public async Task<IReadOnlyList<AdminUserRow>> ListAsync(string? actorEmail, CancellationToken ct)
     {
         var all = await customers.AllAsync(ct);
-        var names = all.ToDictionary(c => c.Id.Value, c => c.Name);
+        var byId = all.ToDictionary(c => c.Id.Value, c => c);
 
         var rows = new List<AdminUserRow>();
         foreach (var u in await users.Users.ToListAsync(ct))
@@ -53,13 +62,62 @@ internal sealed class AdminUserService(
             var isSuper = role == ColdstartRoles.SuperAdmin;
             var status = !u.EmailConfirmed ? "Pending"
                 : u.LockoutEnd is { } le && le > DateTimeOffset.UtcNow ? "Blocked" : "Active";
-            var company = u.CustomerId is { } cid && names.TryGetValue(cid, out var n) ? n : "—";
+            var customer = u.CustomerId is { } cid && byId.TryGetValue(cid, out var c) ? c : null;
+            var company = customer?.Name ?? "—";
             rows.Add(new AdminUserRow(u.Id, u.Email!, company, role, status,
                 DaysLeft(u.InvitedAt),
                 CanManage: !isSuper && !string.Equals(u.Email, actorEmail, StringComparison.OrdinalIgnoreCase),
-                u.CustomerId));
+                u.CustomerId,
+                customer?.Plan, customer?.StripeSubscriptionId is not null, customer?.ComplimentaryUntil,
+                customer?.HarvestStatus, customer?.LastHarvestAt));
         }
         return rows.OrderBy(r => r.Company).ThenBy(r => r.Email).ToList();
+    }
+
+    // Grants (or extends — GrantComplimentary always sets a NEW end date from now, it never adds
+    // to whatever remained) complimentary full-plan access, then emails the customer's confirmed
+    // address, mirroring what the /api/admin/customers/{id}/complimentary endpoint does.
+    public async Task<AdminActionResult> GrantComplimentaryAsync(Guid customerId, int days, CancellationToken ct)
+    {
+        var result = await grantComplimentary.ExecuteAsync(customerId, days, ct);
+        if (!result.Succeeded)
+            return new(result.Message.Contains("No such customer") ? AdminOutcome.NotFound : AdminOutcome.Conflict, result.Message);
+
+        var to = await users.Users
+            .Where(u => u.CustomerId == customerId && u.Email != null && u.EmailConfirmed)
+            .OrderBy(u => u.Email).Select(u => u.Email!).FirstOrDefaultAsync(ct);
+        if (to is not null)
+        {
+            var appUrl = $"{notifications.Value.BaseUrl.TrimEnd('/')}/app";
+            var content = EmailTemplates.ComplimentaryGranted(result.CustomerName!, result.Until!.Value, appUrl);
+            try { await email.SendAsync(to, content.Subject, content.TextBody, content.HtmlBody, ct); }
+            catch { /* the grant stands even if mail fails */ }
+        }
+        return new(AdminOutcome.Ok, result.Message);
+    }
+
+    // Revokes an active complimentary grant immediately. Never emails — only a grant notifies.
+    public async Task<AdminActionResult> CancelComplimentaryAsync(Guid customerId, CancellationToken ct)
+    {
+        var result = await cancelComplimentary.ExecuteAsync(customerId, ct);
+        return result.Succeeded
+            ? new(AdminOutcome.Ok, result.Message)
+            : new(result.Message.Contains("No such customer") ? AdminOutcome.NotFound : AdminOutcome.Conflict, result.Message);
+    }
+
+    // Enqueues a harvest, same mechanism as POST /api/admin/harvest/{customerId}. Refuses a
+    // second run while one is already Pending or Running so the operator can't pile up jobs.
+    public async Task<AdminActionResult> TriggerHarvestAsync(Guid customerId, CancellationToken ct)
+    {
+        var customer = (await customers.AllAsync(ct)).FirstOrDefault(c => c.Id.Value == customerId);
+        if (customer is null)
+            return new(AdminOutcome.NotFound, "No such customer.");
+        if (customer.HarvestStatus is HarvestStatus.Pending or HarvestStatus.Running)
+            return new(AdminOutcome.Conflict,
+                $"A harvest for {customer.Name} is already {customer.HarvestStatus.ToString().ToLowerInvariant()} — wait for it to finish before queuing another.");
+
+        harvestQueue.Enqueue(new HarvestJob(customerId));
+        return new(AdminOutcome.Ok, $"Harvest queued for {customer.Name} — it runs in the background; check back shortly.");
     }
 
     public async Task<AdminActionResult> InviteAsync(InviteRequest request, CancellationToken ct)

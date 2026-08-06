@@ -89,6 +89,18 @@ public sealed class Customer
         RetentionReminderSent = false;
     }
 
+    // Revokes an active complimentary grant immediately, returning the customer to Free.
+    // A comp trial never paid, so — unlike DowngradeToFree(endedAt) after a real subscription —
+    // this must NOT touch SubscriptionEndedAt/RetentionReminderSent; there is no privacy-policy
+    // §7 retention clock to start for access that was never paid for.
+    public void CancelComplimentary()
+    {
+        if (ComplimentaryUntil is null)
+            throw new DomainException("This customer has no active complimentary grant to cancel.");
+        Plan = CustomerPlan.Free;
+        ComplimentaryUntil = null;
+    }
+
     public void MarkRetentionReminderSent() => RetentionReminderSent = true;
 
     public void ConfigureSources(IReadOnlyCollection<string>? sourceNames) =>

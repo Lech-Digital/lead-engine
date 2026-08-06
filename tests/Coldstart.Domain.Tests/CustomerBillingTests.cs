@@ -137,6 +137,52 @@ public class CustomerBillingTests
     }
 
     [Fact]
+    public void CancelComplimentary_ActiveGrant_ReturnsToFreeAndClearsUntil()
+    {
+        // Arrange
+        var customer = Customer.Create("Comped Co");
+        var now = DateTimeOffset.UtcNow;
+        customer.GrantComplimentary(now.AddDays(5), now);
+
+        // Act
+        customer.CancelComplimentary();
+
+        // Assert
+        customer.Plan.Should().Be(CustomerPlan.Free);
+        customer.ComplimentaryUntil.Should().BeNull();
+    }
+
+    [Fact]
+    public void CancelComplimentary_NoActiveGrant_Throws()
+    {
+        // Arrange
+        var customer = Customer.Create("Never Comped Co");
+
+        // Act
+        Action act = () => customer.CancelComplimentary();
+
+        // Assert
+        act.Should().Throw<DomainException>().WithMessage("*no active complimentary grant*");
+    }
+
+    [Fact]
+    public void CancelComplimentary_ActiveGrant_DoesNotStartTheRetentionClock()
+    {
+        // Arrange — a comp trial never paid, so cancelling it must not touch the fields that
+        // drive the privacy-policy §7 retention-deletion clock.
+        var customer = Customer.Create("Comped Co");
+        var now = DateTimeOffset.UtcNow;
+        customer.GrantComplimentary(now.AddDays(5), now);
+
+        // Act
+        customer.CancelComplimentary();
+
+        // Assert
+        customer.SubscriptionEndedAt.Should().BeNull();
+        customer.RetentionReminderSent.Should().BeFalse();
+    }
+
+    [Fact]
     public void GrantComplimentary_ToLapsedCustomer_StopsTheRetentionClock()
     {
         // Arrange — a customer who paid, lapsed, and was already reminded about deletion
