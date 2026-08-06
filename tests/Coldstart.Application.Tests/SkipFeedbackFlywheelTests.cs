@@ -18,6 +18,13 @@ public class SkipFeedbackFlywheelTests
         public Task<IReadOnlyList<RawItem>> FetchAsync(NicheOptions runNiche, CancellationToken ct) => Task.FromResult<IReadOnlyList<RawItem>>(items);
     }
 
+    private static ISecondaryContextLookup NoSecondaryContext()
+    {
+        var lookup = Substitute.For<ISecondaryContextLookup>();
+        lookup.LookupAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns((string?)null);
+        return lookup;
+    }
+
     private static Lead SkippedLead(CustomerId cid, string company, string reason)
     {
         var lead = Lead.CreateHarvested(cid, company, Fit.Yes, "s", "d",
@@ -46,13 +53,13 @@ public class SkipFeedbackFlywheelTests
         SenderContext? seen = null;
         var enricher = Substitute.For<ILeadEnricher>();
         enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(),
-                Arg.Do<SenderContext>(s => seen = s), Arg.Any<CancellationToken>())
+                Arg.Do<SenderContext>(s => seen = s), Arg.Any<string?>(), Arg.Any<CancellationToken>())
             .Returns((EnrichmentResult?)null);
 
         var suppressions = Substitute.For<ISuppressionRepository>();
         suppressions.ValuesAsync(Arg.Any<CancellationToken>()).Returns([]);
         var sut = new HarvestLeads([new FakeSource(new RawItem("fake", "1", "", "hiring outbound SDR", "", "u1", ""))],
-            enricher, leads, customers, suppressions, new NicheOptions { MinScore = 0.1, MaxEnrichPerRun = 5 }, Substitute.For<ITenantScope>());
+            enricher, NoSecondaryContext(), leads, customers, suppressions, new NicheOptions { MinScore = 0.1, MaxEnrichPerRun = 5 }, Substitute.For<ITenantScope>());
 
         // Act
         await sut.RunForCustomerAsync(customer.Id.Value, HarvestTargeting.FromNiche(new NicheOptions
@@ -82,12 +89,12 @@ public class SkipFeedbackFlywheelTests
         SenderContext? seen = null;
         var enricher = Substitute.For<ILeadEnricher>();
         enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(),
-                Arg.Do<SenderContext>(s => seen = s), Arg.Any<CancellationToken>())
+                Arg.Do<SenderContext>(s => seen = s), Arg.Any<string?>(), Arg.Any<CancellationToken>())
             .Returns((EnrichmentResult?)null);
         var suppressions = Substitute.For<ISuppressionRepository>();
         suppressions.ValuesAsync(Arg.Any<CancellationToken>()).Returns([]);
         var sut = new HarvestLeads([new FakeSource(new RawItem("fake", "1", "", "hiring outbound SDR", "", "u1", ""))],
-            enricher, leads, customers, suppressions, new NicheOptions(), Substitute.For<ITenantScope>());
+            enricher, NoSecondaryContext(), leads, customers, suppressions, new NicheOptions(), Substitute.For<ITenantScope>());
 
         // Act
         await sut.RunForCustomerAsync(customer.Id.Value, HarvestTargeting.FromNiche(new NicheOptions

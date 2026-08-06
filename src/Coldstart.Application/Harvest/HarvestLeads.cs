@@ -6,6 +6,7 @@ namespace Coldstart.Application.Harvest;
 internal sealed class HarvestLeads(
     IEnumerable<ILeadSource> sources,
     ILeadEnricher enricher,
+    ISecondaryContextLookup secondaryContextLookup,
     ILeadRepository leads,
     ICustomerRepository customers,
     ISuppressionRepository suppressions,
@@ -70,7 +71,13 @@ internal sealed class HarvestLeads(
         // Phase 2: enrich only the top-N by score (spend cap), save real fits.
         foreach (var (item, signal) in candidates.OrderByDescending(c => c.signal.Score).Take(runNiche.MaxEnrichPerRun))
         {
-            var result = await enricher.EnrichAsync(item, runNiche, signal, sender, ct);
+            // Best-effort: one extra public snippet about the company (its own announcement, a
+            // founder quote) gives paragraph one something beyond the funding blurb to draw on.
+            // Any failure here must never abort the batch — enrichment proceeds without it.
+            string? secondaryContext = null;
+            try { secondaryContext = await secondaryContextLookup.LookupAsync(item.Author, ct); }
+            catch (Exception) when (!ct.IsCancellationRequested) { /* best-effort by contract */ }
+            var result = await enricher.EnrichAsync(item, runNiche, signal, sender, secondaryContext, ct);
             if (result is null) continue;         // LLM failed/empty → retried next run
             enriched++;
             var company = string.IsNullOrWhiteSpace(result.Company) || result.Company == "-" ? item.Author : result.Company;

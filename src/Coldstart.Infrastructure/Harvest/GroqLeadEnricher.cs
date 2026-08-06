@@ -40,7 +40,7 @@ internal sealed class GroqLeadEnricher : ILeadEnricher
         _delay = delay;
     }
 
-    public async Task<EnrichmentResult?> EnrichAsync(RawItem item, NicheOptions niche, SignalResult signal, SenderContext sender, CancellationToken ct)
+    public async Task<EnrichmentResult?> EnrichAsync(RawItem item, NicheOptions niche, SignalResult signal, SenderContext sender, string? secondaryContext, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(_o.ApiKey)) return null;
         // Pace the batch: pause before every call after the first so a sequential run
@@ -48,7 +48,7 @@ internal sealed class GroqLeadEnricher : ILeadEnricher
         if (_sentBefore && _o.RequestDelaySeconds > 0)
             await _delay(TimeSpan.FromSeconds(_o.RequestDelaySeconds), ct);
         _sentBefore = true;
-        var prompt = BuildPrompt(item, niche, signal, sender);
+        var prompt = BuildPrompt(item, niche, signal, sender, secondaryContext);
         var body = new
         {
             model = _o.Model,
@@ -105,7 +105,7 @@ internal sealed class GroqLeadEnricher : ILeadEnricher
     }
 
     // Ported from enrich.py PROMPT_TEMPLATE.
-    private static string BuildPrompt(RawItem item, NicheOptions n, SignalResult signal, SenderContext sender)
+    private static string BuildPrompt(RawItem item, NicheOptions n, SignalResult signal, SenderContext sender, string? secondaryContext)
     {
         // SHA-256 hex of "{Source}:{ExternalId}" — stable per item, never empty. Rotates the
         // subject pattern and draft skeleton deterministically so the same lead always gets
@@ -137,6 +137,11 @@ internal sealed class GroqLeadEnricher : ILeadEnricher
         \"\"\"
         {item.Text}
         \"\"\"
+        {(string.IsNullOrWhiteSpace(secondaryContext) ? "" : $"""
+
+        SECONDARY CONTEXT:
+        {secondaryContext}
+        """)}
 
         Pre-detected signals (keyword-level, may be noisy): {string.Join(", ", signal.Matched)}
 

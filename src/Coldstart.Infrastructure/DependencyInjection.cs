@@ -34,6 +34,7 @@ public static class DependencyInjection
         services.AddScoped<Application.Harvest.ILeadSource, Harvest.LangSearchSource>();
         services.AddScoped<Application.Harvest.ILeadSource, Harvest.DutchBusinessNewsSource>();
         services.AddScoped<Application.Harvest.ILeadEnricher, Harvest.GroqLeadEnricher>();
+        services.AddScoped<Application.Harvest.ISecondaryContextLookup, Harvest.LangSearchSecondaryLookup>();
         services.AddScoped<Application.Notifications.IBriefingChannel, Notifications.SlackBriefingChannel>();
         services.AddScoped<Application.Notifications.IBriefingChannel, Notifications.TwilioWhatsAppChannel>();
         services.AddScoped<Application.Customers.ICompanyBriefPolisher, Harvest.GroqBriefPolisher>();

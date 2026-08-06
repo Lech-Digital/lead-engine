@@ -63,7 +63,7 @@ public class GroqLeadEnricherTests
             (d, _) => { delays.Add(d); return Task.CompletedTask; });
 
         // Act
-        var result = await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
+        var result = await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, null, CancellationToken.None);
 
         // Assert — the 429 was retried, the second (200) response parsed successfully
         result.Should().NotBeNull();
@@ -82,7 +82,7 @@ public class GroqLeadEnricherTests
             (d, _) => { delays.Add(d); return Task.CompletedTask; });
 
         // Act
-        var result = await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
+        var result = await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, null, CancellationToken.None);
 
         // Assert — bounded retries: 1 initial + 3 retries = 4 calls, 3 backoffs, then give up
         result.Should().BeNull();
@@ -101,9 +101,9 @@ public class GroqLeadEnricherTests
             (d, _) => { delays.Add(d); return Task.CompletedTask; });
 
         // Act
-        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
-        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
-        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, null, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, null, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, null, CancellationToken.None);
 
         // Assert — no delay before the first request, the pacing delay before each subsequent one
         handler.Calls.Should().Be(3);
@@ -122,8 +122,8 @@ public class GroqLeadEnricherTests
             (d, _) => { delays.Add(d); return Task.CompletedTask; });
 
         // Act
-        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
-        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, null, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, null, CancellationToken.None);
 
         // Assert
         handler.Calls.Should().Be(2);
@@ -140,7 +140,7 @@ public class GroqLeadEnricherTests
             (d, _) => { delays.Add(d); return Task.CompletedTask; });
 
         // Act
-        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, null, CancellationToken.None);
 
         // Assert — the server-provided Retry-After drives the wait, not the exponential fallback
         delays.Should().ContainSingle().Which.Should().Be(TimeSpan.FromSeconds(2));
@@ -155,7 +155,7 @@ public class GroqLeadEnricherTests
         var sender = new SenderContext("Acme helps dentists fill calendars.", MentionSourceTool: false);
 
         // Act
-        await sut.EnrichAsync(Item, Niche, Signal, sender, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, sender, null, CancellationToken.None);
 
         // Assert — the brief is in the prompt; the Coldstart line is NOT (toggle off)
         handler.SentBody.Should().Contain("Acme helps dentists fill calendars.");
@@ -171,7 +171,7 @@ public class GroqLeadEnricherTests
         var sender = new SenderContext(Brief: null, MentionSourceTool: true);
 
         // Act
-        await sut.EnrichAsync(Item, Niche, Signal, sender, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, sender, null, CancellationToken.None);
 
         // Assert — the dogfood line must be an explicit, first-person "found you with the
         // tool I'm offering you" statement, not a vague hint.
@@ -199,7 +199,7 @@ public class GroqLeadEnricherTests
         var sender = new SenderContext(Brief: null, MentionSourceTool: true, PitchLine: "I run Coldstart.", CtaLine: "3 free leads: link");
 
         // Act
-        await sut.EnrichAsync(Item, Niche, Signal, sender, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, sender, null, CancellationToken.None);
 
         // Assert — hook-only instructions; no AI-written pitch/CTA/dogfood line
         handler.SentBody.Should().Contain("ONLY the greeting");
@@ -240,7 +240,7 @@ public class GroqLeadEnricherTests
         {
             var handler = new CapturingHandler(ValidBody);
             var sut = new GroqLeadEnricher(new HttpClient(handler), Opts(), (d, _) => Task.CompletedTask);
-            await sut.EnrichAsync(item, Niche, Signal, SenderContext.None, CancellationToken.None);
+            await sut.EnrichAsync(item, Niche, Signal, SenderContext.None, null, CancellationToken.None);
             actualSubjects[item.ExternalId] = ExtractPromptContent(handler.SentBody!);
         }
 
@@ -255,10 +255,10 @@ public class GroqLeadEnricherTests
         // not just DraftSkeletons in isolation).
         var repeatHandler1 = new CapturingHandler(ValidBody);
         var repeatSut1 = new GroqLeadEnricher(new HttpClient(repeatHandler1), Opts(), (d, _) => Task.CompletedTask);
-        await repeatSut1.EnrichAsync(items[0], Niche, Signal, SenderContext.None, CancellationToken.None);
+        await repeatSut1.EnrichAsync(items[0], Niche, Signal, SenderContext.None, null, CancellationToken.None);
         var repeatHandler2 = new CapturingHandler(ValidBody);
         var repeatSut2 = new GroqLeadEnricher(new HttpClient(repeatHandler2), Opts(), (d, _) => Task.CompletedTask);
-        await repeatSut2.EnrichAsync(items[0], Niche, Signal, SenderContext.None, CancellationToken.None);
+        await repeatSut2.EnrichAsync(items[0], Niche, Signal, SenderContext.None, null, CancellationToken.None);
         ExtractPromptContent(repeatHandler1.SentBody!).Should().Be(ExtractPromptContent(repeatHandler2.SentBody!));
     }
 
@@ -277,7 +277,7 @@ public class GroqLeadEnricherTests
         var sut = new GroqLeadEnricher(new HttpClient(handler), Opts(), (d, _) => Task.CompletedTask);
 
         // Act
-        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, null, CancellationToken.None);
 
         // Assert — drafts open with a greeting; every skeleton keeps the shared invariants
         handler.SentBody.Should().Contain("Hi there");
@@ -310,8 +310,8 @@ public class GroqLeadEnricherTests
         var sutB = new GroqLeadEnricher(new HttpClient(handlerB), Opts(), (d, _) => Task.CompletedTask);
 
         // Act — enrich item A and item B
-        await sutA.EnrichAsync(itemA, Niche, Signal, SenderContext.None, CancellationToken.None);
-        await sutB.EnrichAsync(itemB, Niche, Signal, SenderContext.None, CancellationToken.None);
+        await sutA.EnrichAsync(itemA, Niche, Signal, SenderContext.None, null, CancellationToken.None);
+        await sutB.EnrichAsync(itemB, Niche, Signal, SenderContext.None, null, CancellationToken.None);
 
         // Assert — the two captured prompts' DRAFT sections differ
         var promptA = ExtractSection(handlerA.SentBody!, "DRAFT:", "COMPANY:");
@@ -328,11 +328,40 @@ public class GroqLeadEnricherTests
         var sender = new SenderContext(Brief: null, MentionSourceTool: true, PitchLine: "I run Coldstart.", CtaLine: "3 free leads: link");
 
         // Act — capture the prompt
-        await sut.EnrichAsync(Item, Niche, Signal, sender, CancellationToken.None);
+        await sut.EnrichAsync(Item, Niche, Signal, sender, null, CancellationToken.None);
 
         // Assert — the hallucination guardrail replaced the invention instruction
         handler.SentBody.Should().NotContain("Invent it from THEIR market");
         handler.SentBody.Should().Contain("only when the harvested content itself supports");
+    }
+
+    [Fact]
+    public async Task EnrichAsync_WithSecondaryContext_PromptContainsSecondaryContextSection()
+    {
+        // Arrange / Act — capture prompt with secondaryContext: "They just hired a VP Sales."
+        var handler = new CapturingHandler(ValidBody);
+        var sut = new GroqLeadEnricher(new HttpClient(handler), Opts(), (d, _) => Task.CompletedTask);
+
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, "They just hired a VP Sales.", CancellationToken.None);
+
+        // Assert
+        var prompt = ExtractPromptContent(handler.SentBody!);
+        prompt.Should().Contain("SECONDARY CONTEXT");
+        prompt.Should().Contain("They just hired a VP Sales.");
+    }
+
+    [Fact]
+    public async Task EnrichAsync_NullSecondaryContext_PromptOmitsSection()
+    {
+        // Arrange / Act
+        var handler = new CapturingHandler(ValidBody);
+        var sut = new GroqLeadEnricher(new HttpClient(handler), Opts(), (d, _) => Task.CompletedTask);
+
+        await sut.EnrichAsync(Item, Niche, Signal, SenderContext.None, null, CancellationToken.None);
+
+        // Assert
+        var prompt = ExtractPromptContent(handler.SentBody!);
+        prompt.Should().NotContain("SECONDARY CONTEXT");
     }
 
     private static string ExtractSection(string body, string startMarker, string endMarker)

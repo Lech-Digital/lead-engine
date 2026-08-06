@@ -49,6 +49,9 @@ public sealed class LangSearchOptions
     // weaker signal than the week-fresh websearch source — scored below it on purpose.
     public double BaseScore { get; set; } = 0.25;
     public double ScoreWeight { get; set; } = 0.7;
+    // Off switch for the secondary-context lookup (an extra snippet fetched per lead before
+    // enrichment). On by default; operators can disable it without touching the API key.
+    public bool SecondaryContextEnabled { get; set; } = true;
 }
 
 public sealed class HackerNewsOptions

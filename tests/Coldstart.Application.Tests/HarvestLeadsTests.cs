@@ -3,6 +3,7 @@ using Coldstart.Application.Ports;
 using Coldstart.Domain;
 using FluentAssertions;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using Xunit;
 
 namespace Coldstart.Application.Tests;
@@ -23,6 +24,15 @@ public class HarvestLeadsTests
         public Task<IReadOnlyList<RawItem>> FetchAsync(NicheOptions runNiche, CancellationToken ct) => Task.FromResult<IReadOnlyList<RawItem>>(items);
     }
 
+    // Default: no secondary snippet available. Individual tests override when the
+    // lookup's behaviour (success/throw) is the thing under test.
+    private static ISecondaryContextLookup NoSecondaryContext()
+    {
+        var lookup = Substitute.For<ISecondaryContextLookup>();
+        lookup.LookupAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns((string?)null);
+        return lookup;
+    }
+
     [Fact]
     public async Task RunAsync_SavesOnlyAboveThresholdNonDuplicateFits()
     {
@@ -31,7 +41,7 @@ public class HarvestLeadsTests
         var weak = new RawItem("fake", "2", "", "unrelated chatter", "", "u2", "");       // below threshold
         var source = new FakeSource(good, weak);
         var enricher = Substitute.For<ILeadEnricher>();
-        enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<CancellationToken>())
+        enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
             .Returns(new EnrichmentResult(Fit.Yes, "s", "subj", "draft", "Acme"));
         var leads = Substitute.For<ILeadRepository>();
         leads.ExistsByFingerprintAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(false);
@@ -40,7 +50,7 @@ public class HarvestLeadsTests
         Customer? target = null;
         customers.AddAsync(Arg.Do<Customer>(c => target = c), Arg.Any<CancellationToken>()).Returns(Task.CompletedTask);
         var tenantScope = Substitute.For<ITenantScope>();
-        var sut = new HarvestLeads([source], enricher, leads, customers, NoSuppressions(), Niche(), tenantScope);
+        var sut = new HarvestLeads([source], enricher, NoSecondaryContext(), leads, customers, NoSuppressions(), Niche(), tenantScope);
 
         // Act
         var report = await sut.RunAsync(CancellationToken.None);
@@ -60,13 +70,13 @@ public class HarvestLeadsTests
         var first = new RawItem("fake", "1", "", "hiring outbound SDR", "", "u1", "");
         var again = new RawItem("fake", "1", "", "hiring outbound SDR", "", "u1", "");
         var enricher = Substitute.For<ILeadEnricher>();
-        enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<CancellationToken>())
+        enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
             .Returns(new EnrichmentResult(Fit.Yes, "s", "subj", "draft", "Acme"));
         var leads = Substitute.For<ILeadRepository>();
         leads.ExistsByFingerprintAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(false);
         var customers = Substitute.For<ICustomerRepository>();
         customers.GetByNameAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns((Customer?)null);
-        var sut = new HarvestLeads([new FakeSource(first, again)], enricher, leads, customers, NoSuppressions(), Niche(), Substitute.For<ITenantScope>());
+        var sut = new HarvestLeads([new FakeSource(first, again)], enricher, NoSecondaryContext(), leads, customers, NoSuppressions(), Niche(), Substitute.For<ITenantScope>());
 
         // Act
         var report = await sut.RunAsync(CancellationToken.None);
@@ -76,7 +86,7 @@ public class HarvestLeadsTests
         report.Harvested.Should().Be(2);
         report.Deduped.Should().Be(1);
         report.Saved.Should().Be(1);
-        await enricher.Received(1).EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<CancellationToken>());
+        await enricher.Received(1).EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
         await leads.Received(1).AddAsync(Arg.Is<Lead>(l => l.Fingerprint == first.Fingerprint), Arg.Any<CancellationToken>());
     }
 
@@ -87,14 +97,14 @@ public class HarvestLeadsTests
         var dup = new RawItem("fake", "1", "", "hiring outbound", "", "u1", "");
         var no = new RawItem("fake", "2", "", "hiring outbound", "", "u2", "");
         var enricher = Substitute.For<ILeadEnricher>();
-        enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<CancellationToken>())
+        enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
             .Returns(new EnrichmentResult(Fit.No, "s", "-", "-", "-"));
         var leads = Substitute.For<ILeadRepository>();
         leads.ExistsByFingerprintAsync(dup.Fingerprint, Arg.Any<CancellationToken>()).Returns(true);
         leads.ExistsByFingerprintAsync(no.Fingerprint, Arg.Any<CancellationToken>()).Returns(false);
         var customers = Substitute.For<ICustomerRepository>();
         customers.GetByNameAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns((Customer?)null);
-        var sut = new HarvestLeads([new FakeSource(dup, no)], enricher, leads, customers, NoSuppressions(), Niche(), Substitute.For<ITenantScope>());
+        var sut = new HarvestLeads([new FakeSource(dup, no)], enricher, NoSecondaryContext(), leads, customers, NoSuppressions(), Niche(), Substitute.For<ITenantScope>());
 
         // Act
         var report = await sut.RunAsync(CancellationToken.None);
@@ -108,9 +118,9 @@ public class HarvestLeadsTests
 
         // the duplicate must be skipped before any LLM spend; the non-dup is enriched
         await enricher.DidNotReceive().EnrichAsync(
-            Arg.Is<RawItem>(i => i.Fingerprint == dup.Fingerprint), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<CancellationToken>());
+            Arg.Is<RawItem>(i => i.Fingerprint == dup.Fingerprint), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
         await enricher.Received(1).EnrichAsync(
-            Arg.Is<RawItem>(i => i.Fingerprint == no.Fingerprint), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<CancellationToken>());
+            Arg.Is<RawItem>(i => i.Fingerprint == no.Fingerprint), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -123,7 +133,7 @@ public class HarvestLeadsTests
         SenderContext? captured = null;
         var enricher = Substitute.For<ILeadEnricher>();
         enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(),
-                Arg.Do<SenderContext>(s => captured = s), Arg.Any<CancellationToken>())
+                Arg.Do<SenderContext>(s => captured = s), Arg.Any<string?>(), Arg.Any<CancellationToken>())
             .Returns(new EnrichmentResult(Fit.Yes, "s", "subj", "draft", "Acme"));
         var leads = Substitute.For<ILeadRepository>();
         leads.ExistsByFingerprintAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(false);
@@ -131,7 +141,7 @@ public class HarvestLeadsTests
         target.UpdateProfile(new CompanyProfile(null, null, null, null, null, null, null, "We help dentists.", true));
         var customers = Substitute.For<ICustomerRepository>();
         customers.GetByNameAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(target);
-        var sut = new HarvestLeads([source], enricher, leads, customers, NoSuppressions(), Niche(), Substitute.For<ITenantScope>());
+        var sut = new HarvestLeads([source], enricher, NoSecondaryContext(), leads, customers, NoSuppressions(), Niche(), Substitute.For<ITenantScope>());
 
         // Act
         await sut.RunAsync(CancellationToken.None);
@@ -161,12 +171,12 @@ public class HarvestLeadsTests
         leads.ExistsByFingerprintAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(false);
 
         var enricher = Substitute.For<ILeadEnricher>();
-        enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<CancellationToken>())
+        enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
             .Returns(new EnrichmentResult(Fit.Yes, "sum", "subj", "draft", "Acme"));
 
         var globalNiche = new NicheOptions();   // provides HackerNews/Funding source config
         var scope = Substitute.For<ITenantScope>();
-        var sut = new HarvestLeads(new[] { source }, enricher, leads, customers, NoSuppressions(), globalNiche, scope);
+        var sut = new HarvestLeads(new[] { source }, enricher, NoSecondaryContext(), leads, customers, NoSuppressions(), globalNiche, scope);
         var targeting = new HarvestTargeting("offer", ["dentist"], ["hiring"], [], "Acme", "", 0.4, 30);
 
         // Act
@@ -176,6 +186,63 @@ public class HarvestLeadsTests
         scope.Received().SetCurrent(cid);
         report.Saved.Should().Be(1);
         await leads.Received().AddAsync(Arg.Is<Lead>(l => l.CustomerId.Value == cid && l.Company == "Acme"), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RunForCustomerAsync_LookupSucceeds_PassesSecondaryContextToEnricher()
+    {
+        // Arrange — ISecondaryContextLookup substitute returns "extra snippet" for the item's author
+        var cid = Guid.NewGuid();
+        var customer = Customer.Create("Acme");
+        var customers = Substitute.For<ICustomerRepository>();
+        customers.GetAsync(new CustomerId(cid), Arg.Any<CancellationToken>()).Returns(customer);
+        var item = new RawItem("fake", "1", "", "hiring outbound SDR", "SomeCo", "u1", "");
+        var source = new FakeSource(item);
+        var leads = Substitute.For<ILeadRepository>();
+        leads.ExistsByFingerprintAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(false);
+        var enricher = Substitute.For<ILeadEnricher>();
+        enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(new EnrichmentResult(Fit.Yes, "s", "subj", "draft", "Acme"));
+        var lookup = Substitute.For<ISecondaryContextLookup>();
+        lookup.LookupAsync("SomeCo", Arg.Any<CancellationToken>()).Returns("extra snippet");
+        var sut = new HarvestLeads([source], enricher, lookup, leads, customers, NoSuppressions(), Niche(), Substitute.For<ITenantScope>());
+        var targeting = new HarvestTargeting("offer", ["outbound"], ["hiring"], [], "Acme", "", 0.4, 10);
+
+        // Act — run the pipeline
+        await sut.RunForCustomerAsync(cid, targeting, CancellationToken.None);
+
+        // Assert
+        await enricher.Received().EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(),
+            Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), "extra snippet", Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RunForCustomerAsync_LookupThrows_EnrichesWithNullContext()
+    {
+        // Arrange — lookup substitute throws
+        var cid = Guid.NewGuid();
+        var customer = Customer.Create("Acme");
+        var customers = Substitute.For<ICustomerRepository>();
+        customers.GetAsync(new CustomerId(cid), Arg.Any<CancellationToken>()).Returns(customer);
+        var item = new RawItem("fake", "1", "", "hiring outbound SDR", "SomeCo", "u1", "");
+        var source = new FakeSource(item);
+        var leads = Substitute.For<ILeadRepository>();
+        leads.ExistsByFingerprintAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(false);
+        var enricher = Substitute.For<ILeadEnricher>();
+        enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(new EnrichmentResult(Fit.Yes, "s", "subj", "draft", "Acme"));
+        var lookup = Substitute.For<ISecondaryContextLookup>();
+        lookup.LookupAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).ThrowsAsync(new InvalidOperationException("boom"));
+        var sut = new HarvestLeads([source], enricher, lookup, leads, customers, NoSuppressions(), Niche(), Substitute.For<ITenantScope>());
+        var targeting = new HarvestTargeting("offer", ["outbound"], ["hiring"], [], "Acme", "", 0.4, 10);
+
+        // Act — run the pipeline
+        var report = await sut.RunForCustomerAsync(cid, targeting, CancellationToken.None);
+
+        // Assert — the batch is not aborted; enricher called with null secondary context
+        report.Saved.Should().Be(1);
+        await enricher.Received().EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(),
+            Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), null, Arg.Any<CancellationToken>());
     }
 
     private static ISuppressionRepository NoSuppressions()
