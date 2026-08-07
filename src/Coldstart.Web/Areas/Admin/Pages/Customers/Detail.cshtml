@@ -162,6 +162,49 @@
     </div>
   </div>
 
+  <!-- Targeting -->
+  <div class="pz-card">
+    <h2>Targeting</h2>
+    <p class="pz-hint">Who this customer sells to — one entry per line for the list fields below. Leave them empty and the harvest keeps working the way it does today.</p>
+    <form method="post" asp-page-handler="SaveTargeting" asp-route-id="@Model.CustomerId">
+      <div class="pz-settings">
+        <div class="pz-field full">
+          <label asp-for="Targeting.Industries">Industries</label>
+          <textarea asp-for="Targeting.Industries" rows="3"></textarea>
+        </div>
+        <div class="pz-field full">
+          <label asp-for="Targeting.Geographies">Geographies</label>
+          <textarea asp-for="Targeting.Geographies" rows="3"></textarea>
+        </div>
+        <div class="pz-field full">
+          <label asp-for="Targeting.BuyerRoles">Buyer roles</label>
+          <textarea asp-for="Targeting.BuyerRoles" rows="3"></textarea>
+        </div>
+        <div class="pz-field">
+          <label asp-for="Targeting.SizeMin">Smallest company size</label>
+          <input asp-for="Targeting.SizeMin" type="number" min="0">
+        </div>
+        <div class="pz-field">
+          <label asp-for="Targeting.SizeMax">Largest company size</label>
+          <input asp-for="Targeting.SizeMax" type="number" min="0">
+        </div>
+        <div class="pz-field full">
+          <label asp-for="Targeting.TriggerEvents">Trigger events</label>
+          <textarea asp-for="Targeting.TriggerEvents" rows="3"></textarea>
+          <p class="pz-hint">Events that signal a good time to reach out — e.g. hiring, funding.</p>
+        </div>
+        <div class="pz-field full">
+          <label asp-for="Targeting.Exclusions">Exclusions</label>
+          <textarea asp-for="Targeting.Exclusions" rows="3"></textarea>
+          <p class="pz-hint">Kinds of company to skip — e.g. competitors, existing customers.</p>
+        </div>
+      </div>
+      <div class="pz-actions">
+        <button class="pz-btn pz-btn-primary" type="submit">Save targeting</button>
+      </div>
+    </form>
+  </div>
+
   <partial name="/Pages/Shared/_ConfirmDialog.cshtml" />
 </main>
   </div>

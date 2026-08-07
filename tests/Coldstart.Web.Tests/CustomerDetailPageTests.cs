@@ -1,3 +1,5 @@
+using Coldstart.Application.Customers;
+using Coldstart.Application.Ports;
 using Coldstart.Domain;
 using Coldstart.Infrastructure;
 using Coldstart.Infrastructure.Identity;
@@ -107,6 +109,95 @@ public class CustomerDetailPageTests(ColdstartWebFactory factory) : IClassFixtur
         // And the grant control is unmistakable that a new grant replaces rather than extends
         html.Should().Contain("replaces").And.Contain("does not add to it");
         html.Should().Contain("Cancel complimentary access");
+    }
+
+    [Fact]
+    public async Task Detail_ShowsTheCustomersTargetingFields()
+    {
+        // Arrange — SuperAdmin session and a customer
+        var client = factory.CreateClient();
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
+        var invitee = $"targeting-view-{Guid.NewGuid():N}@test.com";
+        var customerId = await InviteAndGetCustomerIdAsync(client, invitee, "Targeting View Co");
+
+        // Act — GET /admin/customers/{id}
+        var html = await client.GetStringAsync($"/admin/customers/{customerId}");
+
+        // Assert
+        html.Should().Contain("Targeting");
+        html.Should().Contain("Industries");
+    }
+
+    [Fact]
+    public async Task Detail_SaveTargeting_PersistsAndIsVisibleToTheCustomersOwnPage()
+    {
+        // Arrange — SuperAdmin saves targeting for a customer
+        var client = factory.CreateClient();
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
+        var invitee = $"targeting-save-{Guid.NewGuid():N}@test.com";
+        var customerId = await InviteAndGetCustomerIdAsync(client, invitee, "Targeting Save Co");
+
+        // Act — POST the admin targeting form, then read it back via the same use case
+        // (IGetTargeting) that the customer's own settings page uses
+        await TestAuth.PostFormAsync(client, $"/admin/customers/{customerId}?handler=SaveTargeting", new()
+        {
+            ["Targeting.Industries"] = "SaaS\nFintech",
+            ["Targeting.Geographies"] = "Netherlands",
+            ["Targeting.BuyerRoles"] = "CTO",
+            ["Targeting.SizeMin"] = "50",
+            ["Targeting.SizeMax"] = "500",
+            ["Targeting.TriggerEvents"] = "Hiring",
+            ["Targeting.Exclusions"] = "Competitors",
+        });
+
+        var view = await ReadTargetingAsync(customerId);
+
+        // Assert — the stored values match what the admin entered, proving both surfaces
+        // share one write path
+        view.Should().NotBeNull();
+        view!.Industries.Should().Be("SaaS\nFintech");
+        view.Geographies.Should().Be("Netherlands");
+        view.BuyerRoles.Should().Be("CTO");
+        view.SizeMin.Should().Be(50);
+        view.SizeMax.Should().Be(500);
+        view.TriggerEvents.Should().Be("Hiring");
+        view.Exclusions.Should().Be("Competitors");
+    }
+
+    [Fact]
+    public async Task Detail_SaveTargetingWithInvertedSizeBand_ShowsTheErrorAndSavesNothing()
+    {
+        // Arrange
+        var client = factory.CreateClient();
+        await TestAuth.SignInAsync(factory, client, $"boss-{Guid.NewGuid():N}@test.com", "Passw0rd!long", ColdstartRoles.SuperAdmin);
+        var invitee = $"targeting-invalid-{Guid.NewGuid():N}@test.com";
+        var customerId = await InviteAndGetCustomerIdAsync(client, invitee, "Targeting Invalid Co");
+
+        // Act
+        var html = await TestAuth.PostFormReadAsync(client, $"/admin/customers/{customerId}?handler=SaveTargeting", new()
+        {
+            ["Targeting.SizeMin"] = "500",
+            ["Targeting.SizeMax"] = "50",
+        });
+
+        var view = await ReadTargetingAsync(customerId);
+
+        // Assert — the "smallest company size" message appears and nothing was stored
+        html.Should().Contain("smallest company size");
+        view.Should().NotBeNull();
+        view!.SizeMin.Should().BeNull();
+        view.SizeMax.Should().BeNull();
+    }
+
+    // Reads targeting back via IGetTargeting — the same use case the customer's own settings
+    // page (TargetingSettingsModel) calls. Its underlying repository read is tenant-scoped, so
+    // (like the admin page itself) this establishes the tenant for the scope first.
+    private async Task<TargetingView?> ReadTargetingAsync(Guid customerId)
+    {
+        using var scope = factory.Services.CreateScope();
+        scope.ServiceProvider.GetRequiredService<ITenantScope>().SetCurrent(customerId);
+        var getTargeting = scope.ServiceProvider.GetRequiredService<IGetTargeting>();
+        return await getTargeting.ForCustomerAsync(customerId, CancellationToken.None);
     }
 
     private async Task<Guid> InviteAndGetCustomerIdAsync(HttpClient client, string invitee, string company)

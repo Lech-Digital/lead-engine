@@ -1,3 +1,4 @@
+using Coldstart.Application.Customers;
 using Coldstart.Application.Ports;
 using Coldstart.Domain;
 using Coldstart.Infrastructure.Identity;
@@ -17,7 +18,10 @@ namespace Coldstart.Web.Areas.Admin.Pages.Customers;
 internal sealed class DetailModel(
     AdminUserService admin,
     UserManager<ApplicationUser> users,
-    ICustomerRepository customers) : PageModel
+    ICustomerRepository customers,
+    ITenantScope tenants,
+    IGetTargeting getTargeting,
+    IUpdateTargeting updateTargeting) : PageModel
 {
     public Guid CustomerId { get; private set; }
     public string Company { get; private set; } = "";
@@ -38,8 +42,23 @@ internal sealed class DetailModel(
     public IReadOnlyList<AdminUserRow> People { get; private set; } = [];
 
     [BindProperty] public int GrantDays { get; set; } = 5;
+    [BindProperty] public TargetingFormInput Targeting { get; set; } = new();
     public string? StatusMessage { get; private set; }
     public (string Email, string Url)? CopyLink { get; private set; }
+
+    // Mirrors TargetingSettingsModel.TargetingFormInput on the customer-facing page — same
+    // shape, same fields — but this is the operator's own bound model; both surfaces still
+    // funnel through IGetTargeting/IUpdateTargeting so validation can't drift between them.
+    public sealed class TargetingFormInput
+    {
+        public string? Industries { get; set; }
+        public string? Geographies { get; set; }
+        public string? BuyerRoles { get; set; }
+        public int? SizeMin { get; set; }
+        public int? SizeMax { get; set; }
+        public string? TriggerEvents { get; set; }
+        public string? Exclusions { get; set; }
+    }
 
     // Carries a status message across the redirect that follows a Revoke/Remove that deleted
     // this customer entirely — there's no detail page left to re-render, so we land on the
@@ -110,6 +129,22 @@ internal sealed class DetailModel(
         return await RenderAsync(id, ct);
     }
 
+    // The operator's own path to the exact same use case the customer's settings page uses
+    // (see TargetingSettingsModel.OnPostAsync) — same validation, same write path, so the two
+    // surfaces cannot drift apart. A failure (e.g. an inverted size band) persists nothing.
+    // IUpdateTargeting reads/writes through the tenant-scoped repository, and a SuperAdmin's own
+    // request carries no customer tenant claim — so establish it for the duration of this call,
+    // the same way FollowUpOptOutModel does on the customer's behalf.
+    public async Task<IActionResult> OnPostSaveTargetingAsync(Guid id, CancellationToken ct)
+    {
+        tenants.SetCurrent(id);
+        var result = await updateTargeting.UpdateAsync(id, new TargetingInput(
+            Targeting.Industries, Targeting.Geographies, Targeting.BuyerRoles,
+            Targeting.SizeMin, Targeting.SizeMax, Targeting.TriggerEvents, Targeting.Exclusions), ct);
+        StatusMessage = result.Succeeded ? "Saved." : result.Message;
+        return await RenderAsync(id, ct);
+    }
+
     // The row buttons post the Identity user id; the service is keyed by email. Deliberately not
     // scope-checked against the route's customer id — AdminUserService's own guard (no touching a
     // SuperAdmin or yourself) is the actual authority here, same as it was on the old /admin page.
@@ -168,6 +203,10 @@ internal sealed class DetailModel(
         var allRows = await admin.ListAsync(User.Identity?.Name, ct);
         People = allRows.Where(r => r.CustomerId == id).OrderBy(r => r.Email).ToList();
 
+        tenants.SetCurrent(id);
+        var targetingView = await getTargeting.ForCustomerAsync(id, ct);
+        Targeting = targetingView is null ? new() : FromView(targetingView);
+
         // The tenant's creation moment isn't tracked on Customer itself, but provisioning happens
         // at invite time — so the earliest invited-at among this customer's users is the same instant.
         var invitedDates = (await users.Users.Where(u => u.CustomerId == id).Select(u => u.InvitedAt).ToListAsync(ct))
@@ -176,4 +215,10 @@ internal sealed class DetailModel(
 
         return true;
     }
+
+    private static TargetingFormInput FromView(TargetingView v) => new()
+    {
+        Industries = v.Industries, Geographies = v.Geographies, BuyerRoles = v.BuyerRoles,
+        SizeMin = v.SizeMin, SizeMax = v.SizeMax, TriggerEvents = v.TriggerEvents, Exclusions = v.Exclusions,
+    };
 }
