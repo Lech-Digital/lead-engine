@@ -59,11 +59,11 @@ internal sealed class HarvestLeads(
                 var signal = SignalScorer.Score(item, runNiche, source.BaseScore, source.ScoreWeight);
                 if (signal.Score < runNiche.MinScore) { funnel.CountDropped("below-score"); continue; }
                 funnel.CountPrioritised();
-                if (await leads.ExistsByFingerprintAsync(item.Fingerprint, ct)) { funnel.CountDropped("duplicate-fingerprint"); continue; }
+                if (await leads.ExistsByFingerprintAsync(item.Fingerprint, ct)) { funnel.CountDuplicateFingerprint(); continue; }
                 // The same item can surface twice in one run (e.g. an HN comment matching several
                 // queries). Dedup within the run too, or the second save collides on the unique
                 // fingerprint index. Empty fingerprints are exempt (mirrors the partial DB index).
-                if (item.Fingerprint.Length != 0 && !seen.Add(item.Fingerprint)) { funnel.CountDropped("duplicate-fingerprint"); continue; }
+                if (item.Fingerprint.Length != 0 && !seen.Add(item.Fingerprint)) { funnel.CountDuplicateFingerprint(); continue; }
                 funnel.CountTriaged();
                 candidates.Add((item, signal));
             }

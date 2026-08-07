@@ -16,11 +16,20 @@ public sealed class HarvestFunnel
     public int Saved { get; private set; }
     public int Rejected { get; private set; }
 
+    // Legacy counters — preserve the exact pre-funnel meaning of HarvestReport's ScoredIn/
+    // Deduped positions, which live consumers (HarvestRunAlert's ScoredIn - Deduped arithmetic)
+    // depend on. ScoredIn = passed the score gate (same event as CountPrioritised, tracked
+    // separately on purpose). Deduped = fingerprint-dedup drops ONLY — it must NOT become the
+    // full Vetoed aggregate, which also includes suppressed/below-score/post-enrichment drops
+    // that happen outside the old ScoredIn cohort and would make the subtraction go negative.
+    public int ScoredIn { get; private set; }
+    public int Deduped { get; private set; }
+
     public IReadOnlyDictionary<string, int> DropReasons => _dropReasons;
     public IReadOnlyDictionary<string, int> PerSource => _perSource;
 
     public void CountHarvested() => Harvested++;
-    public void CountPrioritised() => Prioritised++;
+    public void CountPrioritised() { Prioritised++; ScoredIn++; }
     public void CountTriaged() => Triaged++;
     public void CountEnriched() => Enriched++;
     public void CountRejected() => Rejected++;
@@ -31,6 +40,15 @@ public sealed class HarvestFunnel
         _dropReasons[reason] = _dropReasons.TryGetValue(reason, out var n) ? n + 1 : 1;
     }
 
+    // Dedicated call for the two fingerprint-dedup sites: keeps the "duplicate-fingerprint"
+    // reason string centralised here (no risk of a call site typo splitting the bucket) and
+    // keeps the legacy Deduped counter in lockstep with the new attribution.
+    public void CountDuplicateFingerprint()
+    {
+        Deduped++;
+        CountDropped("duplicate-fingerprint");
+    }
+
     public void CountSavedFrom(string source)
     {
         Saved++;
@@ -38,5 +56,5 @@ public sealed class HarvestFunnel
     }
 
     public HarvestReport ToReport(IReadOnlyList<SavedLead> savedLeads) =>
-        new(Harvested, Prioritised, Vetoed, Enriched, Saved, Rejected, savedLeads, _dropReasons, _perSource);
+        new(Harvested, ScoredIn, Deduped, Enriched, Saved, Rejected, savedLeads, _dropReasons, _perSource);
 }

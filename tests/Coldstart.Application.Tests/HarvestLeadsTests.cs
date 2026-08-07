@@ -251,4 +251,70 @@ public class HarvestLeadsTests
         repo.ValuesAsync(Arg.Any<CancellationToken>()).Returns([]);
         return repo;
     }
+
+    [Fact]
+    public async Task RunAsync_RunWithSeveralDistinctDrops_AttributesEachToItsReason_AndKeepsLegacyCountersHonest()
+    {
+        // Arrange — seven raw items, each engineered to hit exactly one funnel decision point:
+        //   suppressedItem              -> "suppressed" (pre-score GDPR check)
+        //   weakItem                    -> "below-score" (score gate)
+        //   dupDbItem                   -> "duplicate-fingerprint" (DB check)
+        //   dupRunItem1 + dupRunItem2   -> the second is "duplicate-fingerprint" (in-run HashSet)
+        //   goodItem                    -> saved
+        //   postEnrichSuppressedItem    -> "suppressed-after-enrichment" (post-enrichment gate)
+        // dupRunItem1 also reaches enrichment and is saved, so the funnel sees several distinct
+        // reasons AND a reason hit twice in the same run — the coincidence the earlier test missed.
+        var suppressedItem = new RawItem("fake", "supp", "BlockedCo raises funding", "hiring outbound SDR", "u1", "", "");
+        var weakItem = new RawItem("fake", "weak", "", "unrelated chatter", "u2", "", "");
+        var dupDbItem = new RawItem("fake", "db-dup", "", "hiring outbound SDR", "u3", "", "");
+        var dupRunItem1 = new RawItem("fake", "run-dup", "", "hiring outbound SDR", "u4", "", "");
+        var dupRunItem2 = new RawItem("fake", "run-dup", "", "hiring outbound SDR", "u4", "", "");
+        var goodItem = new RawItem("fake", "good", "", "hiring outbound SDR", "u5", "", "");
+        var postEnrichSuppressedItem = new RawItem("fake", "post-supp", "", "hiring outbound SDR", "u6", "", "");
+        var source = new FakeSource(suppressedItem, weakItem, dupDbItem, dupRunItem1, dupRunItem2, goodItem, postEnrichSuppressedItem);
+
+        var enricher = Substitute.For<ILeadEnricher>();
+        enricher.EnrichAsync(Arg.Is<RawItem>(i => i.ExternalId == "run-dup"), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(new EnrichmentResult(Fit.Yes, "s", "subj", "draft", "Widget Co"));
+        enricher.EnrichAsync(Arg.Is<RawItem>(i => i.ExternalId == "good"), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(new EnrichmentResult(Fit.Yes, "s", "subj", "draft", "Acme"));
+        enricher.EnrichAsync(Arg.Is<RawItem>(i => i.ExternalId == "post-supp"), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+            .Returns(new EnrichmentResult(Fit.Yes, "s", "subj", "draft", "Bluecore Energy B.V."));
+
+        var leads = Substitute.For<ILeadRepository>();
+        leads.ExistsByFingerprintAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(false);
+        leads.ExistsByFingerprintAsync(dupDbItem.Fingerprint, Arg.Any<CancellationToken>()).Returns(true);
+
+        var customers = Substitute.For<ICustomerRepository>();
+        customers.GetByNameAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns((Customer?)null);
+
+        var suppressions = Substitute.For<ISuppressionRepository>();
+        suppressions.ValuesAsync(Arg.Any<CancellationToken>()).Returns(["blockedco", "bluecore energy"]);
+
+        var sut = new HarvestLeads([source], enricher, NoSecondaryContext(), leads, customers, suppressions, Niche(), Substitute.For<ITenantScope>());
+
+        // Act
+        var report = await sut.RunAsync(CancellationToken.None);
+
+        // Assert — every distinct reason attributed with the right count
+        report.Harvested.Should().Be(7);
+        report.DropReasons["suppressed"].Should().Be(1);
+        report.DropReasons["below-score"].Should().Be(1);
+        report.DropReasons["duplicate-fingerprint"].Should().Be(2);           // DB dup + in-run dup, same reason bucket
+        report.DropReasons["suppressed-after-enrichment"].Should().Be(1);
+
+        // Assert — legacy ScoredIn/Deduped positions still mean what they meant before this task:
+        // ScoredIn = passed the score gate (5 items: dupDbItem, both run-dup items, goodItem,
+        // postEnrichSuppressedItem — suppressedItem and weakItem never reach the score gate).
+        // Deduped = fingerprint-dedup drops ONLY (2), not the full 5-drop Vetoed aggregate — this
+        // is exactly the invariant HarvestRunAlert's `ScoredIn - Deduped` arithmetic depends on.
+        report.ScoredIn.Should().Be(5);
+        report.Deduped.Should().Be(2);
+        (report.ScoredIn - report.Deduped).Should().Be(3);   // must stay non-negative and meaningful
+
+        // Only goodItem and the first run-dup item survive to be saved; the suppressed-after-
+        // enrichment company never gets persisted at all.
+        report.Saved.Should().Be(2);
+        await leads.DidNotReceive().AddAsync(Arg.Is<Lead>(l => l.Company == "Bluecore Energy B.V."), Arg.Any<CancellationToken>());
+    }
 }
