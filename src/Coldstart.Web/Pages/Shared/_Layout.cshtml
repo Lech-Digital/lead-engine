@@ -26,6 +26,9 @@
 @{
     var analyticsId = Configuration["Analytics:WebsiteId"];
     var isPublic = !Context.Request.Path.StartsWithSegments("/app") && !Context.Request.Path.StartsWithSegments("/admin") && !Context.Request.Path.StartsWithSegments("/Identity");
+    // The footer renders outside the rail shell, so on portal pages it needs the
+    // rail's offset itself — otherwise the fixed rail covers its left edge.
+    var footerClass = isPublic ? "" : "rail-footer";
 }
 @if (isPublic && !string.IsNullOrEmpty(analyticsId))
 {
@@ -36,7 +39,10 @@
 
 @RenderBody()
 
-<partial name="_Footer" />
+@* The footer renders outside .rail-shell, so on the two areas that use the rail it
+   needs the rail's own offset — otherwise the fixed rail covers its left edge.
+   /Identity pages have no rail, so they are deliberately excluded. *@
+<div class="@(Context.Request.Path.StartsWithSegments("/app") || Context.Request.Path.StartsWithSegments("/admin") ? "rail-footer" : null)"><partial name="_Footer" /></div>
 
 <script src="~/js/contact.js" defer asp-append-version="true"></script>
 </body>

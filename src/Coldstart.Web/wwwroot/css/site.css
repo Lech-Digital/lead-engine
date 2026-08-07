@@ -761,6 +761,9 @@
    the offset for the mobile overlay — same specificity, so source order decides. */
 .rail { position: fixed; top: 0; left: 0; bottom: 0; height: auto; }
 .rail-main { margin-left: 216px; flex: 1 1 auto; }
+/* The footer renders outside .rail-shell, so it needs the same offset or the
+   fixed rail covers its left edge on every portal page. */
+.rail-footer { margin-left: 216px; }
 .rail-main .wrap { max-width: 1080px; margin-inline: auto; padding-inline: clamp(24px, 3vw, 48px); }
 .rail-main .app-zone { padding-top: 30px; padding-bottom: 72px; }
 /* The zone already owns the top space; these page headers added a second helping. */
@@ -777,6 +780,7 @@
   .rail-burger { background: none; border: 1px solid #3a352f; color: #f5f1ea; border-radius: 8px; padding: 6px 10px; font-size: 1rem; cursor: pointer; }
   /* Fixed overlay on mobile, so the content column reclaims the full width. */
   .rail-main { margin-left: 0; }
+  .rail-footer { margin-left: 0; }
 }
 
 /* ---- portal design system (.pz) ----
