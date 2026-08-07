@@ -19,6 +19,8 @@ public static class DependencyInjection
         services.AddScoped<Customers.IProvisionCustomer, Customers.ProvisionCustomer>();
         services.AddScoped<Customers.IUpdateCompanyProfile, Customers.UpdateCompanyProfile>();
         services.AddScoped<Customers.IGetCompanyProfile, Customers.GetCompanyProfile>();
+        services.AddScoped<Customers.IUpdateTargeting, Customers.UpdateTargeting>();
+        services.AddScoped<Customers.IGetTargeting, Customers.GetTargeting>();
         services.AddScoped<Customers.IDeleteCustomer, Customers.DeleteCustomer>();
         services.AddScoped<Harvest.IHarvestLeads, Harvest.HarvestLeads>();
         services.AddScoped<Billing.IApplySubscriptionChange, Billing.ApplySubscriptionChange>();
