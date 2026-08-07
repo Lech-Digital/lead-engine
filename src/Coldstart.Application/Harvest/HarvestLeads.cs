@@ -39,7 +39,7 @@ internal sealed class HarvestLeads(
     private async Task<HarvestReport> RunPipelineAsync(CustomerId cid, HarvestTargeting targeting, SenderContext sender, Func<string, bool> allowsSource, CancellationToken ct)
     {
         var runNiche = BuildRunNiche(targeting);
-        int harvested = 0, scoredIn = 0, deduped = 0, enriched = 0, saved = 0, rejected = 0;
+        var funnel = new HarvestFunnel();
         var savedLeads = new List<SavedLead>();
         // GDPR objection list (privacy policy §5): matching items never enter the pipeline.
         var suppressed = await suppressions.ValuesAsync(ct);
@@ -54,16 +54,17 @@ internal sealed class HarvestLeads(
             catch { continue; }   // a failing source must not abort the run
             foreach (var item in items)
             {
-                harvested++;
-                if (SuppressionMatcher.IsMatch(suppressed, item.Title, item.Author)) continue;
+                funnel.CountHarvested();
+                if (SuppressionMatcher.IsMatch(suppressed, item.Title, item.Author)) { funnel.CountDropped("suppressed"); continue; }
                 var signal = SignalScorer.Score(item, runNiche, source.BaseScore, source.ScoreWeight);
-                if (signal.Score < runNiche.MinScore) continue;
-                scoredIn++;
-                if (await leads.ExistsByFingerprintAsync(item.Fingerprint, ct)) { deduped++; continue; }
+                if (signal.Score < runNiche.MinScore) { funnel.CountDropped("below-score"); continue; }
+                funnel.CountPrioritised();
+                if (await leads.ExistsByFingerprintAsync(item.Fingerprint, ct)) { funnel.CountDropped("duplicate-fingerprint"); continue; }
                 // The same item can surface twice in one run (e.g. an HN comment matching several
                 // queries). Dedup within the run too, or the second save collides on the unique
                 // fingerprint index. Empty fingerprints are exempt (mirrors the partial DB index).
-                if (item.Fingerprint.Length != 0 && !seen.Add(item.Fingerprint)) { deduped++; continue; }
+                if (item.Fingerprint.Length != 0 && !seen.Add(item.Fingerprint)) { funnel.CountDropped("duplicate-fingerprint"); continue; }
+                funnel.CountTriaged();
                 candidates.Add((item, signal));
             }
         }
@@ -87,7 +88,7 @@ internal sealed class HarvestLeads(
             }
             var result = await enricher.EnrichAsync(item, runNiche, signal, sender, secondaryContext, ct);
             if (result is null) continue;         // LLM failed/empty → retried next run
-            enriched++;
+            funnel.CountEnriched();
             var company = string.IsNullOrWhiteSpace(result.Company) || result.Company == "-" ? item.Author : result.Company;
             // Second gate: the true company name is often only known after enrichment.
             if (SuppressionMatcher.IsMatch(suppressed, company)) continue;
@@ -103,15 +104,15 @@ internal sealed class HarvestLeads(
                 // read model keeps Rejected/Shelved out of the customer inbox.
                 lead.Reject();
                 await leads.AddAsync(lead, ct);
-                rejected++;
+                funnel.CountRejected();
                 continue;
             }
             await leads.AddAsync(lead, ct);
-            saved++;
+            funnel.CountSavedFrom(item.Source);
             savedLeads.Add(new SavedLead(lead.Id.Value, company, subject));
         }
 
-        return new HarvestReport(harvested, scoredIn, deduped, enriched, saved, rejected, savedLeads);
+        return funnel.ToReport(savedLeads);
     }
 
     // Per-run options: per-customer targeting + the injected global source config.
