@@ -23,8 +23,14 @@ internal sealed class IndexModel(
 
     // Which slice of the inquiry lifecycle to show. "open" (neither converted nor dismissed) is
     // the operator's actual work queue and stays the default so nothing already resolved crowds it.
+    // Nullable on purpose: a non-nullable string [BindProperty] is implicitly "required" under
+    // nullable-reference-types, which would fail model validation on any POST (Invite, Dismiss,
+    // Restore) that doesn't happen to submit a Filter field. FilterOrDefault below is what callers
+    // and the view should read.
     [BindProperty(SupportsGet = true)]
-    public string Filter { get; set; } = "open";
+    public string? Filter { get; set; }
+
+    public string FilterOrDefault => Filter ?? "open";
 
     public string? StatusMessage { get; private set; }
     public IReadOnlyList<CustomerRow> Rows { get; private set; } = [];
@@ -157,7 +163,7 @@ internal sealed class IndexModel(
         DismissedCount = allRows.Count(r => r.IsDismissed);
         AllCount = allRows.Count;
 
-        Inquiries = Filter switch
+        Inquiries = FilterOrDefault switch
         {
             "converted" => allRows.Where(r => r.Converted).ToList(),
             "dismissed" => allRows.Where(r => r.IsDismissed).ToList(),

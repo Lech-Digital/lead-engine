@@ -12,6 +12,11 @@ public sealed class Inquiry
     public DateTimeOffset CreatedAt { get; private set; }
     // When the person ticked the processing-consent box (GDPR audit trail); null on legacy rows.
     public DateTimeOffset? ConsentGivenAt { get; private set; }
+    // Operator marked this as spam/not-a-fit; null = not dismissed. This is real state (unlike
+    // "converted", which is derived from whether a user account exists for the email) because
+    // spam-or-not is a judgement call nothing else can reconstruct. Dismissing never deletes the
+    // row — it carries a GDPR consent trail — so Restore can always bring it back with no loss.
+    public DateTimeOffset? DismissedAt { get; private set; }
 
     private Inquiry() { } // EF
 
@@ -39,4 +44,13 @@ public sealed class Inquiry
             whatYouSell?.Trim() ?? "", string.IsNullOrWhiteSpace(message) ? null : message.Trim(), createdAt,
             string.IsNullOrWhiteSpace(company) ? null : company.Trim(), consentGivenAt);
     }
+
+    // Idempotent by design: the admin UI never re-offers Dismiss on an already-dismissed row (it
+    // offers Restore instead), so a repeat call can only be a double-submit or a race between two
+    // tabs — refreshing the timestamp instead of throwing keeps that a harmless no-op rather than
+    // an error the operator can't do anything about.
+    public void Dismiss(DateTimeOffset when) => DismissedAt = when;
+
+    // Also idempotent: restoring a row that isn't dismissed just confirms it's already open.
+    public void Restore() => DismissedAt = null;
 }

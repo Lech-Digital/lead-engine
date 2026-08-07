@@ -22,5 +22,6 @@ internal sealed class InquiryConfiguration : IEntityTypeConfiguration<Inquiry>
         builder.Property(i => i.WhatYouSell);
         builder.Property(i => i.Message);
         builder.Property(i => i.CreatedAt);
+        builder.Property(i => i.DismissedAt);
     }
 }

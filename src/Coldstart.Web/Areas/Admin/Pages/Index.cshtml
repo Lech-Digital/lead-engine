@@ -35,16 +35,16 @@
        only hides it from the open queue and restoring brings it straight back. Converted is
        derived (a user account already exists for the email), never stored, so it can't drift. *@
     <div class="pz-row-actions">
-      <a class="pz-btn @(Model.Filter == "open" ? "pz-btn-primary" : "pz-btn-quiet")" href="/admin?filter=open">Open · @Model.OpenCount</a>
-      <a class="pz-btn @(Model.Filter == "converted" ? "pz-btn-primary" : "pz-btn-quiet")" href="/admin?filter=converted">Converted · @Model.ConvertedCount</a>
-      <a class="pz-btn @(Model.Filter == "dismissed" ? "pz-btn-primary" : "pz-btn-quiet")" href="/admin?filter=dismissed">Dismissed · @Model.DismissedCount</a>
-      <a class="pz-btn @(Model.Filter == "all" ? "pz-btn-primary" : "pz-btn-quiet")" href="/admin?filter=all">All · @Model.AllCount</a>
+      <a class="pz-btn @(Model.FilterOrDefault == "open" ? "pz-btn-primary" : "pz-btn-quiet")" href="/admin?filter=open">Open · @Model.OpenCount</a>
+      <a class="pz-btn @(Model.FilterOrDefault == "converted" ? "pz-btn-primary" : "pz-btn-quiet")" href="/admin?filter=converted">Converted · @Model.ConvertedCount</a>
+      <a class="pz-btn @(Model.FilterOrDefault == "dismissed" ? "pz-btn-primary" : "pz-btn-quiet")" href="/admin?filter=dismissed">Dismissed · @Model.DismissedCount</a>
+      <a class="pz-btn @(Model.FilterOrDefault == "all" ? "pz-btn-primary" : "pz-btn-quiet")" href="/admin?filter=all">All · @Model.AllCount</a>
     </div>
 
     @if (Model.Inquiries.Count == 0)
     {
       <p class="pz-empty">
-        @(Model.Filter switch
+        @(Model.FilterOrDefault switch
         {
           "converted" => "No converted inquiries yet — they'll show up here once an invited company signs in.",
           "dismissed" => "No dismissed inquiries — anything marked spam or not-a-fit will show up here.",
@@ -95,7 +95,7 @@
                 {
                   <form method="post" asp-page-handler="Restore">
                     <input type="hidden" name="id" value="@q.Id">
-                    <input type="hidden" name="Filter" value="@Model.Filter">
+                    <input type="hidden" name="Filter" value="@Model.FilterOrDefault">
                     <button class="pz-btn pz-btn-quiet" type="submit">Restore</button>
                   </form>
                 }
@@ -105,7 +105,7 @@
                     <a class="pz-btn pz-btn-quiet" href="/admin?useInquiry=@q.Id">Use for invite</a>
                     <form method="post" asp-page-handler="Dismiss">
                       <input type="hidden" name="id" value="@q.Id">
-                      <input type="hidden" name="Filter" value="@Model.Filter">
+                      <input type="hidden" name="Filter" value="@Model.FilterOrDefault">
                       @* Dismiss is reversible (Restore is one click away), so it deliberately
                          carries no confirmation — unlike genuinely destructive actions on this page. *@
                       <button class="pz-btn pz-btn-quiet" type="submit">Dismiss</button>
