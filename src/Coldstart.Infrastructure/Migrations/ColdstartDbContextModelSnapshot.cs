@@ -572,7 +572,51 @@ namespace Coldstart.Infrastructure.Migrations
                                 .HasForeignKey("CustomerId");
                         });
 
+                    b.OwnsOne("Coldstart.Domain.Targeting", "Targeting", b1 =>
+                        {
+                            b1.Property<Guid>("CustomerId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("BuyerRoles")
+                                .HasColumnType("text")
+                                .HasColumnName("TargetingBuyerRoles");
+
+                            b1.Property<string>("Exclusions")
+                                .HasColumnType("text")
+                                .HasColumnName("TargetingExclusions");
+
+                            b1.Property<string>("Geographies")
+                                .HasColumnType("text")
+                                .HasColumnName("TargetingGeographies");
+
+                            b1.Property<string>("Industries")
+                                .HasColumnType("text")
+                                .HasColumnName("TargetingIndustries");
+
+                            b1.Property<int?>("SizeMax")
+                                .HasColumnType("integer")
+                                .HasColumnName("TargetingSizeMax");
+
+                            b1.Property<int?>("SizeMin")
+                                .HasColumnType("integer")
+                                .HasColumnName("TargetingSizeMin");
+
+                            b1.Property<string>("TriggerEvents")
+                                .HasColumnType("text")
+                                .HasColumnName("TargetingTriggerEvents");
+
+                            b1.HasKey("CustomerId");
+
+                            b1.ToTable("customers");
+
+                            b1.WithOwner()
+                                .HasForeignKey("CustomerId");
+                        });
+
                     b.Navigation("Profile")
+                        .IsRequired();
+
+                    b.Navigation("Targeting")
                         .IsRequired();
                 });
 

@@ -58,5 +58,17 @@ internal sealed class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         builder.Property(c => c.RetentionReminderSent).HasDefaultValue(false);
         builder.Property(c => c.WhatsAppNumber);
         builder.Navigation(c => c.Profile).IsRequired();   // Profile is never null (defaults to Empty)
+
+        builder.OwnsOne(c => c.Targeting, t =>
+        {
+            t.Property(x => x.Industries).HasColumnName("TargetingIndustries");
+            t.Property(x => x.Geographies).HasColumnName("TargetingGeographies");
+            t.Property(x => x.BuyerRoles).HasColumnName("TargetingBuyerRoles");
+            t.Property(x => x.SizeMin).HasColumnName("TargetingSizeMin");
+            t.Property(x => x.SizeMax).HasColumnName("TargetingSizeMax");
+            t.Property(x => x.TriggerEvents).HasColumnName("TargetingTriggerEvents");
+            t.Property(x => x.Exclusions).HasColumnName("TargetingExclusions");
+        });
+        builder.Navigation(c => c.Targeting).IsRequired();   // never null; defaults to Targeting.Empty
     }
 }

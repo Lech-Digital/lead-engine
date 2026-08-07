@@ -68,6 +68,38 @@ public class CustomerRepositoryTests(PostgresFixture fixture) : IClassFixture<Po
     }
 
     [Fact]
+    public async Task Targeting_RoundTripsThroughOwnedType()
+    {
+        // Arrange
+        var customer = Customer.Create("targeting-roundtrip@acme.com");
+        await using var write = fixture.NewDbContext(customer.Id.Value);
+        customer.UpdateTargeting(Targeting.Create(
+            industries: ["Dentists", "Clinics"],
+            geographies: ["NL", "BE"],
+            buyerRoles: ["Owner", "Office Manager"],
+            sizeMin: 5,
+            sizeMax: 50,
+            triggerEvents: ["New location opened"],
+            exclusions: ["Enterprise chains"]));
+        write.Customers.Add(customer);
+        await write.SaveChangesAsync();
+
+        // Act
+        await using var read = fixture.NewDbContext(customer.Id.Value);
+        var found = await new CustomerRepository(read).GetAsync(customer.Id, CancellationToken.None);
+
+        // Assert
+        found.Should().NotBeNull();
+        found!.Targeting.IndustryList.Should().Equal("Dentists", "Clinics");
+        found.Targeting.GeographyList.Should().Equal("NL", "BE");
+        found.Targeting.BuyerRoleList.Should().Equal("Owner", "Office Manager");
+        found.Targeting.SizeMin.Should().Be(5);
+        found.Targeting.SizeMax.Should().Be(50);
+        found.Targeting.TriggerEventList.Should().Equal("New location opened");
+        found.Targeting.ExclusionList.Should().Equal("Enterprise chains");
+    }
+
+    [Fact]
     public async Task DeleteAsync_RemovesCustomerAndItsLeads()
     {
         // Arrange

@@ -28,6 +28,36 @@ public sealed record HarvestTargeting(
         MinScore: 0.4,
         MaxEnrichPerRun: 30);
 
+    // Structured targeting when the customer has filled it in, otherwise the legacy flat
+    // fields, unchanged. In sub-project A the structured branch deliberately derives the
+    // same inputs as the legacy one — sub-projects B (query generation) and C
+    // (qualification) are what actually exploit the extra dimensions.
+    public static HarvestTargeting FromCustomer(CompanyProfile profile, Targeting targeting, string customerName)
+    {
+        if (targeting is null || !targeting.HasAny) return FromProfile(profile, customerName);
+
+        var keywords = targeting.IndustryList.Concat(targeting.GeographyList).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        if (keywords.Count == 0) keywords = [.. Split(profile.TargetKeywords)];
+
+        var signals = targeting.TriggerEventList.Count > 0
+            ? targeting.TriggerEventList
+            : Split(profile.BuyingSignals);
+
+        var exclusions = targeting.ExclusionList.Count > 0
+            ? targeting.ExclusionList
+            : Split(profile.Disqualifiers);
+
+        return new(
+            profile.Offer ?? "",
+            keywords,
+            signals,
+            exclusions,
+            SenderName: string.IsNullOrWhiteSpace(profile.CompanyName) ? customerName : profile.CompanyName!,
+            SenderTitle: "",
+            MinScore: 0.4,
+            MaxEnrichPerRun: 30);
+    }
+
     private static IReadOnlyList<string> Split(string? joined) =>
         string.IsNullOrWhiteSpace(joined)
             ? []

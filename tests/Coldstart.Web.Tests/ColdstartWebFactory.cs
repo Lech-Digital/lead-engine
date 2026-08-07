@@ -24,6 +24,7 @@ public class ColdstartWebFactory : WebApplicationFactory<Program>, IAsyncLifetim
     public FakeSearchProfileGenerator SearchProfiles { get; } = new();
     public FakeBillingGateway Billing { get; } = new();
     public FakeStripeEventParser StripeEvents { get; } = new();
+    public FakeTargetingGenerator TargetingGenerator { get; } = new();
 
     public Task InitializeAsync() => _db.StartAsync();
 
@@ -55,6 +56,8 @@ public class ColdstartWebFactory : WebApplicationFactory<Program>, IAsyncLifetim
             services.AddSingleton<Coldstart.Application.Billing.IBillingGateway>(Billing);
             services.RemoveAll<Coldstart.Application.Billing.IStripeEventParser>();
             services.AddSingleton<Coldstart.Application.Billing.IStripeEventParser>(StripeEvents);
+            services.RemoveAll<ITargetingGenerator>();
+            services.AddSingleton<ITargetingGenerator>(TargetingGenerator);
         });
     }
 }
@@ -79,4 +82,15 @@ public sealed class FakeCompanyBriefPolisher : ICompanyBriefPolisher
     public string? Result { get; set; } = "POLISHED BRIEF";
 
     public Task<string?> PolishAsync(string rawBrief, CancellationToken ct) => Task.FromResult(Result);
+}
+
+// Fake ITargetingGenerator: settable proposal, defaults to a fixed suggestion; set to null to
+// simulate the LLM call failing so tests can assert the customer's stored values are untouched.
+public sealed class FakeTargetingGenerator : ITargetingGenerator
+{
+    public TargetingInput? Result { get; set; } =
+        new("Software", "Netherlands, Belgium", "CTO, VP Engineering", 10, 500, "Just raised funding", "Existing customers");
+
+    public Task<TargetingInput?> ProposeAsync(TargetingProposalRequest request, CancellationToken ct) =>
+        Task.FromResult(Result);
 }

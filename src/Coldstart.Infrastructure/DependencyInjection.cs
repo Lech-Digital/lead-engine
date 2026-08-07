@@ -51,6 +51,7 @@ public static class DependencyInjection
         services.AddScoped<Application.Notifications.IBriefingChannel, Notifications.TwilioWhatsAppChannel>();
         services.AddScoped<Application.Customers.ICompanyBriefPolisher, Harvest.GroqBriefPolisher>();
         services.AddScoped<Application.Customers.ISearchProfileGenerator, Harvest.GroqSearchProfileGenerator>();
+        services.AddScoped<Application.Customers.ITargetingGenerator, Harvest.GroqTargetingGenerator>();
         services.AddScoped<Application.Billing.IBillingGateway, Billing.StripeBillingGateway>();
         services.AddSingleton<Application.Billing.IStripeEventParser, Billing.StripeEventParser>();
         return services;

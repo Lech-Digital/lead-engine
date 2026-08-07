@@ -1,5 +1,5 @@
 @* Shared full-height rail nav for every /app page. ViewData["AppNav"] marks the
-   active section: "briefing" | "history" | "company" | "outreach" | "sources" |
+   active section: "briefing" | "history" | "company" | "targeting" | "outreach" | "sources" |
    "notifications" | "billing" | "account" (or omitted — no item active).
    The Subscription item is always rendered (not gated on plan) — /app/settings/billing
    renders a sensible upgrade pitch for Free customers, so the link is never a dead end. *@
@@ -15,6 +15,7 @@
     <a class="rail-item @(nav == "history" ? "active" : null)" href="/app/history">History</a>
     <span class="rail-group">Settings</span>
     <a class="rail-item @(nav == "company" ? "active" : null)" href="/app/settings/company">Company</a>
+    <a class="rail-item @(nav == "targeting" ? "active" : null)" href="/app/settings/targeting">Targeting</a>
     <a class="rail-item @(nav == "outreach" ? "active" : null)" href="/app/settings/outreach">Outreach</a>
     <a class="rail-item @(nav == "sources" ? "active" : null)" href="/app/settings/sources">Sources</a>
     <a class="rail-item @(nav == "notifications" ? "active" : null)" href="/app/settings/notifications">Notifications</a>

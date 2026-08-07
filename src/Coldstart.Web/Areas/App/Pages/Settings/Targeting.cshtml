@@ -1,0 +1,66 @@
+@page "/app/settings/targeting"
+@model Coldstart.Web.Areas.App.Pages.Settings.TargetingSettingsModel
+@{ ViewData["Title"] = "Settings · Targeting"; Layout = "/Pages/Shared/_Layout.cshtml"; ViewData["AppNav"] = "targeting"; }
+
+<div class="rail-shell">
+  <partial name="_AppSidebar" />
+  <div class="rail-main">
+<main class="wrap app-zone settings-page">
+  <div class="pz-head">
+    <div>
+      <h1>Targeting</h1>
+      <p class="pz-sub">These fields tell the engine exactly who to look for — leave them empty and the harvest keeps working the way it does today.</p>
+    </div>
+  </div>
+
+  <div asp-validation-summary="All" class="field-error"></div>
+
+  <form method="post">
+    <div class="pz-card">
+      <h2>Who you sell to</h2>
+      <p class="pz-hint">One entry per line for the list fields below.</p>
+      <div class="pz-settings">
+        <div class="pz-field full">
+          <label asp-for="Input.Industries">Industries</label>
+          <textarea asp-for="Input.Industries" rows="3"></textarea>
+        </div>
+        <div class="pz-field full">
+          <label asp-for="Input.Geographies">Geographies</label>
+          <textarea asp-for="Input.Geographies" rows="3"></textarea>
+        </div>
+        <div class="pz-field full">
+          <label asp-for="Input.BuyerRoles">Buyer roles</label>
+          <textarea asp-for="Input.BuyerRoles" rows="3"></textarea>
+        </div>
+        <div class="pz-field">
+          <label asp-for="Input.SizeMin">Smallest company size</label>
+          <input asp-for="Input.SizeMin" type="number" min="0">
+        </div>
+        <div class="pz-field">
+          <label asp-for="Input.SizeMax">Largest company size</label>
+          <input asp-for="Input.SizeMax" type="number" min="0">
+        </div>
+        <div class="pz-field full">
+          <label asp-for="Input.TriggerEvents">Trigger events</label>
+          <textarea asp-for="Input.TriggerEvents" rows="3"></textarea>
+          <p class="pz-hint">Events that signal a good time to reach out — e.g. hiring, funding.</p>
+        </div>
+        <div class="pz-field full">
+          <label asp-for="Input.Exclusions">Exclusions</label>
+          <textarea asp-for="Input.Exclusions" rows="3"></textarea>
+          <p class="pz-hint">Kinds of company to skip — e.g. competitors, existing customers.</p>
+        </div>
+      </div>
+      <div class="pz-actions">
+        <button class="pz-btn pz-btn-primary" type="submit">Save changes</button>
+        <button class="pz-btn pz-btn-quiet" type="submit" asp-page-handler="Suggest">Suggest from my description</button>
+        @if (Model.StatusMessage is not null) { <span class="form-status">@Model.StatusMessage</span> }
+      </div>
+    </div>
+  </form>
+</main>
+  </div>
+</div>
+<partial name="/Pages/Shared/_ConfirmDialog.cshtml" />
+<script src="~/js/app-rail.js" defer asp-append-version="true"></script>
+<script src="~/js/app-confirm.js" defer asp-append-version="true"></script>

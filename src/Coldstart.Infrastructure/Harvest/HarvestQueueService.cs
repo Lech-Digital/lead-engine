@@ -34,7 +34,7 @@ internal sealed class HarvestQueueService(
         var customer = await customers.GetAsync(new CustomerId(job.CustomerId), ct);
         if (customer is null) return;
 
-        var targeting = HarvestTargeting.FromProfile(customer.Profile, customer.Name);
+        var targeting = HarvestTargeting.FromCustomer(customer.Profile, customer.Targeting, customer.Name);
         if (!targeting.HasKeywords)
         {
             // No usable search profile (generation failed at invite) → mark failed, no bogus leads.

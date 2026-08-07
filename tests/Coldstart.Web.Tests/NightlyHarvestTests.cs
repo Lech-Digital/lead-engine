@@ -106,6 +106,8 @@ public class NightlyHarvestTests(ColdstartWebFactory factory) : IClassFixture<Co
                                                                 // Customer.Profile defaults to the shared static
                                                                 // Empty singleton, which two Adds in one DbContext
                                                                 // cannot both own (owned entity, shared PK).
+        customer.UpdateTargeting(Targeting.Empty with { });   // same reason: Targeting also defaults to a
+                                                                // shared static Empty singleton.
         customer.SetPlan(plan);
         customer.MarkHarvest(status, status == HarvestStatus.Running ? null : DateTimeOffset.UtcNow);
         db.Customers.Add(customer);
