@@ -67,4 +67,22 @@ public class HarvestFunnelTests
         report.DropReasons["stale"].Should().Be(1);
         report.PerSource["adzuna"].Should().Be(1);
     }
+
+    [Fact]
+    public void CountDropped_PreScoreAndPostEnrichmentSuppression_TrackSeparately()
+    {
+        // Arrange — the two suppression drops mean genuinely different things operationally:
+        // one costs nothing, the other means an LLM call was already paid for. They must never
+        // collapse into a single "suppressed" bucket.
+        var funnel = new HarvestFunnel();
+
+        // Act
+        funnel.CountDropped("suppressed");
+        funnel.CountDropped("suppressed-after-enrichment");
+        funnel.CountDropped("suppressed-after-enrichment");
+
+        // Assert
+        funnel.DropReasons["suppressed"].Should().Be(1);
+        funnel.DropReasons["suppressed-after-enrichment"].Should().Be(2);
+    }
 }

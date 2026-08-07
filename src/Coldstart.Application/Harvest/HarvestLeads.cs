@@ -91,7 +91,7 @@ internal sealed class HarvestLeads(
             funnel.CountEnriched();
             var company = string.IsNullOrWhiteSpace(result.Company) || result.Company == "-" ? item.Author : result.Company;
             // Second gate: the true company name is often only known after enrichment.
-            if (SuppressionMatcher.IsMatch(suppressed, company)) continue;
+            if (SuppressionMatcher.IsMatch(suppressed, company)) { funnel.CountDropped("suppressed-after-enrichment"); continue; }
             // Real fits get the sender's hardcoded pitch/CTA appended; rejected drafts are "-".
             var draft = result.Fit == Fit.No ? result.Draft : DraftComposer.Compose(result.Draft, sender, company, result.ProspectNiche, result.ProspectSells);
             var subject = result.Fit == Fit.No ? result.Subject : DraftComposer.ComposeSubject(result.Subject, sender, company, result.ProspectNiche, result.ProspectSells);
