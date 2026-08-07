@@ -42,11 +42,10 @@ public class HarvestTargetingCompatibilityTests
         var legacy = HarvestTargeting.FromProfile(profile, "Acme");
         var structured = HarvestTargeting.FromCustomer(profile, targeting, "Acme");
 
-        // Assert — sub-project A must not move lead flow in either direction
-        structured.TargetKeywords.Should().BeEquivalentTo(legacy.TargetKeywords);
-        structured.BuyingSignals.Should().BeEquivalentTo(legacy.BuyingSignals);
-        structured.Disqualifiers.Should().BeEquivalentTo(legacy.Disqualifiers);
-        structured.Offer.Should().Be(legacy.Offer);
+        // Assert — sub-project A must not move lead flow in either direction; whole-record
+        // equivalence so a future edit to SenderName/SenderTitle/MinScore/MaxEnrichPerRun
+        // can't silently diverge behind a green suite.
+        structured.Should().BeEquivalentTo(legacy);
     }
 
     [Fact]
