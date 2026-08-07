@@ -14,6 +14,8 @@ public static class DependencyInjection
         services.AddScoped<IGetLeadDetail, GetLeadDetail>();
         services.AddScoped<ILeadWorkflow, LeadWorkflow>();
         services.AddScoped<Contact.ISubmitInquiry, Contact.SubmitInquiry>();
+        services.AddScoped<Contact.IDismissInquiry, Contact.DismissInquiry>();
+        services.AddScoped<Contact.IRestoreInquiry, Contact.RestoreInquiry>();
         services.AddScoped<Customers.IProvisionCustomer, Customers.ProvisionCustomer>();
         services.AddScoped<Customers.IUpdateCompanyProfile, Customers.UpdateCompanyProfile>();
         services.AddScoped<Customers.IGetCompanyProfile, Customers.GetCompanyProfile>();

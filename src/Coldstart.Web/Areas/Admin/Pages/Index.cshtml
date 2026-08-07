@@ -29,30 +29,97 @@
     </form>
   </div>
 
-  @if (Model.Inquiries.Count > 0)
-  {
-    <div class="pz-card">
-      <h2>Recent inquiries</h2>
+  <div class="pz-card">
+    <h2>Inquiries</h2>
+    @* Nothing here is ever deleted — an inquiry carries a GDPR consent timestamp, so dismissing
+       only hides it from the open queue and restoring brings it straight back. Converted is
+       derived (a user account already exists for the email), never stored, so it can't drift. *@
+    <div class="pz-row-actions">
+      <a class="pz-btn @(Model.FilterOrDefault == "open" ? "pz-btn-primary" : "pz-btn-quiet")" href="/admin?filter=open">Open · @Model.OpenCount</a>
+      <a class="pz-btn @(Model.FilterOrDefault == "converted" ? "pz-btn-primary" : "pz-btn-quiet")" href="/admin?filter=converted">Converted · @Model.ConvertedCount</a>
+      <a class="pz-btn @(Model.FilterOrDefault == "dismissed" ? "pz-btn-primary" : "pz-btn-quiet")" href="/admin?filter=dismissed">Dismissed · @Model.DismissedCount</a>
+      <a class="pz-btn @(Model.FilterOrDefault == "all" ? "pz-btn-primary" : "pz-btn-quiet")" href="/admin?filter=all">All · @Model.AllCount</a>
+    </div>
+
+    @if (Model.Inquiries.Count == 0)
+    {
+      <p class="pz-empty">
+        @(Model.FilterOrDefault switch
+        {
+          "converted" => "No converted inquiries yet — they'll show up here once an invited company signs in.",
+          "dismissed" => "No dismissed inquiries — anything marked spam or not-a-fit will show up here.",
+          "all" => "No inquiries yet — they'll appear here as visitors submit the contact form.",
+          _ => "No open inquiries — you're caught up.",
+        })
+      </p>
+    }
+    else
+    {
       <div class="pz-table-wrap">
         <table class="pz-table">
-          <thead><tr><th>Name</th><th>Company</th><th>Email</th><th>Niche</th><th>Sells</th><th></th></tr></thead>
+          <thead><tr><th>Name</th><th>Company</th><th class="pz-cell-wrap">Email</th><th>Niche</th><th>Sells</th><th>Status</th><th></th></tr></thead>
           <tbody>
           @foreach (var q in Model.Inquiries)
           {
             <tr>
               <td>@q.Name</td>
               <td>@(q.Company ?? "—")</td>
-              <td>@q.Email</td>
+              <td class="pz-cell-wrap">@q.Email</td>
               <td>@q.Niche</td>
               <td>@q.WhatYouSell</td>
-              <td><a class="pz-btn pz-btn-quiet" href="/admin?useInquiry=@q.Id">Use for invite</a></td>
+              <td>
+                @if (q.Converted)
+                {
+                  <span class="pz-pill pz-pill-sent">Converted</span>
+                  @if (q.ConvertedCustomerId is { } cid)
+                  {
+                    <span class="pz-cell-sub"><a href="/admin/customers/@cid">@(q.ConvertedCustomerName ?? "View company")</a></span>
+                  }
+                }
+                else if (q.IsDismissed)
+                {
+                  <span class="pz-pill pz-pill-sent">Dismissed</span>
+                  <span class="pz-cell-sub">@q.DismissedAt!.Value.ToString("d MMM")</span>
+                }
+                else
+                {
+                  <span class="pz-pill pz-pill-maybe">Open</span>
+                }
+              </td>
+              <td>
+                @if (q.Converted)
+                {
+                  @* Already resolved — no action to offer. *@
+                }
+                else if (q.IsDismissed)
+                {
+                  <form method="post" asp-page-handler="Restore">
+                    <input type="hidden" name="id" value="@q.Id">
+                    <input type="hidden" name="Filter" value="@Model.FilterOrDefault">
+                    <button class="pz-btn pz-btn-quiet" type="submit">Restore</button>
+                  </form>
+                }
+                else
+                {
+                  <div class="pz-row-actions">
+                    <a class="pz-btn pz-btn-quiet" href="/admin?useInquiry=@q.Id">Use for invite</a>
+                    <form method="post" asp-page-handler="Dismiss">
+                      <input type="hidden" name="id" value="@q.Id">
+                      <input type="hidden" name="Filter" value="@Model.FilterOrDefault">
+                      @* Dismiss is reversible (Restore is one click away), so it deliberately
+                         carries no confirmation — unlike genuinely destructive actions on this page. *@
+                      <button class="pz-btn pz-btn-quiet" type="submit">Dismiss</button>
+                    </form>
+                  </div>
+                }
+              </td>
             </tr>
           }
           </tbody>
         </table>
       </div>
-    </div>
-  }
+    }
+  </div>
 
   <div class="pz-card">
     <h2>All companies</h2>

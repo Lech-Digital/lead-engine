@@ -15,6 +15,15 @@ internal sealed class InquiryRepository(ColdstartDbContext db) : IInquiryReposit
     public async Task<IReadOnlyList<Inquiry>> RecentAsync(int max, CancellationToken ct) =>
         await db.Inquiries.OrderByDescending(i => i.CreatedAt).Take(max).ToListAsync(ct);
 
+    public async Task<IReadOnlyList<Inquiry>> AllAsync(CancellationToken ct) =>
+        await db.Inquiries.OrderByDescending(i => i.CreatedAt).ToListAsync(ct);
+
     public async Task<Inquiry?> GetAsync(InquiryId id, CancellationToken ct) =>
         await db.Inquiries.FirstOrDefaultAsync(i => i.Id == id, ct);
+
+    public async Task UpdateAsync(Inquiry inquiry, CancellationToken ct)
+    {
+        db.Inquiries.Update(inquiry);
+        await db.SaveChangesAsync(ct);
+    }
 }
