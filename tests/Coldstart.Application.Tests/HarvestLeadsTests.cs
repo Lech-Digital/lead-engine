@@ -160,7 +160,9 @@ public class HarvestLeadsTests
         var customers = Substitute.For<ICustomerRepository>();
         customers.GetAsync(new CustomerId(cid), Arg.Any<CancellationToken>()).Returns(customer);
 
-        var item = new RawItem("hackernews", "1", "hiring a dentist", "we need a dentist now", "acme", "https://x/1", "2026-07-23");
+        // CreatedAt must stay within the veto stage's freshness window (relative to "now",
+        // not a fixed calendar date, or this test becomes a time bomb).
+        var item = new RawItem("hackernews", "1", "hiring a dentist", "we need a dentist now", "acme", "https://x/1", DateTimeOffset.UtcNow.AddDays(-1).ToString("O"));
         var source = Substitute.For<ILeadSource>();
         source.Enabled.Returns(true);
         source.BaseScore.Returns(0.0);

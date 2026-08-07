@@ -44,7 +44,13 @@ internal sealed class HarvestLeads(
         // GDPR objection list (privacy policy §5): matching items never enter the pipeline.
         var suppressed = await suppressions.ValuesAsync(ct);
 
-        // Phase 1: harvest + cheap score gate + dedup (no LLM spend yet).
+        // Companies this customer already has a lead for, built once per run (not per
+        // candidate) so the veto's duplicate-company check is a cheap in-memory lookup.
+        var existingLeads = await leads.ForCustomerAsync(cid, ct);
+        var alreadyHeldCompanies = new HashSet<string>(
+            existingLeads.Select(l => l.Company), StringComparer.OrdinalIgnoreCase);
+
+        // Phase 1: harvest + veto + cheap score gate + dedup (no LLM spend yet).
         var candidates = new List<(RawItem item, SignalResult signal)>();
         var seen = new HashSet<string>();   // fingerprints already taken this run
         foreach (var source in sources.Where(s => s.Enabled && allowsSource(s.Name)))
@@ -56,6 +62,8 @@ internal sealed class HarvestLeads(
             {
                 funnel.CountHarvested();
                 if (SuppressionMatcher.IsMatch(suppressed, item.Title, item.Author)) { funnel.CountDropped("suppressed"); continue; }
+                var vetoReason = CandidateVeto.Check(item, targeting.Disqualifiers, alreadyHeldCompanies, DateTimeOffset.UtcNow, TimeSpan.FromDays(14));
+                if (vetoReason is not null) { funnel.CountDropped(vetoReason); continue; }
                 var signal = SignalScorer.Score(item, runNiche, source.BaseScore, source.ScoreWeight);
                 if (signal.Score < runNiche.MinScore) { funnel.CountDropped("below-score"); continue; }
                 funnel.CountPrioritised();
