@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Coldstart.Application.Contact;
 using Coldstart.Application.Ports;
 using Coldstart.Domain;
 using Coldstart.Web.Admin;
@@ -12,20 +13,43 @@ namespace Coldstart.Web.Areas.Admin.Pages;
 internal sealed class IndexModel(
     AdminUserService admin,
     ICustomerRepository customers,
-    IInquiryRepository inquiries) : PageModel
+    IInquiryRepository inquiries,
+    InquiryConversionLookup conversionLookup,
+    IDismissInquiry dismissInquiry,
+    IRestoreInquiry restoreInquiry) : PageModel
 {
     [BindProperty]
     public InputModel Input { get; set; } = new();
+
+    // Which slice of the inquiry lifecycle to show. "open" (neither converted nor dismissed) is
+    // the operator's actual work queue and stays the default so nothing already resolved crowds it.
+    [BindProperty(SupportsGet = true)]
+    public string Filter { get; set; } = "open";
 
     public string? StatusMessage { get; private set; }
     public IReadOnlyList<CustomerRow> Rows { get; private set; } = [];
     public IReadOnlyList<InquiryRow> Inquiries { get; private set; } = [];
 
+    public int OpenCount { get; private set; }
+    public int ConvertedCount { get; private set; }
+    public int DismissedCount { get; private set; }
+    public int AllCount { get; private set; }
+
     // Set by the customer detail page when a Revoke/Remove there deleted the customer outright,
     // leaving no detail page to return to.
     [TempData] public string? Flash { get; set; }
 
-    public sealed record InquiryRow(Guid Id, string Name, string Email, string Niche, string WhatYouSell, string? Message, DateTimeOffset CreatedAt, string? Company);
+    // Converted/ConvertedCustomerId are derived at read time (see InquiryConversionLookup), never
+    // stored — an inquiry is "converted" purely because an account already exists for its email.
+    // DismissedAt is real, stored state (an operator judgement nothing else can reconstruct).
+    public sealed record InquiryRow(
+        Guid Id, string Name, string Email, string Niche, string WhatYouSell, string? Message,
+        DateTimeOffset CreatedAt, string? Company, DateTimeOffset? DismissedAt,
+        bool Converted, Guid? ConvertedCustomerId, string? ConvertedCustomerName)
+    {
+        public bool IsDismissed => !Converted && DismissedAt is not null;
+        public bool IsOpen => !Converted && DismissedAt is null;
+    }
 
     // One row per customer (not per user) — the detail page is where per-user and per-plan
     // controls live now, so this list only needs to say enough for the operator to pick a company.
@@ -69,6 +93,24 @@ internal sealed class IndexModel(
         return Page();
     }
 
+    // Dismiss/Restore never delete the inquiry — see Inquiry.Dismiss/Restore — they only move it
+    // between the Open and Dismissed slices of this same page. Dismiss is reversible (Restore is
+    // right there), so it deliberately carries no confirmation dialog, unlike genuinely
+    // destructive admin actions elsewhere on this page.
+    public async Task<IActionResult> OnPostDismissAsync(Guid id, CancellationToken ct)
+    {
+        StatusMessage = (await dismissInquiry.ExecuteAsync(id, DateTimeOffset.UtcNow, ct)).Message;
+        await LoadAsync(ct);
+        return Page();
+    }
+
+    public async Task<IActionResult> OnPostRestoreAsync(Guid id, CancellationToken ct)
+    {
+        StatusMessage = (await restoreInquiry.ExecuteAsync(id, ct)).Message;
+        await LoadAsync(ct);
+        return Page();
+    }
+
     // Groups the same per-user rows AdminUserService already computes down to one row per
     // customer, then folds in the lead counts the admin API already exposes — no new queries.
     private async Task LoadAsync(CancellationToken ct)
@@ -92,9 +134,36 @@ internal sealed class IndexModel(
             .OrderBy(r => r.Company)
             .ToList();
 
-        Inquiries = (await inquiries.RecentAsync(20, ct))
-            .Select(i => new InquiryRow(i.Id.Value, i.Name, i.Email.Value, i.Niche, i.WhatYouSell, i.Message, i.CreatedAt, i.Company))
-            .ToList();
+        var companyNames = Rows.ToDictionary(r => r.CustomerId, r => r.Company);
+
+        // Single query for every account's normalized email (InquiryConversionLookup), matched in
+        // memory against every inquiry — not one query per inquiry.
+        var converted = await conversionLookup.BuildAsync(ct);
+        var all = await inquiries.AllAsync(ct);
+
+        var allRows = all.Select(i =>
+        {
+            var isConverted = converted.TryGetValue(conversionLookup.Normalize(i.Email.Value), out var customerId);
+            var customerName = isConverted && customerId is { } cid && companyNames.TryGetValue(cid, out var name)
+                ? name
+                : null;
+            return new InquiryRow(
+                i.Id.Value, i.Name, i.Email.Value, i.Niche, i.WhatYouSell, i.Message, i.CreatedAt, i.Company,
+                i.DismissedAt, isConverted, isConverted ? customerId : null, customerName);
+        }).ToList();
+
+        OpenCount = allRows.Count(r => r.IsOpen);
+        ConvertedCount = allRows.Count(r => r.Converted);
+        DismissedCount = allRows.Count(r => r.IsDismissed);
+        AllCount = allRows.Count;
+
+        Inquiries = Filter switch
+        {
+            "converted" => allRows.Where(r => r.Converted).ToList(),
+            "dismissed" => allRows.Where(r => r.IsDismissed).ToList(),
+            "all" => allRows,
+            _ => allRows.Where(r => r.IsOpen).ToList(),
+        };
     }
 
     public sealed class InputModel

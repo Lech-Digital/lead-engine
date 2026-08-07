@@ -12,7 +12,7 @@ namespace Coldstart.Web.Areas.Admin.Pages;
 internal sealed class CockpitModel(ColdstartDbContext db) : PageModel
 {
     public sealed record CustomerRow(
-        string Name, string Plan, string HarvestStatus, DateTimeOffset? LastHarvestAt,
+        Guid Id, string Name, string Plan, string HarvestStatus, DateTimeOffset? LastHarvestAt,
         int TotalLeads, int PendingLeads, int SentLeads, int Outcomes,
         DateTimeOffset? RetentionDeadline, bool Alarm, string? AlarmReason);
 
@@ -65,7 +65,7 @@ internal sealed class CockpitModel(ColdstartDbContext db) : PageModel
                 : stale ? "Stale — no harvest in 36h+"
                 : null;
             return new CustomerRow(
-                c.Name, c.Plan.ToString(), c.HarvestStatus.ToString(), c.LastHarvestAt,
+                c.Id.Value, c.Name, c.Plan.ToString(), c.HarvestStatus.ToString(), c.LastHarvestAt,
                 s?.Total ?? 0, s?.Pending ?? 0, s?.Sent ?? 0, s?.Outcomes ?? 0,
                 c.SubscriptionEndedAt?.AddDays(60),
                 Alarm: alarmReason is not null, AlarmReason: alarmReason);

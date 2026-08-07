@@ -166,4 +166,19 @@ public class CockpitTests(ColdstartWebFactory factory) : IClassFixture<Coldstart
         // Assert
         ((int)response.StatusCode).Should().BeOneOf(302, 401);
     }
+
+    [Fact]
+    public async Task Cockpit_CustomerRow_LinksToTheCustomerDetailPage()
+    {
+        // Arrange — SuperAdmin session; the seeded dogfood tenant is always present
+        var client = factory.CreateClient();
+        await TestAuth.SignInAsync(factory, client, $"cockpit-link-{Guid.NewGuid():N}@test.com",
+            "Passw0rd!long", ColdstartRoles.SuperAdmin);
+
+        // Act
+        var html = await client.GetStringAsync("/admin/cockpit");
+
+        // Assert — the company name is a link into its detail page, not plain text
+        html.Should().MatchRegex(@"<a class=""pz-row-link"" href=""/admin/customers/[0-9a-fA-F-]{36}"">");
+    }
 }

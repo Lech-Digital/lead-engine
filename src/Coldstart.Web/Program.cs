@@ -35,6 +35,7 @@ builder.Services.AddScoped<Coldstart.Application.FollowUps.ITrialFollowUpSender,
 builder.Services.Configure<Coldstart.Web.Api.AdminApiOptions>(builder.Configuration.GetSection("AdminApi"));
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<Coldstart.Web.Admin.AdminUserService>();
+builder.Services.AddScoped<Coldstart.Web.Admin.InquiryConversionLookup>();
 builder.Services.AddHealthChecks().AddCheck<Coldstart.Web.Health.DbHealthCheck>("db");
 
 builder.Services.AddSingleton(_ =>

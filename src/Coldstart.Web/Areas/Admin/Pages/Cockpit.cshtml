@@ -43,7 +43,7 @@
           @foreach (var row in Model.Customers)
           {
             <tr class="@(row.Alarm ? "pz-row-alarm" : null)">
-              <td>@row.Name</td>
+              <td><a class="pz-row-link" href="/admin/customers/@row.Id">@row.Name</a></td>
               <td><span class="pz-pill @(row.Plan == "Full" ? "pz-pill-yes" : "pz-pill-sent")">@row.Plan</span></td>
               <td>@row.HarvestStatus@(row.LastHarvestAt is { } at ? $" · {at:dd MMM HH:mm}" : "")</td>
               <td>@row.TotalLeads</td>
