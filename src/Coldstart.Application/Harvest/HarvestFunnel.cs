@@ -18,10 +18,15 @@ public sealed class HarvestFunnel
 
     // Legacy counters — preserve the exact pre-funnel meaning of HarvestReport's ScoredIn/
     // Deduped positions, which live consumers (HarvestRunAlert's ScoredIn - Deduped arithmetic)
-    // depend on. ScoredIn = passed the score gate (same event as CountPrioritised, tracked
-    // separately on purpose). Deduped = fingerprint-dedup drops ONLY — it must NOT become the
-    // full Vetoed aggregate, which also includes suppressed/below-score/post-enrichment drops
-    // that happen outside the old ScoredIn cohort and would make the subtraction go negative.
+    // depend on. Since the score gate was removed (Task 3), ScoredIn = survived veto and was
+    // ranked (same event as CountPrioritised, tracked separately on purpose) — every non-
+    // vetoed candidate now reaches this point, not just the ones that used to clear MinScore.
+    // Deduped = fingerprint-dedup drops ONLY — it must NOT become the full Vetoed aggregate,
+    // which also includes suppressed/veto/post-enrichment drops that happen outside the
+    // ScoredIn cohort and would make the subtraction go negative. ScoredIn - Deduped is now
+    // the size of the actual candidate pool handed to phase 2 (pre-enrich-cap) — an accurate
+    // count of that pool, whereas before it undercounted by however many the bogus score gate
+    // silently ate. HarvestRunAlert's diagnosis (LLM failure vs content starvation) still holds.
     public int ScoredIn { get; private set; }
     public int Deduped { get; private set; }
 

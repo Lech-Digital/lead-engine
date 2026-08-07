@@ -34,11 +34,12 @@ public class HarvestLeadsTests
     }
 
     [Fact]
-    public async Task RunAsync_SavesOnlyAboveThresholdNonDuplicateFits()
+    public async Task RunAsync_RanksHigherSignalItemAboveWeakOne_AndEnrichesOnlyTheTopWithinBudget()
     {
-        // Arrange
-        var good = new RawItem("fake", "1", "", "hiring outbound SDR", "", "u1", "");   // scores >= 0.4
-        var weak = new RawItem("fake", "2", "", "unrelated chatter", "", "u2", "");       // below threshold
+        // Arrange — Task 3 removed the score gate: "weak" no longer gets dropped for scoring
+        // low, it just ranks behind "good" and misses this run's enrich budget of 1.
+        var good = new RawItem("fake", "1", "", "hiring outbound SDR", "", "u1", "");   // matches keywords, ranks high
+        var weak = new RawItem("fake", "2", "", "unrelated chatter", "", "u2", "");       // no signal, ranks low
         var source = new FakeSource(good, weak);
         var enricher = Substitute.For<ILeadEnricher>();
         enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
@@ -50,16 +51,22 @@ public class HarvestLeadsTests
         Customer? target = null;
         customers.AddAsync(Arg.Do<Customer>(c => target = c), Arg.Any<CancellationToken>()).Returns(Task.CompletedTask);
         var tenantScope = Substitute.For<ITenantScope>();
-        var sut = new HarvestLeads([source], enricher, NoSecondaryContext(), leads, customers, NoSuppressions(), Niche(), tenantScope);
+        var niche = new NicheOptions { TargetKeywords = ["outbound"], BuyingSignals = ["hiring"], MinScore = 0.4, MaxEnrichPerRun = 1 };
+        var sut = new HarvestLeads([source], enricher, NoSecondaryContext(), leads, customers, NoSuppressions(), niche, tenantScope);
 
         // Act
         var report = await sut.RunAsync(CancellationToken.None);
 
-        // Assert — only the good item is enriched + saved under the created target customer; weak dropped at the score gate
+        // Assert — both items are harvested; neither is dropped by a score gate (there is none
+        // any more). "weak" is merely out-ranked and misses this run's budget of 1, it is not
+        // rejected or vetoed.
         report.Harvested.Should().Be(2);
+        report.DropReasons.Should().NotContainKey("below-score");
         report.Saved.Should().Be(1);
         await leads.Received(1).AddAsync(Arg.Is<Lead>(l => l.Company == "Acme" && l.Fingerprint == good.Fingerprint && l.CustomerId == target!.Id), Arg.Any<CancellationToken>());
         tenantScope.Received(1).SetCurrent(target!.Id.Value);
+        await enricher.DidNotReceive().EnrichAsync(
+            Arg.Is<RawItem>(i => i.Fingerprint == weak.Fingerprint), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -259,7 +266,10 @@ public class HarvestLeadsTests
     {
         // Arrange — seven raw items, each engineered to hit exactly one funnel decision point:
         //   suppressedItem              -> "suppressed" (pre-score GDPR check)
-        //   weakItem                    -> "below-score" (score gate)
+        //   weakItem                    -> no signal at all, but Task 3 removed the score gate,
+        //                                  so it now reaches the (unconfigured) enricher fake,
+        //                                  which returns null — the ordinary "LLM empty" path,
+        //                                  not a drop reason
         //   dupDbItem                   -> "duplicate-fingerprint" (DB check)
         //   dupRunItem1 + dupRunItem2   -> the second is "duplicate-fingerprint" (in-run HashSet)
         //   goodItem                    -> saved
@@ -298,24 +308,28 @@ public class HarvestLeadsTests
         // Act
         var report = await sut.RunAsync(CancellationToken.None);
 
-        // Assert — every distinct reason attributed with the right count
+        // Assert — every distinct reason attributed with the right count. "below-score" no
+        // longer exists as a reason — the score gate it named was deleted in Task 3.
         report.Harvested.Should().Be(7);
         report.DropReasons["suppressed"].Should().Be(1);
-        report.DropReasons["below-score"].Should().Be(1);
+        report.DropReasons.Should().NotContainKey("below-score");
         report.DropReasons["duplicate-fingerprint"].Should().Be(2);           // DB dup + in-run dup, same reason bucket
         report.DropReasons["suppressed-after-enrichment"].Should().Be(1);
 
-        // Assert — legacy ScoredIn/Deduped positions still mean what they meant before this task:
-        // ScoredIn = passed the score gate (5 items: dupDbItem, both run-dup items, goodItem,
-        // postEnrichSuppressedItem — suppressedItem and weakItem never reach the score gate).
-        // Deduped = fingerprint-dedup drops ONLY (2), not the full 5-drop Vetoed aggregate — this
-        // is exactly the invariant HarvestRunAlert's `ScoredIn - Deduped` arithmetic depends on.
-        report.ScoredIn.Should().Be(5);
+        // Assert — legacy ScoredIn/Deduped positions still mean what they meant structurally
+        // before this task, but the cohort they describe grew: ScoredIn now = survived veto and
+        // was ranked (6 items: weakItem, dupDbItem, both run-dup items, goodItem,
+        // postEnrichSuppressedItem — only suppressedItem never reaches ranking; weakItem is no
+        // longer excluded, because there is no score gate left to exclude it).
+        // Deduped = fingerprint-dedup drops ONLY (2), not the full Vetoed aggregate — this is
+        // exactly the invariant HarvestRunAlert's `ScoredIn - Deduped` arithmetic depends on.
+        report.ScoredIn.Should().Be(6);
         report.Deduped.Should().Be(2);
-        (report.ScoredIn - report.Deduped).Should().Be(3);   // must stay non-negative and meaningful
+        (report.ScoredIn - report.Deduped).Should().Be(4);   // now the true candidate-pool size (weakItem included)
 
-        // Only goodItem and the first run-dup item survive to be saved; the suppressed-after-
-        // enrichment company never gets persisted at all.
+        // Only goodItem and the first run-dup item survive to be saved; weakItem reaches the
+        // (unconfigured) enricher fake and gets a null result — treated as an ordinary LLM-empty
+        // outcome, not a drop; the suppressed-after-enrichment company never gets persisted at all.
         report.Saved.Should().Be(2);
         await leads.DidNotReceive().AddAsync(Arg.Is<Lead>(l => l.Company == "Bluecore Energy B.V."), Arg.Any<CancellationToken>());
     }

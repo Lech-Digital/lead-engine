@@ -50,8 +50,10 @@ internal sealed class HarvestLeads(
         var alreadyHeldCompanies = new HashSet<string>(
             existingLeads.Select(l => l.Company), StringComparer.OrdinalIgnoreCase);
 
-        // Phase 1: harvest + veto + cheap score gate + dedup (no LLM spend yet).
-        var candidates = new List<(RawItem item, SignalResult signal)>();
+        // Phase 1: harvest + veto + rank + dedup (no LLM spend yet). MinScore is no longer a
+        // drop-threshold — every candidate that survives the veto is ranked and queued; the
+        // spend cap (MaxEnrichPerRun below) decides who actually gets enriched this run.
+        var candidates = new List<(RawItem item, SignalResult signal, double rank)>();
         var seen = new HashSet<string>();   // fingerprints already taken this run
         foreach (var source in sources.Where(s => s.Enabled && allowsSource(s.Name)))
         {
@@ -65,7 +67,7 @@ internal sealed class HarvestLeads(
                 var vetoReason = CandidateVeto.Check(item, targeting.Disqualifiers, alreadyHeldCompanies, DateTimeOffset.UtcNow, TimeSpan.FromDays(14));
                 if (vetoReason is not null) { funnel.CountDropped(vetoReason); continue; }
                 var signal = SignalScorer.Score(item, runNiche, source.BaseScore, source.ScoreWeight);
-                if (signal.Score < runNiche.MinScore) { funnel.CountDropped("below-score"); continue; }
+                var rank = CandidatePriority.Rank(signal, source.BaseScore, ParsedDate(item), DateTimeOffset.UtcNow);
                 funnel.CountPrioritised();
                 if (await leads.ExistsByFingerprintAsync(item.Fingerprint, ct)) { funnel.CountDuplicateFingerprint(); continue; }
                 // The same item can surface twice in one run (e.g. an HN comment matching several
@@ -73,12 +75,14 @@ internal sealed class HarvestLeads(
                 // fingerprint index. Empty fingerprints are exempt (mirrors the partial DB index).
                 if (item.Fingerprint.Length != 0 && !seen.Add(item.Fingerprint)) { funnel.CountDuplicateFingerprint(); continue; }
                 funnel.CountTriaged();
-                candidates.Add((item, signal));
+                candidates.Add((item, signal, rank));
             }
         }
 
-        // Phase 2: enrich only the top-N by score (spend cap), save real fits.
-        foreach (var (item, signal) in candidates.OrderByDescending(c => c.signal.Score).Take(runNiche.MaxEnrichPerRun))
+        // Phase 2: enrich only the top-N by rank (spend cap), save real fits. Nothing is
+        // dropped for ranking low — an item that misses the cap this run simply queues
+        // behind better candidates and may be picked up on a later run.
+        foreach (var (item, signal, _) in candidates.OrderByDescending(c => c.rank).Take(runNiche.MaxEnrichPerRun))
         {
             // Best-effort: one extra public snippet about the company (its own announcement, a
             // founder quote) gives paragraph one something beyond the funding blurb to draw on.
@@ -122,6 +126,11 @@ internal sealed class HarvestLeads(
 
         return funnel.ToReport(savedLeads);
     }
+
+    // Several sources emit no usable CreatedAt at all — null here (not "now", not "epoch")
+    // is what lets CandidatePriority give it the neutral recency value instead of a penalty.
+    private static DateTimeOffset? ParsedDate(RawItem item) =>
+        DateTimeOffset.TryParse(item.CreatedAt, out var parsed) ? parsed : null;
 
     // Per-run options: per-customer targeting + the injected global source config.
     // The flywheel: the customer's recent skip reasons, formatted for the enricher prompt.
