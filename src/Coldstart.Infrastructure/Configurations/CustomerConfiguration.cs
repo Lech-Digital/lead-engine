@@ -58,5 +58,10 @@ internal sealed class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         builder.Property(c => c.RetentionReminderSent).HasDefaultValue(false);
         builder.Property(c => c.WhatsAppNumber);
         builder.Navigation(c => c.Profile).IsRequired();   // Profile is never null (defaults to Empty)
+
+        // Targeting has no EF mapping yet — it's a Domain-only value object for now (a later
+        // task adds the OwnsOne + migration). Without this, EF's convention discovery treats
+        // it as a related entity requiring its own primary key and refuses to build the model.
+        builder.Ignore(c => c.Targeting);
     }
 }
