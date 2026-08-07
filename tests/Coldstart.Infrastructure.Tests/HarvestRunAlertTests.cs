@@ -12,8 +12,8 @@ public class HarvestRunAlertTests
     [Fact]
     public void For_WhenCandidatesExistedButNothingEnriched_BlamesTheLlm()
     {
-        // Arrange — 10 scored in, 2 deduped → 8 real candidates reached the enricher and all failed
-        var report = new HarvestReport(Harvested: 20, ScoredIn: 10, Deduped: 2, Enriched: 0, Saved: 0, Rejected: 0);
+        // Arrange — 10 scored in, 2 deduped → 8 real candidates, all 8 sent to the enricher and all failed
+        var report = new HarvestReport(Harvested: 20, ScoredIn: 10, Deduped: 2, Enriched: 0, Saved: 0, Rejected: 0, Attempted: 8);
 
         // Act
         var alert = HarvestRunAlert.For(report, "Acme", CustomerId);
@@ -22,6 +22,25 @@ public class HarvestRunAlertTests
         alert.Should().NotBeNull();
         alert!.Value.Subject.Should().Contain("LLM");
         alert.Value.Body.Should().Contain("8 candidate");
+        alert.Value.Body.Should().Contain("8 of them were sent to the enricher");
+    }
+
+    [Fact]
+    public void For_WhenCandidatePoolExceedsTheEnrichCap_ReportsAttemptedCountNotTheWholePool()
+    {
+        // Arrange — Task 3 revived four sources: 180 items now survive veto+dedup in one run, but
+        // MaxEnrichPerRun only ever sends 30 to the enricher. The message must not claim all 180
+        // were tried and failed — that is the exact misdiagnosis the alert exists to prevent.
+        var report = new HarvestReport(Harvested: 400, ScoredIn: 180, Deduped: 0, Enriched: 0, Saved: 0, Rejected: 0, Attempted: 30);
+
+        // Act
+        var alert = HarvestRunAlert.For(report, "Acme", CustomerId);
+
+        // Assert — subject and body report the attempted count, and the body still names the
+        // full pool separately rather than conflating the two.
+        alert.Should().NotBeNull();
+        alert!.Value.Subject.Should().Contain("0 of 30 attempted").And.NotContain("180");
+        alert.Value.Body.Should().Contain("180 candidate").And.Contain("30 of them were sent to the enricher");
     }
 
     [Fact]

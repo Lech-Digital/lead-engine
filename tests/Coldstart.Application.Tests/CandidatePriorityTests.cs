@@ -24,16 +24,22 @@ public class CandidatePriorityTests
     }
 
     [Fact]
-    public void Rank_LowBaseScoreSource_StillProducesAUsableRank()
+    public void Rank_LowBaseScoreSourceWithMatchedSignal_OutranksHighBaseScoreSourceWithout()
     {
-        // Arrange — LangSearch's 0.25 base is below the old 0.4 gate, which killed it entirely
-        var signal = new SignalResult(0.25, []);
+        // Arrange — LangSearch's 0.25 base is below the old 0.4 gate, which killed it entirely.
+        // The real behaviour that matters isn't "produces a positive number" (trivially true of
+        // any positive-weighted formula) — it's that a real keyword hit on a low-base-score
+        // source must be able to outrank a no-signal item from funding's 0.50 base. That
+        // competitiveness is the whole reason the four dead sources can now compete at all.
+        var langSearchWithSignal = new SignalResult(0.8, ["raised seed"]);
+        var fundingWithoutSignal = new SignalResult(0.5, []);
 
         // Act
-        var rank = CandidatePriority.Rank(signal, 0.25, Now, Now);
+        var langSearchRank = CandidatePriority.Rank(langSearchWithSignal, 0.25, Now, Now);
+        var fundingRank = CandidatePriority.Rank(fundingWithoutSignal, 0.5, Now, Now);
 
-        // Assert — it must compete, not be discarded
-        rank.Should().BeGreaterThan(0);
+        // Assert
+        langSearchRank.Should().BeGreaterThan(fundingRank);
     }
 
     [Fact]

@@ -1,6 +1,7 @@
 namespace Coldstart.Application.Harvest;
 
 public sealed record HarvestReport(int Harvested, int ScoredIn, int Deduped, int Enriched, int Saved, int Rejected,
+    int Attempted = 0,
     IReadOnlyList<SavedLead>? SavedLeads = null,
     IReadOnlyDictionary<string, int>? DropReasons = null,
     IReadOnlyDictionary<string, int>? PerSource = null)

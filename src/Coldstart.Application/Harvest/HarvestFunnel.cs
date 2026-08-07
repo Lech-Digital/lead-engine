@@ -12,6 +12,7 @@ public sealed class HarvestFunnel
     public int Vetoed { get; private set; }
     public int Prioritised { get; private set; }
     public int Triaged { get; private set; }
+    public int Attempted { get; private set; }
     public int Enriched { get; private set; }
     public int Saved { get; private set; }
     public int Rejected { get; private set; }
@@ -36,6 +37,10 @@ public sealed class HarvestFunnel
     public void CountHarvested() => Harvested++;
     public void CountPrioritised() { Prioritised++; ScoredIn++; }
     public void CountTriaged() => Triaged++;
+    // One per actual call to the enricher (success or failure) — distinct from ScoredIn/
+    // Deduped's candidate-pool size, because MaxEnrichPerRun caps how many of that pool are
+    // ever sent. HarvestRunAlert needs this to avoid implying the whole pool was tried.
+    public void CountAttempted() => Attempted++;
     public void CountEnriched() => Enriched++;
     public void CountRejected() => Rejected++;
 
@@ -61,5 +66,6 @@ public sealed class HarvestFunnel
     }
 
     public HarvestReport ToReport(IReadOnlyList<SavedLead> savedLeads) =>
-        new(Harvested, ScoredIn, Deduped, Enriched, Saved, Rejected, savedLeads, _dropReasons, _perSource);
+        new(Harvested, ScoredIn, Deduped, Enriched, Saved, Rejected, Attempted: Attempted,
+            SavedLeads: savedLeads, DropReasons: _dropReasons, PerSource: _perSource);
 }

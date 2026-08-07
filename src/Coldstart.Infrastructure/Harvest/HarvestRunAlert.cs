@@ -14,9 +14,15 @@ internal static class HarvestRunAlert
         if (report.Enriched > 0 || report.ScoredIn == 0) return null;
         var candidates = report.ScoredIn - report.Deduped;
         if (candidates > 0)
-            return ($"Harvest enriched 0 of {candidates} for {customerName} — LLM quota?",
-                $"The run for {customerName} ({customerId}) had {candidates} candidate(s) left after dedup " +
-                "but every enrichment call failed. Check the LLM provider quota/keys.");
+            // report.Attempted is the number of actual enricher calls (bounded by MaxEnrichPerRun),
+            // which can be far smaller than candidates now that every veto-surviving item across
+            // all five sources joins the pool — say so honestly, or an operator reading "180
+            // candidates but every enrichment call failed" will conclude the LLM is comprehensively
+            // broken when only 30 were ever tried and 150 simply queue for a later run.
+            return ($"Harvest enriched 0 of {report.Attempted} attempted for {customerName} — LLM quota?",
+                $"The run for {customerName} ({customerId}) had {candidates} candidate(s) left after dedup; " +
+                $"{report.Attempted} of them were sent to the enricher (the rest queue for a later run) and " +
+                "every attempt failed. Check the LLM provider quota/keys.");
         return ($"Harvest found nothing new for {customerName} — sources stale?",
             $"The run for {customerName} ({customerId}) scored in {report.ScoredIn} item(s), but dedup matched " +
             "every one against already-harvested leads — the sources produced nothing new. Check the search " +

@@ -98,6 +98,7 @@ internal sealed class HarvestLeads(
                 try { secondaryContext = await secondaryContextLookup.LookupAsync(secondaryKey, ct); }
                 catch (Exception) when (!ct.IsCancellationRequested) { /* best-effort by contract */ }
             }
+            funnel.CountAttempted();               // an actual enricher call, win or lose — distinct from the candidate pool size
             var result = await enricher.EnrichAsync(item, runNiche, signal, sender, secondaryContext, ct);
             if (result is null) continue;         // LLM failed/empty → retried next run
             funnel.CountEnriched();
