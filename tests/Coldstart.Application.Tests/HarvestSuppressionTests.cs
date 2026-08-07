@@ -48,7 +48,7 @@ public class HarvestSuppressionTests
         var item = new RawItem("fake", "1", "Bluecore Energy raises €4M", "hiring outbound SDR", "", "u1", "");
         var enricher = Substitute.For<ILeadEnricher>();
         var (leads, customers, suppressions) = Deps("bluecore energy");
-        var sut = new HarvestLeads([new FakeSource(item)], enricher, NoSecondaryContext(), leads, customers, suppressions, Niche(), Substitute.For<ITenantScope>());
+        var sut = new HarvestLeads([new FakeSource(item)], enricher, HarvestLeadsTests.AlwaysFitTriage(), NoSecondaryContext(), leads, customers, suppressions, Niche(), Substitute.For<ITenantScope>());
 
         // Act
         var report = await sut.RunAsync(CancellationToken.None);
@@ -68,7 +68,7 @@ public class HarvestSuppressionTests
         enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
             .Returns(new EnrichmentResult(Fit.Yes, "s", "subj", "draft", "Bluecore Energy B.V."));
         var (leads, customers, suppressions) = Deps("bluecore energy");
-        var sut = new HarvestLeads([new FakeSource(item)], enricher, NoSecondaryContext(), leads, customers, suppressions, Niche(), Substitute.For<ITenantScope>());
+        var sut = new HarvestLeads([new FakeSource(item)], enricher, HarvestLeadsTests.AlwaysFitTriage(), NoSecondaryContext(), leads, customers, suppressions, Niche(), Substitute.For<ITenantScope>());
 
         // Act
         var report = await sut.RunAsync(CancellationToken.None);
@@ -87,7 +87,7 @@ public class HarvestSuppressionTests
         enricher.EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(), Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
             .Returns(new EnrichmentResult(Fit.Yes, "s", "subj", "draft", "Acme"));
         var (leads, customers, suppressions) = Deps("bluecore energy");
-        var sut = new HarvestLeads([new FakeSource(item)], enricher, NoSecondaryContext(), leads, customers, suppressions, Niche(), Substitute.For<ITenantScope>());
+        var sut = new HarvestLeads([new FakeSource(item)], enricher, HarvestLeadsTests.AlwaysFitTriage(), NoSecondaryContext(), leads, customers, suppressions, Niche(), Substitute.For<ITenantScope>());
 
         // Act
         var report = await sut.RunAsync(CancellationToken.None);

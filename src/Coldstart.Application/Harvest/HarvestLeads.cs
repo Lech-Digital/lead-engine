@@ -6,6 +6,7 @@ namespace Coldstart.Application.Harvest;
 internal sealed class HarvestLeads(
     IEnumerable<ILeadSource> sources,
     ILeadEnricher enricher,
+    ILeadTriage triage,
     ISecondaryContextLookup secondaryContextLookup,
     ILeadRepository leads,
     ICustomerRepository customers,
@@ -19,7 +20,7 @@ internal sealed class HarvestLeads(
         var target = await ResolveTargetCustomerAsync(ct);
         tenantScope.SetCurrent(target.Id.Value);
         var sender = new SenderContext(target.Profile.Brief, target.Profile.MentionSourceTool);
-        return await RunPipelineAsync(target.Id, HarvestTargeting.FromNiche(niche), sender, target.AllowsSource, ct);
+        return await RunPipelineAsync(target.Id, HarvestTargeting.FromNiche(niche), target.Targeting, sender, target.AllowsSource, ct);
     }
 
     public async Task<HarvestReport> RunForCustomerAsync(Guid customerId, HarvestTargeting targeting, CancellationToken ct)
@@ -33,12 +34,13 @@ internal sealed class HarvestLeads(
                 customer.Profile.PitchLine, customer.Profile.CtaLine, customer.Profile.CtaButtonUrl,
                 customer.Profile.IntroLine, customer.Profile.SubjectTemplate,
                 SkipFeedback: await BuildSkipFeedbackAsync(cid, ct));
-        return await RunPipelineAsync(cid, targeting, sender, customer is null ? _ => true : customer.AllowsSource, ct);
+        return await RunPipelineAsync(cid, targeting, customer?.Targeting ?? Targeting.Empty, sender, customer is null ? _ => true : customer.AllowsSource, ct);
     }
 
-    private async Task<HarvestReport> RunPipelineAsync(CustomerId cid, HarvestTargeting targeting, SenderContext sender, Func<string, bool> allowsSource, CancellationToken ct)
+    private async Task<HarvestReport> RunPipelineAsync(CustomerId cid, HarvestTargeting targeting, Targeting structuredTargeting, SenderContext sender, Func<string, bool> allowsSource, CancellationToken ct)
     {
         var runNiche = BuildRunNiche(targeting);
+        var criteria = TriageCriteria.Describe(structuredTargeting, runNiche.Offer);
         var funnel = new HarvestFunnel();
         var savedLeads = new List<SavedLead>();
         // GDPR objection list (privacy policy §5): matching items never enter the pipeline.
@@ -74,15 +76,65 @@ internal sealed class HarvestLeads(
                 // queries). Dedup within the run too, or the second save collides on the unique
                 // fingerprint index. Empty fingerprints are exempt (mirrors the partial DB index).
                 if (item.Fingerprint.Length != 0 && !seen.Add(item.Fingerprint)) { funnel.CountDuplicateFingerprint(); continue; }
-                funnel.CountTriaged();
                 candidates.Add((item, signal, rank));
             }
         }
 
-        // Phase 2: enrich only the top-N by rank (spend cap), save real fits. Nothing is
-        // dropped for ranking low — an item that misses the cap this run simply queues
-        // behind better candidates and may be picked up on a later run.
-        foreach (var (item, signal, _) in candidates.OrderByDescending(c => c.rank).Take(runNiche.MaxEnrichPerRun))
+        // Phase 2: triage — a cheap LLM verdict gates the (far more expensive) enrichment
+        // call. Only the top MaxTriagePerRun ranked candidates are judged at all; that cap is
+        // a COUNT OF CALLS, never a computed price (see NicheOptions.MaxTriagePerRun).
+        var ranked = candidates.OrderByDescending(c => c.rank).ToList();
+        var judged = new List<(RawItem item, SignalResult signal, TriageVerdict? verdict)>();
+        foreach (var (item, signal, _) in ranked.Take(runNiche.MaxTriagePerRun))
+        {
+            TriageVerdict? verdict;
+            try { verdict = await triage.JudgeAsync(item, criteria, ct); }
+            catch { verdict = null; }   // a failing triage call must never abort the batch
+            funnel.CountTriaged();
+            judged.Add((item, signal, verdict));
+        }
+
+        // "Unavailable entirely" (no API key configured, etc.) is detected purely from the
+        // shape of the results — every single call this run came back null — never by
+        // inspecting configuration, so the Application layer stays free of provider
+        // knowledge. Degrade to the pre-triage behaviour rather than produce zero leads.
+        var triageUnavailable = judged.Count > 0 && judged.All(j => j.verdict is null);
+
+        var toEnrich = new List<(RawItem item, SignalResult signal, string? triageCompany)>();
+        if (triageUnavailable)
+        {
+            toEnrich.AddRange(ranked.Take(runNiche.MaxEnrichPerRun).Select(c => (c.item, c.signal, (string?)null)));
+        }
+        else
+        {
+            foreach (var (item, signal, verdict) in judged)
+            {
+                // A null verdict here means triage FAILED for this one candidate (transport
+                // error, unparseable answer, …) — treated as Unsure, not as a rejection, so a
+                // good prospect is never silently discarded for an LLM hiccup. It simply does
+                // not proceed this run and can be picked up on a later pass.
+                if (verdict is null) { funnel.CountDropped("triage-unsure"); continue; }
+                switch (verdict.Decision)
+                {
+                    case TriageDecision.Fit:
+                        toEnrich.Add((item, signal, verdict.Company));
+                        break;
+                    case TriageDecision.NotFit:
+                        funnel.CountDropped("triage-not-fit");   // the whole point: no draft, no enrichment call
+                        break;
+                    default:
+                        funnel.CountDropped("triage-unsure");
+                        break;
+                }
+            }
+            toEnrich = toEnrich.Take(runNiche.MaxEnrichPerRun).ToList();
+        }
+
+        // Phase 3: enrich only what triage passed (or, in the fallback path, the top-N by
+        // rank), save real fits. Nothing here is dropped for ranking low — an item that
+        // misses the cap this run simply queues behind better candidates and may be picked
+        // up on a later run.
+        foreach (var (item, signal, triageCompany) in toEnrich)
         {
             // Best-effort: one extra public snippet about the company (its own announcement, a
             // founder quote) gives paragraph one something beyond the funding blurb to draw on.
@@ -102,7 +154,11 @@ internal sealed class HarvestLeads(
             var result = await enricher.EnrichAsync(item, runNiche, signal, sender, secondaryContext, ct);
             if (result is null) continue;         // LLM failed/empty → retried next run
             funnel.CountEnriched();
-            var company = string.IsNullOrWhiteSpace(result.Company) || result.Company == "-" ? item.Author : result.Company;
+            // Entity-extraction fix: when triage already worked out the real company, prefer
+            // it over item.Author — production stored "Menlo Ventures" and
+            // "news.crunchbase.com" as prospects because the author field was trusted blindly.
+            var fallbackCompany = triageCompany ?? item.Author;
+            var company = string.IsNullOrWhiteSpace(result.Company) || result.Company == "-" ? fallbackCompany : result.Company;
             // Second gate: the true company name is often only known after enrichment.
             if (SuppressionMatcher.IsMatch(suppressed, company)) { funnel.CountDropped("suppressed-after-enrichment"); continue; }
             // Real fits get the sender's hardcoded pitch/CTA appended; rejected drafts are "-".
@@ -158,6 +214,9 @@ internal sealed class HarvestLeads(
         Disqualifiers = t.Disqualifiers.ToList(),
         MinScore = t.MinScore,
         MaxEnrichPerRun = t.MaxEnrichPerRun,
+        // Not part of HarvestTargeting (a per-customer concept elsewhere) — the triage budget
+        // is a global operator knob, so it always comes from the injected settings.
+        MaxTriagePerRun = niche.MaxTriagePerRun,
         HackerNews = niche.HackerNews,
         Funding = niche.Funding,
         FundingNl = niche.FundingNl,

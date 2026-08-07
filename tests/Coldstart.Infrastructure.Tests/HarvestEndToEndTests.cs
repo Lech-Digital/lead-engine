@@ -42,8 +42,13 @@ public class HarvestEndToEndTests(PostgresFixture fixture) : IClassFixture<Postg
             .Returns(new EnrichmentResult(Fit.Yes, "sum", "subj", "draft", "Acme"));
         var lookup = Substitute.For<ISecondaryContextLookup>();
         lookup.LookupAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns((string?)null);
+        // Always Fit, no company opinion of its own — this test exercises the persistence
+        // path, not the triage stage, so it must not be gated by it.
+        var triage = Substitute.For<ILeadTriage>();
+        triage.JudgeAsync(Arg.Any<RawItem>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(new TriageVerdict(TriageDecision.Fit, null, [], []));
         HarvestLeads Sut(ColdstartDbContext ctx, MutableTenantContext scope) =>
-            new([new OneSource(item)], enricher, lookup, new LeadRepository(ctx), new CustomerRepository(ctx), new SuppressionRepository(ctx), niche, scope);
+            new([new OneSource(item)], enricher, triage, lookup, new LeadRepository(ctx), new CustomerRepository(ctx), new SuppressionRepository(ctx), niche, scope);
 
         // Act
         var first = await Sut(db, tenantScope).RunAsync(CancellationToken.None);

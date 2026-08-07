@@ -10,12 +10,12 @@ namespace Coldstart.Application.Tests;
 
 public class HarvestLeadsTests
 {
-    private static NicheOptions Niche() => new()
+    internal static NicheOptions Niche() => new()
     {
         TargetKeywords = ["outbound"], BuyingSignals = ["hiring"], MinScore = 0.4, MaxEnrichPerRun = 10,
     };
 
-    private sealed class FakeSource(params RawItem[] items) : ILeadSource
+    internal sealed class FakeSource(params RawItem[] items) : ILeadSource
     {
         public string Name => "fake";
         public double BaseScore => 0;
@@ -26,11 +26,22 @@ public class HarvestLeadsTests
 
     // Default: no secondary snippet available. Individual tests override when the
     // lookup's behaviour (success/throw) is the thing under test.
-    private static ISecondaryContextLookup NoSecondaryContext()
+    internal static ISecondaryContextLookup NoSecondaryContext()
     {
         var lookup = Substitute.For<ISecondaryContextLookup>();
         lookup.LookupAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns((string?)null);
         return lookup;
+    }
+
+    // Default: triage waves every candidate through as a Fit with no company opinion of its
+    // own — the tests that predate the triage stage exercise the enrichment/save behaviour
+    // and must not be gated by it. Tests of the triage stage itself build their own substitute.
+    internal static ILeadTriage AlwaysFitTriage()
+    {
+        var triage = Substitute.For<ILeadTriage>();
+        triage.JudgeAsync(Arg.Any<RawItem>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(new TriageVerdict(TriageDecision.Fit, null, [], []));
+        return triage;
     }
 
     [Fact]
@@ -52,7 +63,7 @@ public class HarvestLeadsTests
         customers.AddAsync(Arg.Do<Customer>(c => target = c), Arg.Any<CancellationToken>()).Returns(Task.CompletedTask);
         var tenantScope = Substitute.For<ITenantScope>();
         var niche = new NicheOptions { TargetKeywords = ["outbound"], BuyingSignals = ["hiring"], MinScore = 0.4, MaxEnrichPerRun = 1 };
-        var sut = new HarvestLeads([source], enricher, NoSecondaryContext(), leads, customers, NoSuppressions(), niche, tenantScope);
+        var sut = new HarvestLeads([source], enricher, AlwaysFitTriage(), NoSecondaryContext(), leads, customers, NoSuppressions(), niche, tenantScope);
 
         // Act
         var report = await sut.RunAsync(CancellationToken.None);
@@ -83,7 +94,7 @@ public class HarvestLeadsTests
         leads.ExistsByFingerprintAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(false);
         var customers = Substitute.For<ICustomerRepository>();
         customers.GetByNameAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns((Customer?)null);
-        var sut = new HarvestLeads([new FakeSource(first, again)], enricher, NoSecondaryContext(), leads, customers, NoSuppressions(), Niche(), Substitute.For<ITenantScope>());
+        var sut = new HarvestLeads([new FakeSource(first, again)], enricher, AlwaysFitTriage(), NoSecondaryContext(), leads, customers, NoSuppressions(), Niche(), Substitute.For<ITenantScope>());
 
         // Act
         var report = await sut.RunAsync(CancellationToken.None);
@@ -111,7 +122,7 @@ public class HarvestLeadsTests
         leads.ExistsByFingerprintAsync(no.Fingerprint, Arg.Any<CancellationToken>()).Returns(false);
         var customers = Substitute.For<ICustomerRepository>();
         customers.GetByNameAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns((Customer?)null);
-        var sut = new HarvestLeads([new FakeSource(dup, no)], enricher, NoSecondaryContext(), leads, customers, NoSuppressions(), Niche(), Substitute.For<ITenantScope>());
+        var sut = new HarvestLeads([new FakeSource(dup, no)], enricher, AlwaysFitTriage(), NoSecondaryContext(), leads, customers, NoSuppressions(), Niche(), Substitute.For<ITenantScope>());
 
         // Act
         var report = await sut.RunAsync(CancellationToken.None);
@@ -148,7 +159,7 @@ public class HarvestLeadsTests
         target.UpdateProfile(new CompanyProfile(null, null, null, null, null, null, null, "We help dentists.", true));
         var customers = Substitute.For<ICustomerRepository>();
         customers.GetByNameAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(target);
-        var sut = new HarvestLeads([source], enricher, NoSecondaryContext(), leads, customers, NoSuppressions(), Niche(), Substitute.For<ITenantScope>());
+        var sut = new HarvestLeads([source], enricher, AlwaysFitTriage(), NoSecondaryContext(), leads, customers, NoSuppressions(), Niche(), Substitute.For<ITenantScope>());
 
         // Act
         await sut.RunAsync(CancellationToken.None);
@@ -185,7 +196,7 @@ public class HarvestLeadsTests
 
         var globalNiche = new NicheOptions();   // provides HackerNews/Funding source config
         var scope = Substitute.For<ITenantScope>();
-        var sut = new HarvestLeads(new[] { source }, enricher, NoSecondaryContext(), leads, customers, NoSuppressions(), globalNiche, scope);
+        var sut = new HarvestLeads(new[] { source }, enricher, AlwaysFitTriage(), NoSecondaryContext(), leads, customers, NoSuppressions(), globalNiche, scope);
         var targeting = new HarvestTargeting("offer", ["dentist"], ["hiring"], [], "Acme", "", 0.4, 30);
 
         // Act
@@ -214,7 +225,7 @@ public class HarvestLeadsTests
             .Returns(new EnrichmentResult(Fit.Yes, "s", "subj", "draft", "Acme"));
         var lookup = Substitute.For<ISecondaryContextLookup>();
         lookup.LookupAsync("SomeCo", Arg.Any<CancellationToken>()).Returns("extra snippet");
-        var sut = new HarvestLeads([source], enricher, lookup, leads, customers, NoSuppressions(), Niche(), Substitute.For<ITenantScope>());
+        var sut = new HarvestLeads([source], enricher, AlwaysFitTriage(), lookup, leads, customers, NoSuppressions(), Niche(), Substitute.For<ITenantScope>());
         var targeting = new HarvestTargeting("offer", ["outbound"], ["hiring"], [], "Acme", "", 0.4, 10);
 
         // Act — run the pipeline
@@ -242,7 +253,7 @@ public class HarvestLeadsTests
             .Returns(new EnrichmentResult(Fit.Yes, "s", "subj", "draft", "Acme"));
         var lookup = Substitute.For<ISecondaryContextLookup>();
         lookup.LookupAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).ThrowsAsync(new InvalidOperationException("boom"));
-        var sut = new HarvestLeads([source], enricher, lookup, leads, customers, NoSuppressions(), Niche(), Substitute.For<ITenantScope>());
+        var sut = new HarvestLeads([source], enricher, AlwaysFitTriage(), lookup, leads, customers, NoSuppressions(), Niche(), Substitute.For<ITenantScope>());
         var targeting = new HarvestTargeting("offer", ["outbound"], ["hiring"], [], "Acme", "", 0.4, 10);
 
         // Act — run the pipeline
@@ -254,7 +265,7 @@ public class HarvestLeadsTests
             Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), null, Arg.Any<CancellationToken>());
     }
 
-    private static ISuppressionRepository NoSuppressions()
+    internal static ISuppressionRepository NoSuppressions()
     {
         var repo = Substitute.For<ISuppressionRepository>();
         repo.ValuesAsync(Arg.Any<CancellationToken>()).Returns([]);
@@ -303,7 +314,7 @@ public class HarvestLeadsTests
         var suppressions = Substitute.For<ISuppressionRepository>();
         suppressions.ValuesAsync(Arg.Any<CancellationToken>()).Returns(["blockedco", "bluecore energy"]);
 
-        var sut = new HarvestLeads([source], enricher, NoSecondaryContext(), leads, customers, suppressions, Niche(), Substitute.For<ITenantScope>());
+        var sut = new HarvestLeads([source], enricher, AlwaysFitTriage(), NoSecondaryContext(), leads, customers, suppressions, Niche(), Substitute.For<ITenantScope>());
 
         // Act
         var report = await sut.RunAsync(CancellationToken.None);
