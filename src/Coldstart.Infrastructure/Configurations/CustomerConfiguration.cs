@@ -59,9 +59,16 @@ internal sealed class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         builder.Property(c => c.WhatsAppNumber);
         builder.Navigation(c => c.Profile).IsRequired();   // Profile is never null (defaults to Empty)
 
-        // Targeting has no EF mapping yet — it's a Domain-only value object for now (a later
-        // task adds the OwnsOne + migration). Without this, EF's convention discovery treats
-        // it as a related entity requiring its own primary key and refuses to build the model.
-        builder.Ignore(c => c.Targeting);
+        builder.OwnsOne(c => c.Targeting, t =>
+        {
+            t.Property(x => x.Industries).HasColumnName("TargetingIndustries");
+            t.Property(x => x.Geographies).HasColumnName("TargetingGeographies");
+            t.Property(x => x.BuyerRoles).HasColumnName("TargetingBuyerRoles");
+            t.Property(x => x.SizeMin).HasColumnName("TargetingSizeMin");
+            t.Property(x => x.SizeMax).HasColumnName("TargetingSizeMax");
+            t.Property(x => x.TriggerEvents).HasColumnName("TargetingTriggerEvents");
+            t.Property(x => x.Exclusions).HasColumnName("TargetingExclusions");
+        });
+        builder.Navigation(c => c.Targeting).IsRequired();   // never null; defaults to Targeting.Empty
     }
 }
