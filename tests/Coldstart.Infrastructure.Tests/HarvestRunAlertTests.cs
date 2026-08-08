@@ -44,6 +44,40 @@ public class HarvestRunAlertTests
     }
 
     [Fact]
+    public void For_WhenEveryCandidateWasTriagedNotFit_ReportsStrictIcpInsteadOfBlamingTheLlm()
+    {
+        // Arrange — Task 5's triage gate correctly rejected every candidate before a single
+        // (paid) enrichment call was made: Attempted stays 0. This is the system working
+        // exactly as designed and must never look like an LLM outage.
+        var report = new HarvestReport(Harvested: 10, ScoredIn: 5, Deduped: 0, Enriched: 0, Saved: 0, Rejected: 0,
+            Attempted: 0, DropReasons: new Dictionary<string, int> { ["triage-not-fit"] = 5 });
+
+        // Act
+        var alert = HarvestRunAlert.For(report, "Acme", CustomerId);
+
+        // Assert — a calmer, distinct signal about a strict ICP, never blaming the LLM
+        alert.Should().NotBeNull();
+        alert!.Value.Subject.Should().NotContain("LLM").And.Contain("strict ICP");
+        alert.Value.Body.Should().Contain("triage judged 5").And.NotContain("LLM provider quota");
+    }
+
+    [Fact]
+    public void For_WhenSomeTriagedNotFitButEnrichmentWasAlsoAttemptedAndFailed_StillBlamesTheLlm()
+    {
+        // Arrange — a genuine enrichment failure must still alert exactly as before, even if
+        // triage-not-fit also appears in the drop reasons for other candidates in the same run.
+        var report = new HarvestReport(Harvested: 10, ScoredIn: 5, Deduped: 0, Enriched: 0, Saved: 0, Rejected: 0,
+            Attempted: 3, DropReasons: new Dictionary<string, int> { ["triage-not-fit"] = 2 });
+
+        // Act
+        var alert = HarvestRunAlert.For(report, "Acme", CustomerId);
+
+        // Assert
+        alert.Should().NotBeNull();
+        alert!.Value.Subject.Should().Contain("LLM");
+    }
+
+    [Fact]
     public void For_WhenEverythingDeduped_ReportsStaleSourcesInsteadOfBlamingTheLlm()
     {
         // Arrange — the 2026-08-02/03 incident: all scored-in items were already-known fingerprints

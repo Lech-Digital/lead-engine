@@ -120,15 +120,18 @@ public class HarvestTriageStageTests
     [Fact]
     public async Task RunForCustomerAsync_TriageUnavailableEntirely_FallsBackToEnrichingTopCandidates()
     {
-        // Arrange — every triage call comes back null this run (e.g. no API key configured).
-        // The documented degrade path: no triage must never mean no leads.
+        // Arrange — every triage call comes back null this run (e.g. no API key configured),
+        // across a batch of 3 — at or above MinBatchForOutageDetection, so "every call came
+        // back null" is read as a genuine outage rather than isolated bad luck. The
+        // documented degrade path: no triage must never mean no leads.
         var cid = Guid.NewGuid();
         var customer = Customer.Create("Acme");
         var customers = Substitute.For<ICustomerRepository>();
         customers.GetAsync(new CustomerId(cid), Arg.Any<CancellationToken>()).Returns(customer);
         var itemA = new RawItem("fake", "a", "", "hiring outbound SDR", "", "u1", "");
         var itemB = new RawItem("fake", "b", "", "hiring outbound SDR", "", "u2", "");
-        var source = new HarvestLeadsTests.FakeSource(itemA, itemB);
+        var itemC = new RawItem("fake", "c", "", "hiring outbound SDR", "", "u3", "");
+        var source = new HarvestLeadsTests.FakeSource(itemA, itemB, itemC);
         var leads = Substitute.For<ILeadRepository>();
         leads.ExistsByFingerprintAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(false);
         var enricher = Substitute.For<ILeadEnricher>();
@@ -143,17 +146,84 @@ public class HarvestTriageStageTests
         // Act
         var report = await sut.RunForCustomerAsync(cid, targeting, CancellationToken.None);
 
-        // Assert — both candidates are enriched directly, bypassing the (unavailable) gate
+        // Assert — all three candidates are enriched directly, bypassing the (unavailable) gate
         await enricher.Received(1).EnrichAsync(Arg.Is<RawItem>(i => i.ExternalId == "a"), Arg.Any<NicheOptions>(),
             Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
         await enricher.Received(1).EnrichAsync(Arg.Is<RawItem>(i => i.ExternalId == "b"), Arg.Any<NicheOptions>(),
             Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
-        report.Saved.Should().Be(2);
+        await enricher.Received(1).EnrichAsync(Arg.Is<RawItem>(i => i.ExternalId == "c"), Arg.Any<NicheOptions>(),
+            Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
+        report.Saved.Should().Be(3);
         // The fallback bypasses per-candidate gating entirely — nothing here was ever
         // attributed to a triage drop reason, or the funnel would misreport genuine
         // enrichments as rejections.
         report.DropReasons.Should().NotContainKey("triage-unsure");
         report.DropReasons.Should().NotContainKey("triage-not-fit");
+    }
+
+    [Fact]
+    public async Task RunForCustomerAsync_TriageAllNullWithOnlyOneCandidate_DoesNotFallBackOrEnrich()
+    {
+        // Arrange — a single candidate whose triage call returns null. At batch size 1 this
+        // is indistinguishable from an outage, so it must NOT be read as one: reading it that
+        // way would enrich an unqualified candidate unconditionally on every isolated
+        // failure, which is the expensive, unqualified direction this project exists to avoid.
+        var cid = Guid.NewGuid();
+        var customer = Customer.Create("Acme");
+        var customers = Substitute.For<ICustomerRepository>();
+        customers.GetAsync(new CustomerId(cid), Arg.Any<CancellationToken>()).Returns(customer);
+        var item = new RawItem("fake", "1", "", "hiring outbound SDR", "", "u1", "");
+        var source = new HarvestLeadsTests.FakeSource(item);
+        var leads = Substitute.For<ILeadRepository>();
+        leads.ExistsByFingerprintAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(false);
+        var enricher = Substitute.For<ILeadEnricher>();
+        var triage = Substitute.For<ILeadTriage>();
+        triage.JudgeAsync(Arg.Any<RawItem>(), Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns((TriageVerdict?)null);
+        var sut = new HarvestLeads([source], enricher, triage, HarvestLeadsTests.NoSecondaryContext(), leads, customers,
+            HarvestLeadsTests.NoSuppressions(), HarvestLeadsTests.Niche(), Substitute.For<ITenantScope>());
+        var targeting = new HarvestTargeting("offer", ["outbound"], ["hiring"], [], "Acme", "", 0.4, 10);
+
+        // Act
+        var report = await sut.RunForCustomerAsync(cid, targeting, CancellationToken.None);
+
+        // Assert — treated as an ordinary per-candidate unsure, not an outage: no enrichment,
+        // no leads this run, and the candidate simply queues to be reconsidered next run.
+        await enricher.DidNotReceive().EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(),
+            Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
+        report.Saved.Should().Be(0);
+        report.DropReasons["triage-unsure"].Should().Be(1);
+    }
+
+    [Fact]
+    public async Task RunForCustomerAsync_TriageAllNullWithOnlyTwoCandidates_DoesNotFallBackOrEnrich()
+    {
+        // Arrange — two candidates, both triage calls null. Still below
+        // MinBatchForOutageDetection, so two ordinary independent failures must not be read
+        // as a systemic outage either.
+        var cid = Guid.NewGuid();
+        var customer = Customer.Create("Acme");
+        var customers = Substitute.For<ICustomerRepository>();
+        customers.GetAsync(new CustomerId(cid), Arg.Any<CancellationToken>()).Returns(customer);
+        var itemA = new RawItem("fake", "a", "", "hiring outbound SDR", "", "u1", "");
+        var itemB = new RawItem("fake", "b", "", "hiring outbound SDR", "", "u2", "");
+        var source = new HarvestLeadsTests.FakeSource(itemA, itemB);
+        var leads = Substitute.For<ILeadRepository>();
+        leads.ExistsByFingerprintAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(false);
+        var enricher = Substitute.For<ILeadEnricher>();
+        var triage = Substitute.For<ILeadTriage>();
+        triage.JudgeAsync(Arg.Any<RawItem>(), Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns((TriageVerdict?)null);
+        var sut = new HarvestLeads([source], enricher, triage, HarvestLeadsTests.NoSecondaryContext(), leads, customers,
+            HarvestLeadsTests.NoSuppressions(), HarvestLeadsTests.Niche(), Substitute.For<ITenantScope>());
+        var targeting = new HarvestTargeting("offer", ["outbound"], ["hiring"], [], "Acme", "", 0.4, 10);
+
+        // Act
+        var report = await sut.RunForCustomerAsync(cid, targeting, CancellationToken.None);
+
+        // Assert — neither candidate is enriched; both stay per-candidate unsure
+        await enricher.DidNotReceive().EnrichAsync(Arg.Any<RawItem>(), Arg.Any<NicheOptions>(),
+            Arg.Any<SignalResult>(), Arg.Any<SenderContext>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
+        report.Saved.Should().Be(0);
+        report.DropReasons["triage-unsure"].Should().Be(2);
     }
 
     [Fact]

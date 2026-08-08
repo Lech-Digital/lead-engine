@@ -14,6 +14,11 @@ internal sealed class HarvestLeads(
     NicheOptions niche,
     ITenantScope tenantScope) : IHarvestLeads
 {
+    // The smallest triage batch an "every call came back null" observation is allowed to be
+    // read as a provider outage rather than as isolated bad luck — see the comment at its
+    // one use site in RunPipelineAsync.
+    private const int MinBatchForOutageDetection = 3;
+
     public async Task<HarvestReport> RunAsync(CancellationToken ct)
     {
         // Console path: resolve the configured target tenant, build sender from ITS profile (unchanged).
@@ -98,7 +103,19 @@ internal sealed class HarvestLeads(
         // shape of the results — every single call this run came back null — never by
         // inspecting configuration, so the Application layer stays free of provider
         // knowledge. Degrade to the pre-triage behaviour rather than produce zero leads.
-        var triageUnavailable = judged.Count > 0 && judged.All(j => j.verdict is null);
+        //
+        // Below MinBatchForOutageDetection, "every call came back null" cannot be told apart
+        // from ordinary bad luck on one or two independent candidates — at batch size 1 a
+        // single unlucky failure would otherwise be indistinguishable from an outage and
+        // would enrich an unqualified candidate unconditionally, the exact expensive,
+        // unqualified direction this project exists to avoid. Below the threshold, nulls
+        // stay per-candidate Unsure, exactly as an isolated null does today: this is a
+        // deliberate trade — if triage really is down on a quiet night with fewer than
+        // MinBatchForOutageDetection candidates, that run produces no leads. That is fine:
+        // nothing is persisted for those candidates, so they are re-fetched and reconsidered
+        // next run. A quiet night with no leads is recoverable; a wrong lead put in front of
+        // a paying customer is not.
+        var triageUnavailable = judged.Count >= MinBatchForOutageDetection && judged.All(j => j.verdict is null);
 
         var toEnrich = new List<(RawItem item, SignalResult signal, string? triageCompany)>();
         if (triageUnavailable)
