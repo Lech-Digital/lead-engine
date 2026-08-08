@@ -37,6 +37,7 @@ public static class DependencyInjection
         services.AddScoped<Application.Harvest.ILeadSource, Harvest.LangSearchSource>();
         services.AddScoped<Application.Harvest.ILeadSource, Harvest.DutchBusinessNewsSource>();
         services.AddScoped<Application.Harvest.ILeadEnricher, Harvest.GroqLeadEnricher>();
+        services.AddScoped<Application.Harvest.ILeadTriage, Harvest.GroqLeadTriage>();
         // The secondary-context lookup runs once per enriched lead INSIDE the nightly loop, so a
         // hung endpoint on the shared default client (~100s framework timeout) would cost up to
         // MaxEnrichPerRun × 100s sequentially. Its own named client keeps that bounded at 10s per

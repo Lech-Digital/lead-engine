@@ -49,10 +49,11 @@ public class HarvestTargetingCompatibilityTests
     }
 
     [Fact]
-    public void FromCustomer_StructuredTargeting_DrawsKeywordsFromIndustriesAndGeographies()
+    public void FromCustomer_StructuredTargetingPresent_KeywordsComeFromLegacyWhileSignalsAndExclusionsComeFromStructure()
     {
-        // Arrange
-        var profile = ProfileWith("", "", "");
+        // Arrange — industries/geographies are category nouns, not search-intent phrases;
+        // only the legacy curated keywords should feed the rotation.
+        var profile = ProfileWith("struggling with outbound", "", "");
         var targeting = Targeting.Create(["logistics"], ["NL"], ["Fleet Manager"], 10, 200,
             ["raised funding"], ["competitors"]);
 
@@ -60,10 +61,29 @@ public class HarvestTargetingCompatibilityTests
         var actual = HarvestTargeting.FromCustomer(profile, targeting, "Acme");
 
         // Assert
-        actual.TargetKeywords.Should().Contain("logistics");
+        actual.TargetKeywords.Should().BeEquivalentTo(["struggling with outbound"]);
         actual.BuyingSignals.Should().Contain("raised funding");
         actual.Disqualifiers.Should().Contain("competitors");
         actual.HasKeywords.Should().BeTrue();
+    }
+
+    [Fact]
+    public void FromCustomer_StructuredTargetingWithIndustriesAndGeographies_TargetKeywordsExcludeCategoryNouns()
+    {
+        // Arrange — regression guard: sending "Netherlands"/"B2B SaaS" as literal search
+        // queries returns noise, while "struggling with outbound" finds a founder with a
+        // problem. This must fail if IndustryList/GeographyList are ever concatenated back
+        // into TargetKeywords.
+        var profile = ProfileWith("struggling with outbound", "", "");
+        var targeting = Targeting.Create(["B2B SaaS"], ["Netherlands"], [], null, null, [], []);
+
+        // Act
+        var actual = HarvestTargeting.FromCustomer(profile, targeting, "Acme");
+
+        // Assert
+        actual.TargetKeywords.Should().Contain("struggling with outbound");
+        actual.TargetKeywords.Should().NotContain("B2B SaaS");
+        actual.TargetKeywords.Should().NotContain("Netherlands");
     }
 
     [Fact]

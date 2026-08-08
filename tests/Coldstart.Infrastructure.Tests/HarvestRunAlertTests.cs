@@ -12,8 +12,8 @@ public class HarvestRunAlertTests
     [Fact]
     public void For_WhenCandidatesExistedButNothingEnriched_BlamesTheLlm()
     {
-        // Arrange — 10 scored in, 2 deduped → 8 real candidates reached the enricher and all failed
-        var report = new HarvestReport(Harvested: 20, ScoredIn: 10, Deduped: 2, Enriched: 0, Saved: 0, Rejected: 0);
+        // Arrange — 10 scored in, 2 deduped → 8 real candidates, all 8 sent to the enricher and all failed
+        var report = new HarvestReport(Harvested: 20, ScoredIn: 10, Deduped: 2, Enriched: 0, Saved: 0, Rejected: 0, Attempted: 8);
 
         // Act
         var alert = HarvestRunAlert.For(report, "Acme", CustomerId);
@@ -22,6 +22,59 @@ public class HarvestRunAlertTests
         alert.Should().NotBeNull();
         alert!.Value.Subject.Should().Contain("LLM");
         alert.Value.Body.Should().Contain("8 candidate");
+        alert.Value.Body.Should().Contain("8 of them were sent to the enricher");
+    }
+
+    [Fact]
+    public void For_WhenCandidatePoolExceedsTheEnrichCap_ReportsAttemptedCountNotTheWholePool()
+    {
+        // Arrange — Task 3 revived four sources: 180 items now survive veto+dedup in one run, but
+        // MaxEnrichPerRun only ever sends 30 to the enricher. The message must not claim all 180
+        // were tried and failed — that is the exact misdiagnosis the alert exists to prevent.
+        var report = new HarvestReport(Harvested: 400, ScoredIn: 180, Deduped: 0, Enriched: 0, Saved: 0, Rejected: 0, Attempted: 30);
+
+        // Act
+        var alert = HarvestRunAlert.For(report, "Acme", CustomerId);
+
+        // Assert — subject and body report the attempted count, and the body still names the
+        // full pool separately rather than conflating the two.
+        alert.Should().NotBeNull();
+        alert!.Value.Subject.Should().Contain("0 of 30 attempted").And.NotContain("180");
+        alert.Value.Body.Should().Contain("180 candidate").And.Contain("30 of them were sent to the enricher");
+    }
+
+    [Fact]
+    public void For_WhenEveryCandidateWasTriagedNotFit_ReportsStrictIcpInsteadOfBlamingTheLlm()
+    {
+        // Arrange — Task 5's triage gate correctly rejected every candidate before a single
+        // (paid) enrichment call was made: Attempted stays 0. This is the system working
+        // exactly as designed and must never look like an LLM outage.
+        var report = new HarvestReport(Harvested: 10, ScoredIn: 5, Deduped: 0, Enriched: 0, Saved: 0, Rejected: 0,
+            Attempted: 0, DropReasons: new Dictionary<string, int> { ["triage-not-fit"] = 5 });
+
+        // Act
+        var alert = HarvestRunAlert.For(report, "Acme", CustomerId);
+
+        // Assert — a calmer, distinct signal about a strict ICP, never blaming the LLM
+        alert.Should().NotBeNull();
+        alert!.Value.Subject.Should().NotContain("LLM").And.Contain("strict ICP");
+        alert.Value.Body.Should().Contain("triage judged 5").And.NotContain("LLM provider quota");
+    }
+
+    [Fact]
+    public void For_WhenSomeTriagedNotFitButEnrichmentWasAlsoAttemptedAndFailed_StillBlamesTheLlm()
+    {
+        // Arrange — a genuine enrichment failure must still alert exactly as before, even if
+        // triage-not-fit also appears in the drop reasons for other candidates in the same run.
+        var report = new HarvestReport(Harvested: 10, ScoredIn: 5, Deduped: 0, Enriched: 0, Saved: 0, Rejected: 0,
+            Attempted: 3, DropReasons: new Dictionary<string, int> { ["triage-not-fit"] = 2 });
+
+        // Act
+        var alert = HarvestRunAlert.For(report, "Acme", CustomerId);
+
+        // Assert
+        alert.Should().NotBeNull();
+        alert!.Value.Subject.Should().Contain("LLM");
     }
 
     [Fact]

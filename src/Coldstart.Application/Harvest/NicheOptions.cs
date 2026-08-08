@@ -10,6 +10,11 @@ public sealed class NicheOptions
     public List<string> Disqualifiers { get; set; } = [];
     public double MinScore { get; set; } = 0.4;
     public int MaxEnrichPerRun { get; set; } = 30;
+    // Deliberately a COUNT OF TRIAGE CALLS, never a computed currency amount: the per-token
+    // price estimate behind "triage is ~1/10th the cost of enrichment" is unverified, and a
+    // wrong estimate must never be able to turn into overspend. Capping calls caps risk
+    // regardless of whatever the actual per-call price turns out to be.
+    public int MaxTriagePerRun { get; set; } = 200;
     public string TargetCustomerName { get; set; } = "Coldstart";
     public HackerNewsOptions HackerNews { get; set; } = new();
     public FundingOptions Funding { get; set; } = new();

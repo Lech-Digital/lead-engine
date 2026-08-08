@@ -59,7 +59,7 @@ public class SkipFeedbackFlywheelTests
         var suppressions = Substitute.For<ISuppressionRepository>();
         suppressions.ValuesAsync(Arg.Any<CancellationToken>()).Returns([]);
         var sut = new HarvestLeads([new FakeSource(new RawItem("fake", "1", "", "hiring outbound SDR", "", "u1", ""))],
-            enricher, NoSecondaryContext(), leads, customers, suppressions, new NicheOptions { MinScore = 0.1, MaxEnrichPerRun = 5 }, Substitute.For<ITenantScope>());
+            enricher, HarvestLeadsTests.AlwaysFitTriage(), NoSecondaryContext(), leads, customers, suppressions, new NicheOptions { MinScore = 0.1, MaxEnrichPerRun = 5 }, Substitute.For<ITenantScope>());
 
         // Act
         await sut.RunForCustomerAsync(customer.Id.Value, HarvestTargeting.FromNiche(new NicheOptions
@@ -94,7 +94,7 @@ public class SkipFeedbackFlywheelTests
         var suppressions = Substitute.For<ISuppressionRepository>();
         suppressions.ValuesAsync(Arg.Any<CancellationToken>()).Returns([]);
         var sut = new HarvestLeads([new FakeSource(new RawItem("fake", "1", "", "hiring outbound SDR", "", "u1", ""))],
-            enricher, NoSecondaryContext(), leads, customers, suppressions, new NicheOptions(), Substitute.For<ITenantScope>());
+            enricher, HarvestLeadsTests.AlwaysFitTriage(), NoSecondaryContext(), leads, customers, suppressions, new NicheOptions(), Substitute.For<ITenantScope>());
 
         // Act
         await sut.RunForCustomerAsync(customer.Id.Value, HarvestTargeting.FromNiche(new NicheOptions
