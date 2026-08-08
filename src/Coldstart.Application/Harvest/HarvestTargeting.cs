@@ -32,12 +32,19 @@ public sealed record HarvestTargeting(
     // fields, unchanged. In sub-project A the structured branch deliberately derives the
     // same inputs as the legacy one — sub-projects B (query generation) and C
     // (qualification) are what actually exploit the extra dimensions.
+    //
+    // Keywords deliberately never come from IndustryList/GeographyList: those are category
+    // nouns ("B2B SaaS", "Netherlands"), not search-intent phrases. Sent as literal web-search
+    // queries they return noise, and they dilute KeywordRotation's nightly paid-query budget
+    // against SignalScorer's substring matching. Only the human-curated legacy TargetKeywords
+    // ("struggling with outbound", "first sales hire") find real buying conversations.
+    // Industries/geographies still reach the LLM via TriageCriteria.Describe — do not
+    // reinstate the concat here.
     public static HarvestTargeting FromCustomer(CompanyProfile profile, Targeting targeting, string customerName)
     {
         if (targeting is null || !targeting.HasAny) return FromProfile(profile, customerName);
 
-        var keywords = targeting.IndustryList.Concat(targeting.GeographyList).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        if (keywords.Count == 0) keywords = [.. Split(profile.TargetKeywords)];
+        var keywords = Split(profile.TargetKeywords);
 
         var signals = targeting.TriggerEventList.Count > 0
             ? targeting.TriggerEventList
