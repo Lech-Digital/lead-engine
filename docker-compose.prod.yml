@@ -139,6 +139,10 @@ services:
     ports:
       - "80:80"
       - "443:443"
+      # HTTP/3 (QUIC). Caddy advertises `alt-svc: h3=":443"` and listens on UDP 443
+      # inside the container; without this mapping browsers try QUIC against a port
+      # nothing is listening on and stall before falling back to TCP.
+      - "443:443/udp"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
