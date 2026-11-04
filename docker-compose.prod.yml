@@ -90,6 +90,10 @@ services:
       - coldstart-dpkeys:/app/keys
     expose:
       - "8080"
+    # The edge Caddy (Lech-Digital/lechdigital-infra) reaches this container as coldstart-web-1 on lechdigital_edge.
+    networks:
+      - default
+      - lechdigital_edge
 
   umami:
     image: ghcr.io/umami-software/umami:postgresql-latest
@@ -103,6 +107,9 @@ services:
       APP_SECRET: ${UMAMI_APP_SECRET:?set UMAMI_APP_SECRET in deploy/.env.prod}
     expose:
       - "3000"
+    networks:
+      - default
+      - lechdigital_edge
 
   db-backup:
     image: postgres:17
@@ -131,25 +138,13 @@ services:
           sleep 86400
         done
 
-  caddy:
-    image: caddy:2
-    restart: unless-stopped
-    depends_on:
-      - web
-    ports:
-      - "80:80"
-      - "443:443"
-      # HTTP/3 (QUIC). Caddy advertises `alt-svc: h3=":443"` and listens on UDP 443
-      # inside the container; without this mapping browsers try QUIC against a port
-      # nothing is listening on and stall before falling back to TCP.
-      - "443:443/udp"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy-data:/data
-      - caddy-config:/config
+# The Caddy that used to be here is the edge of Lech-Digital/lechdigital-infra now (2026-11-04). Its certificate volumes
+# (coldstart_caddy-data, coldstart_caddy-config) are the edge's: they are not declared here, so a `down -v` of this
+# stack can never delete them.
+networks:
+  lechdigital_edge:
+    external: true
 
 volumes:
   coldstart-pgdata:
   coldstart-dpkeys:
-  caddy-data:
-  caddy-config:
